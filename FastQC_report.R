@@ -1,46 +1,44 @@
-# this script allows to generate several plots and tables to summarize the FastQC results 
+# FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
 
-# df_nb_reads     => table with total number of reads obtained for Read 1 and Read 2 (normally it's the same number)
-# sum_R1 & sum_R2 => summary of all results for all QC metrics in a form of a plot
-# total_plot      => same as df_nb_reads but in a form of a plot
-# duplic_plot_R1 & duplic_plot_R1 => shows percentages of each duplication level
-# GC_plot_R1 & GC_plot_R2 => shows GC content distribution for all samples in one plot
+# Summary of plots generated:
+# (1) summary of all results for all QC metrics in a form of a plot
+# (2) shows GC content distribution for all samples in one plot (GC_plot_R1 & GC_plot_R2)
+# (3) shows percentages of each duplication level (duplic_plot_R1 & duplic_plot_R1)
+# (4) plots showing total number of reads obtained for R1 and R2 (total_plot)
+# (5) 
 
-
-# install 'ngsReports' package
+# install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("ngsReports", quietly = TRUE)) BiocManager::install("ngsReports")
-if (!requireNamespace("gridExtra", quietly = TRUE)) BiocManager::install("gridExtra")
+if (!requireNamespace("ngsReports", quietly = TRUE)) BiocManager::install("ngsReports"); library(ngsReports)
+if (!requireNamespace("ggplot2", quietly = TRUE)) BiocManager::install("ggplot2"); library(ggplot2)
+if (!requireNamespace("dplyr", quietly = TRUE)) BiocManager::install("dplyr"); library(dplyr)
+if (!requireNamespace("pander", quietly = TRUE)) BiocManager::install("pander"); library(pander)
+if (!requireNamespace("xtable", quietly = TRUE)) BiocManager::install("xtable"); library(xtable)
+if (!requireNamespace("gridExtra", quietly = TRUE)) BiocManager::install("gridExtra"); require(gridExtra)
 
-library(ngsReports)
+args <- commandArgs(trailingOnly = TRUE)
+ 
+if (length(args)!=2) {
+  stop("2 arguments must be supplied: (1 - input) path to directory with data and (2 - output) path where output files should be stored .n", call.=FALSE)
+}
 
-# load addition packages that will be useful
-library(dplyr)
-library(pander)
-library(xtable)
-require(ggplot2)
-require(gridExtra)
+cat("Directories with data (IN): ")
+cat(args[1], sep="\n")
 
-setwd("/Users/ummz/OneDrive/ANALYSES/results_20191218/1_quality_control/postprocessing_in_R")
-
-# define path to the data
-res_dir <- "/Users/ummz/OneDrive/ANALYSES/results_20191218/1_quality_control/report"
-res_dir_rerun <- "/Users/ummz/OneDrive/ANALYSES/results_20200204/3_quality_control_trimmed_rerun/report/"
+cat("Directory for results (OUT): ")
+cat(args[2], sep="\n")
 
 # select all zipped files and create an S4 object to store all results per sample
-files_both <- list.files(res_dir, pattern = "fastqc.zip$", full.names = TRUE)
-files_both_rerun <- list.files(res_dir_rerun, pattern = "fastqc.zip$", full.names = TRUE)
-files_R1 <- list.files(res_dir, pattern = "R1_001_fastqc.zip$", full.names = TRUE)
-files_R2 <- list.files(res_dir, pattern = "R2_001_fastqc.zip$", full.names = TRUE)
+files_both <- list.files(args[1], pattern = "fastqc.zip$", full.names = TRUE)
 fdl_both <- FastqcDataList(files_both)
-fdl_both_rerun <- FastqcDataList(files_both_rerun)
+
+# same as above but separately for R1 and R2
+files_R1 <- list.files(args[1], pattern = "R1_001_fastqc.zip$", full.names = TRUE)
 fdl_R1 <- FastqcDataList(files_R1)
+files_R2 <- list.files(args[1], pattern = "R2_001_fastqc.zip$", full.names = TRUE)
 fdl_R2 <- FastqcDataList(files_R2)
 
-# NOTICE: there are 41 samples (paired-end, thus 82 in total) in this analysis
-
-# getModule(fdl[[1]], "Summary")        # check which metrics were computed for each file (normally they are all the same across all files)
-
+if(FALSE){
 # create a table with the number of reads obtained for each sample (R1 and R2 separately)
 # extract all read numbers
 reads_R1 <- readTotals(fdl_R1)
@@ -49,12 +47,6 @@ reads_R2 <- readTotals(fdl_R2)
 # extract all sample IDs (for R1 only as R2 are the same)
 IDs <- substr(reads_R1$Filename, start = 1, stop = 5)
 IDs <- gsub('_', "", IDs)
-
-# make a table with Sample ID, Read 1 and Read 2
-df_nb_reads <- data.frame(cbind(IDs, prettyNum(reads_R1$Total_Sequences, big.mark=","), prettyNum(reads_R2$Total_Sequences, big.mark=",")))
-df_nb_reads_latex <- xtable(cbind(IDs, prettyNum(reads_R1$Total_Sequences, big.mark=","), prettyNum(reads_R2$Total_Sequences, big.mark=",")))
-
-names(df_nb_reads) <- c("Sample IDs", "Read 1", "Read 2")
 
 # change filenames to keep ID only (i.e. remove S.._L005 and 001) NOTICE: it is not needed as it can be changed later inside the plot object
 for (x in 1:length(fdl_R1)) {
@@ -309,7 +301,7 @@ dev.off()
 
 # FAIL in R2 => 0
 
-
+}
 
 
 
