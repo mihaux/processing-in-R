@@ -19,7 +19,7 @@ if (!requireNamespace("gridExtra", quietly = TRUE)) BiocManager::install("gridEx
 args <- commandArgs(trailingOnly = TRUE)
  
 if (length(args)!=2) {
-  stop("2 arguments must be supplied: (1 - input) path to directory with data and (2 - output) path where output files should be stored .n", call.=FALSE)
+  stop("2 arguments must be supplied: (1 - input) path to directory with data and (2 - output) path where output files should be stored", call.=FALSE)
 }
 
 cat("Directories with data (IN): ")
@@ -37,6 +37,9 @@ files_R1 <- list.files(args[1], pattern = "R1_001_fastqc.zip$", full.names = TRU
 fdl_R1 <- FastqcDataList(files_R1)
 files_R2 <- list.files(args[1], pattern = "R2_001_fastqc.zip$", full.names = TRUE)
 fdl_R2 <- FastqcDataList(files_R2)
+
+files_R1
+
 
 if(FALSE){
 # create a table with the number of reads obtained for each sample (R1 and R2 separately)
