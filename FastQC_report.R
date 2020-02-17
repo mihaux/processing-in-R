@@ -1,11 +1,11 @@
 # FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
 
-# Summary of plots generated:
-# (1) summary of all results for all QC metrics in a form of a plot
-# (2) shows GC content distribution for all samples in one plot (GC_plot_R1 & GC_plot_R2)
-# (3) shows percentages of each duplication level (duplic_plot_R1 & duplic_plot_R1)
-# (4) plots showing total number of reads obtained for R1 and R2 (total_plot)
-# (5) 
+# Summary of results to be generated:
+# (1) plot with summary of all results for all QC metrics []
+# (2) plot with GC content distribution (identical to the one from FastQC) for all samples in one  []
+# (3) plot with percentages of each duplication level []
+# (4) plots with total number of reads obtained for R1 and R2 []
+# (5) .txt file with overepresented sequences []
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
@@ -38,8 +38,21 @@ fdl_R1 <- FastqcDataList(files_R1)
 files_R2 <- list.files(args[1], pattern = "R2_001_fastqc.zip$", full.names = TRUE)
 fdl_R2 <- FastqcDataList(files_R2)
 
-files_R1
+########## (1) plot with summary of all results for all QC metrics ##########
 
+
+
+
+########## (2) plot with GC content distribution for all samples in one ##########
+
+
+########## (3) plot with percentages of each duplication level ##########
+
+
+########## (4) plots with total number of reads obtained for R1 and R2 ##########
+
+
+########## (5) .txt file with overepresented sequences ##########
 
 if(FALSE){
 # create a table with the number of reads obtained for each sample (R1 and R2 separately)
@@ -114,8 +127,9 @@ total_plot <- total_plot + theme(text = element_text(size=7),
 duplic_plot_R1 <- plotDupLevels(fdl_R1)
 duplic_plot_R2 <- plotDupLevels(fdl_R2)
 
-GC_plot_R1 <- plotGcContent(fdl_R1, plotType = "line",  gcType = "Transcriptome") + theme(legend.position="none")
-GC_plot_R2 <- plotGcContent(fdl_R2, plotType = "line",  gcType = "Transcriptome") + theme(legend.position="none")
+# all GC plots in one figure 
+# GC_plot_R1 <- plotGcContent(fdl_R1, plotType = "line",  gcType = "Transcriptome") + theme(legend.position="none")
+# GC_plot_R2 <- plotGcContent(fdl_R2, plotType = "line",  gcType = "Transcriptome") + theme(legend.position="none")
 
 # plot all GC plots together 
 # legend:
@@ -126,185 +140,25 @@ GC_plot_R2 <- plotGcContent(fdl_R2, plotType = "line",  gcType = "Transcriptome"
 # NOTICE: remove subtitles (p1$labels$subtitle = NULL)
 # NOTICE: max 12 plots (grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, ncol = 3))
 
-# PASS in R1 => 23 (3 sets: 8, 8, 7)
-r1_p_1 <- plotGcContent(fdl_R1$`11026_S12_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_2 <- plotGcContent(fdl_R1$`11037_S7_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_3 <- plotGcContent(fdl_R1$`12388_S2_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_4 <- plotGcContent(fdl_R1$`12389_S19_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_5 <- plotGcContent(fdl_R1$`12954_S5_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_6 <- plotGcContent(fdl_R1$`14058_S4_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_7 <- plotGcContent(fdl_R1$`14455_S12_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_8 <- plotGcContent(fdl_R1$`14912_S1_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_9 <- plotGcContent(fdl_R1$`14915_S16_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_10 <- plotGcContent(fdl_R1$`14916_S1_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_11 <- plotGcContent(fdl_R1$`14919_S16_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_12 <- plotGcContent(fdl_R1$`14931_S19_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_13 <- plotGcContent(fdl_R1$`16082_S6_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_14 <- plotGcContent(fdl_R1$`16109_S8_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_15 <- plotGcContent(fdl_R1$`16111_S11_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_16 <- plotGcContent(fdl_R1$`16125_S10_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_17 <- plotGcContent(fdl_R1$`16142_S21_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_18 <- plotGcContent(fdl_R1$`16153_S11_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_19 <- plotGcContent(fdl_R1$`16154_S20_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_20 <- plotGcContent(fdl_R1$`16167_S18_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_21 <- plotGcContent(fdl_R1$`16187_S20_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_22 <- plotGcContent(fdl_R1$`16648_S14_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_p_23 <- plotGcContent(fdl_R1$`16649_S17_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
+# WARN 
+# r1_w_1 <- plotGcContent(fdl_R1$`11028_S4_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
+# r1_w_1$labels$subtitle = NULL
+ 
+# jpeg('GC_content_R1_warn_I.jpg')
+# grid.arrange(r1_w_1, r1_w_2, r1_w_3, r1_w_4, r1_w_5, r1_w_6, r1_w_7, r1_w_8, r1_w_9, r1_w_10, r1_w_11, r1_w_12, 
+#               ncol = 3, top = textGrob("READ 1: WARN",gp=gpar(fontsize=14, font=2)))
+# dev.off()
 
-r1_p_1$labels$subtitle = NULL; r1_p_2$labels$subtitle = NULL; r1_p_3$labels$subtitle = NULL
-r1_p_4$labels$subtitle = NULL; r1_p_5$labels$subtitle = NULL; r1_p_6$labels$subtitle = NULL
-r1_p_7$labels$subtitle = NULL; r1_p_8$labels$subtitle = NULL; r1_p_9$labels$subtitle = NULL
-r1_p_10$labels$subtitle = NULL; r1_p_11$labels$subtitle = NULL; r1_p_12$labels$subtitle = NULL
-r1_p_13$labels$subtitle = NULL; r1_p_14$labels$subtitle = NULL; r1_p_15$labels$subtitle = NULL
-r1_p_16$labels$subtitle = NULL; r1_p_17$labels$subtitle = NULL; r1_p_18$labels$subtitle = NULL
-r1_p_19$labels$subtitle = NULL; r1_p_20$labels$subtitle = NULL; r1_p_21$labels$subtitle = NULL
-r1_p_22$labels$subtitle = NULL; r1_p_23$labels$subtitle = NULL
+# FAIL 
+# r1_f_1 <- plotGcContent(fdl_R1$`12331_S14_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome")
+# r1_f_1$labels$subtitle = NULL
 
-jpeg('GC_content_R1_pass_I.jpg')
-grid.arrange(r1_p_1, r1_p_2, r1_p_3, r1_p_4, r1_p_5, r1_p_6, 
-             r1_p_7, r1_p_8, r1_p_9, r1_p_10, r1_p_11, r1_p_12, 
-             ncol = 3, top = textGrob("READ 1: PASS",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-jpeg('GC_content_R1_pass_II.jpg')
-grid.arrange(r1_p_13, r1_p_14, r1_p_15, r1_p_16, r1_p_17, r1_p_18, 
-             r1_p_19, r1_p_20, r1_p_21, r1_p_22, r1_p_23, 
-             ncol = 3, top = textGrob("READ 1: PASS",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-# WARN in R1 => 17 (2 sets: 9, 8)
-r1_w_1 <- plotGcContent(fdl_R1$`11028_S4_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_2 <- plotGcContent(fdl_R1$`12223_S9_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_3 <- plotGcContent(fdl_R1$`12330_S15_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_4 <- plotGcContent(fdl_R1$`12849_S10_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_5 <- plotGcContent(fdl_R1$`12855_S13_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_6 <- plotGcContent(fdl_R1$`12898_S18_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_7 <- plotGcContent(fdl_R1$`14914_S15_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_8 <- plotGcContent(fdl_R1$`14920_S3_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_9 <- plotGcContent(fdl_R1$`14922_S8_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_10 <- plotGcContent(fdl_R1$`14925_S5_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_11 <- plotGcContent(fdl_R1$`14926_S2_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_12 <- plotGcContent(fdl_R1$`14927_S7_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_13 <- plotGcContent(fdl_R1$`14929_S17_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_14 <- plotGcContent(fdl_R1$`14930_S9_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_15 <- plotGcContent(fdl_R1$`16098_S6_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_16 <- plotGcContent(fdl_R1$`16137_S13_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r1_w_17 <- plotGcContent(fdl_R1$`8546_S3_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-
-r1_w_1$labels$subtitle = NULL; r1_w_2$labels$subtitle = NULL; r1_w_3$labels$subtitle = NULL
-r1_w_4$labels$subtitle = NULL; r1_w_5$labels$subtitle = NULL; r1_w_6$labels$subtitle = NULL
-r1_w_7$labels$subtitle = NULL; r1_w_8$labels$subtitle = NULL; r1_w_9$labels$subtitle = NULL
-r1_w_10$labels$subtitle = NULL; r1_w_11$labels$subtitle = NULL; r1_w_12$labels$subtitle = NULL
-r1_w_13$labels$subtitle = NULL; r1_w_14$labels$subtitle = NULL; r1_w_15$labels$subtitle = NULL
-r1_w_16$labels$subtitle = NULL; r1_w_17$labels$subtitle = NULL;
-
-jpeg('GC_content_R1_warn_I.jpg')
-grid.arrange(r1_w_1, r1_w_2, r1_w_3, r1_w_4, r1_w_5, r1_w_6, 
-             r1_w_7, r1_w_8, r1_w_9, r1_w_10, r1_w_11, r1_w_12, 
-             ncol = 3, top = textGrob("READ 1: WARN",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-jpeg('GC_content_R1_warn_II.jpg')
-grid.arrange(r1_w_13, r1_w_14, r1_w_15, r1_w_16, r1_w_17, 
-             ncol = 2, top = textGrob("READ 1: WARN",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-# FAIL in R1 => 1 (1 set)
-r1_f_1 <- plotGcContent(fdl_R1$`12331_S14_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome")
-r1_f_1$labels$subtitle = NULL
-
-jpeg('GC_content_R1_fail.jpg')
-grid.arrange(r1_f_1, top = textGrob("READ 1: FAIL",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-# PASS in R2 => 19 (2 sets)
-r2_p_1 <- plotGcContent(fdl_R2$`11026_S12_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_2 <- plotGcContent(fdl_R2$`11037_S7_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_3 <- plotGcContent(fdl_R2$`12223_S9_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_4 <- plotGcContent(fdl_R2$`12389_S19_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_5 <- plotGcContent(fdl_R2$`12849_S10_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_6 <- plotGcContent(fdl_R2$`12898_S18_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_7 <- plotGcContent(fdl_R2$`12954_S5_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_8 <- plotGcContent(fdl_R2$`14455_S12_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_9 <- plotGcContent(fdl_R2$`14912_S1_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_10 <- plotGcContent(fdl_R2$`14915_S16_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_11 <- plotGcContent(fdl_R2$`14916_S1_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_12 <- plotGcContent(fdl_R2$`14919_S16_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_13 <- plotGcContent(fdl_R2$`14929_S17_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_14 <- plotGcContent(fdl_R2$`16082_S6_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_15 <- plotGcContent(fdl_R2$`16111_S11_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_16 <- plotGcContent(fdl_R2$`16153_S11_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_17 <- plotGcContent(fdl_R2$`16167_S18_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_18 <- plotGcContent(fdl_R2$`16187_S20_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_p_19 <- plotGcContent(fdl_R2$`16649_S17_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-    
-r2_p_1$labels$subtitle = NULL; r2_p_2$labels$subtitle = NULL; r2_p_3$labels$subtitle = NULL
-r2_p_4$labels$subtitle = NULL; r2_p_5$labels$subtitle = NULL; r2_p_6$labels$subtitle = NULL
-r2_p_7$labels$subtitle = NULL; r2_p_8$labels$subtitle = NULL; r2_p_9$labels$subtitle = NULL
-r2_p_10$labels$subtitle = NULL; r2_p_11$labels$subtitle = NULL; r2_p_12$labels$subtitle = NULL
-r2_p_13$labels$subtitle = NULL; r2_p_14$labels$subtitle = NULL; r2_p_15$labels$subtitle = NULL
-r2_p_16$labels$subtitle = NULL; r2_p_17$labels$subtitle = NULL; r2_p_18$labels$subtitle = NULL
-r2_p_19$labels$subtitle = NULL;
-
-jpeg('GC_content_R2_pass_I.jpg')
-grid.arrange(r2_p_1, r2_p_2, r2_p_3, r2_p_4, r2_p_5, r2_p_6, 
-             r2_p_7, r2_p_8, r2_p_9, r2_p_10, r2_p_11, r2_p_12, 
-             ncol = 3, top = textGrob("READ 2: PASS",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-jpeg('GC_content_R2_pass_II.jpg')
-grid.arrange(r2_p_13, r2_p_14, r2_p_15, r2_p_16, r2_p_17, r2_p_18, 
-             r2_p_19,  ncol = 2, top = textGrob("READ 2: PASS",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-# WARN in R2 => 22 
-r2_w_1 <- plotGcContent(fdl_R2$`11028_S4_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_2 <- plotGcContent(fdl_R2$`12330_S15_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_3 <- plotGcContent(fdl_R2$`12331_S14_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_4 <- plotGcContent(fdl_R2$`12388_S2_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_5 <- plotGcContent(fdl_R2$`12855_S13_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_6 <- plotGcContent(fdl_R2$`14058_S4_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_7 <- plotGcContent(fdl_R2$`14914_S15_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_8 <- plotGcContent(fdl_R2$`14920_S3_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_9 <- plotGcContent(fdl_R2$`14922_S8_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_10 <- plotGcContent(fdl_R2$`14925_S5_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_11 <- plotGcContent(fdl_R2$`14926_S2_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_12 <- plotGcContent(fdl_R2$`14927_S7_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_13 <- plotGcContent(fdl_R2$`14930_S9_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_14 <- plotGcContent(fdl_R2$`14931_S19_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_15 <- plotGcContent(fdl_R2$`16098_S6_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_16 <- plotGcContent(fdl_R2$`16109_S8_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_17 <- plotGcContent(fdl_R2$`16125_S10_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_18 <- plotGcContent(fdl_R2$`16137_S13_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_19 <- plotGcContent(fdl_R2$`16142_S21_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_20 <- plotGcContent(fdl_R2$`16154_S20_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_21 <- plotGcContent(fdl_R2$`16648_S14_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-r2_w_22 <- plotGcContent(fdl_R2$`8546_S3_L005_R2_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
-
-r2_w_1$labels$subtitle = NULL; r2_w_2$labels$subtitle = NULL; r2_w_3$labels$subtitle = NULL
-r2_w_4$labels$subtitle = NULL; r2_w_5$labels$subtitle = NULL; r2_w_6$labels$subtitle = NULL
-r2_w_7$labels$subtitle = NULL; r2_w_8$labels$subtitle = NULL; r2_w_9$labels$subtitle = NULL
-r2_w_10$labels$subtitle = NULL; r2_w_11$labels$subtitle = NULL; r2_w_12$labels$subtitle = NULL
-r2_w_13$labels$subtitle = NULL; r2_w_14$labels$subtitle = NULL; r2_w_15$labels$subtitle = NULL
-r2_w_16$labels$subtitle = NULL; r2_w_17$labels$subtitle = NULL; r2_w_18$labels$subtitle = NULL
-r2_w_19$labels$subtitle = NULL; r2_w_20$labels$subtitle = NULL; r2_w_21$labels$subtitle = NULL
-r2_w_22$labels$subtitle = NULL
-
-jpeg('GC_content_R2_warn_I.jpg')
-grid.arrange(r2_w_1, r2_w_2, r2_w_3, r2_w_4, r2_w_5, r2_w_6, 
-             r2_w_7, r2_w_8, r2_w_9, r2_w_10, r2_w_11, r2_w_12, 
-             ncol = 3, top = textGrob("READ 2: WARN",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-jpeg('GC_content_R2_warn_II.jpg')
-grid.arrange(r2_w_13, r2_w_14, r2_w_15, r2_w_16, r2_w_17, r2_w_18, 
-             r2_w_19, r2_w_20, r2_w_21, r2_w_22, 
-             ncol = 3, top = textGrob("READ 2: WARN",gp=gpar(fontsize=14, font=2)))
-dev.off()
-
-# FAIL in R2 => 0
 
 }
+
+#################################
+# save all plots and .txt files #
+#################################
 
 
 
