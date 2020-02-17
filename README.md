@@ -1,6 +1,6 @@
 # processing-in-R
 
-USAGE: Rscript `FastQC_report.R [directory-to-results] [directory-for-output]`
+USAGE: `Rscript FastQC_report.R [directory-to-results] [directory-for-output]`
 
 EXAMPLE: (for first analysis) 
 ```
