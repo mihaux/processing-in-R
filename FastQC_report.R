@@ -1,10 +1,12 @@
 # FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
 
+# TODO: add if else statement to automate it for Read1 only or paired-end
+
 # Summary of results to be generated:
 # (1) plot with summary of all results for all QC metrics [sum_R1 & sum_R2]
-# (2) plots with total number of reads obtained for R1 and R2 []
-# (3) plot with percentages of each duplication level []
-# (4) .txt file with overepresented sequences []
+# (2) plots with total number of reads obtained for R1 and R2 [total_reads_plot]
+# (3) plot with percentages of each duplication level [duplic_plot_R1 & duplic_plot_R2]
+# (4) .txt file with overepresented sequences [over_seq]
 # (5) plot with GC content distribution (identical to the one from FastQC) for all samples in one  []
 
 # install (if necessary) and load package
@@ -16,11 +18,10 @@ if (!requireNamespace("pander", quietly = TRUE)) BiocManager::install("pander");
 if (!requireNamespace("xtable", quietly = TRUE)) BiocManager::install("xtable"); library(xtable)
 if (!requireNamespace("gridExtra", quietly = TRUE)) BiocManager::install("gridExtra"); require(gridExtra)
 
-# for development only
-# args <- commandArgs(trailingOnly = TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
-args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/report", 
-          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
+#args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/report", 
+#          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
 
 if (length(args)!=2) {
   stop("2 arguments must be supplied: (1 - input) path to directory with data and (2 - output) path where output files should be stored", call.=FALSE)
@@ -31,6 +32,8 @@ cat(args[1], sep="\n")
 
 cat("Directory for results (OUT): ")
 cat(args[2], sep="\n")
+
+setwd(args[2])
 
 # select all zipped files and create an S4 object to store all results per sample
 files_both <- list.files(args[1], pattern = "fastqc.zip$", full.names = TRUE)
@@ -55,12 +58,12 @@ sum_R2$labels$x <- "QC metrics"; sum_R2$labels$y <- "Sample IDs"
 ########## (2) plots with total number of reads obtained for R1 and R2 ##########
 
 # visualise total number of obtained Reads (unique and duplicated)
-total_plot <- plotReadTotals(fdl_both)
-total_plot$labels$x <- "Sample IDs"
+total_reads_plot <- plotReadTotals(fdl_both)
+total_reads_plot$labels$x <- "Sample IDs"
 
-total_plot <- total_plot + theme(text = element_text(size=7), 
-                                 axis.title.x = element_text(size=9),
-                                 axis.title.y = element_text(size=9))
+total_reads_plot <- total_reads_plot + theme(text = element_text(size=7), 
+                                             axis.title.x = element_text(size=9),
+                                             axis.title.y = element_text(size=9))
 
 ########## (3) plot with percentages of each duplication level ##########
 
@@ -69,7 +72,11 @@ duplic_plot_R2 <- plotDupLevels(fdl_R2)
 
 ########## (4) .txt file with overepresented sequences ##########
 
-
+over_seq_R1 <- list(); over_seq_R2 <- list()
+for (x in 1:length(fdl_R1)) {
+  over_seq_R1[[x]] <- fdl_R1[[x]]@Overrepresented_sequences$Sequence
+  over_seq_R2[[x]] <- fdl_R2[[x]]@Overrepresented_sequences$Sequence
+}
 
 ########## (5) plot with GC content distribution for all samples in one ##########
 
@@ -110,8 +117,10 @@ jpeg('summary_plot_R2.jpg'); sum_R2; dev.off()
 jpeg('total_reads_plot.jpg'); total_reads_plot; dev.off()
 
 jpeg('duplication_level_plot_R1.jpg'); duplic_plot_R1; dev.off()
-jpeg('duplication_level_plot_R1.jpg'); duplic_plot_R2; dev.off()
+jpeg('duplication_level_plot_R2.jpg'); duplic_plot_R2; dev.off()
 
+sink("overrepresented_seqs_R1.txt"); cat(unlist(over_seq_R1)); sink()
+sink("overrepresented_seqs_R2.txt"); cat(unlist(over_seq_R2)); sink()
 
 ###################################################################################################
 ########################## other code that might be useful at some time ###########################
@@ -165,5 +174,4 @@ jpeg('duplication_level_plot_R1.jpg'); duplic_plot_R2; dev.off()
 
 # add information about DV200 results
 # sum_R1$data$Filename <- new_leb_R1; sum_R2$data$Filename <- new_leb_R1
-
 
