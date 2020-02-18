@@ -16,8 +16,12 @@ if (!requireNamespace("pander", quietly = TRUE)) BiocManager::install("pander");
 if (!requireNamespace("xtable", quietly = TRUE)) BiocManager::install("xtable"); library(xtable)
 if (!requireNamespace("gridExtra", quietly = TRUE)) BiocManager::install("gridExtra"); require(gridExtra)
 
-args <- commandArgs(trailingOnly = TRUE)
- 
+# for development only
+# args <- commandArgs(trailingOnly = TRUE)
+
+args[1] <- "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_20191218/1_quality_control/report" 
+args[2] <- "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_20191218/1_quality_control/postprocessed"
+
 if (length(args)!=2) {
   stop("2 arguments must be supplied: (1 - input) path to directory with data and (2 - output) path where output files should be stored", call.=FALSE)
 }
