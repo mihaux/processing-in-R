@@ -24,7 +24,7 @@ args <- commandArgs(trailingOnly = TRUE)
 #          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
 
 if (length(args)!=2) {
-  stop("2 arguments must be supplied: (1 - input) path to directory with data and (2 - output) path where output files should be stored", call.=FALSE)
+  stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
 }
 
 cat("Directories with data (IN): ")
