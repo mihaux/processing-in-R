@@ -23,7 +23,7 @@ args <- commandArgs(trailingOnly = TRUE)
 #args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/report", 
 #          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
 
-cat("Example of usage: \n Rscript FastQC_report.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/report /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed)
+cat("Example of usage: \n Rscript FastQC_report.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/report /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
 
 if (length(args)!=2) {
   stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
