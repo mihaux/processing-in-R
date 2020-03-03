@@ -1,14 +1,16 @@
 # STAR processing script that allows to merge all [sample_ID]_Log.final.out files and generate a summary table
 
-# TODO:
-
 # install (if necessary) and load packages
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!requireNamespace("lubridate", quietly = TRUE)) install.packages("lubridate")
 
-# args <- commandArgs(trailingOnly = TRUE)
+library(lubridate)
 
-args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_I_Nov19/4_alignement/bam", 
-          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_I_Nov19/4_alignement")
+args <- commandArgs(trailingOnly = TRUE)
+
+# for running in R-studio
+# args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_I_Nov19/4_alignement/bam", 
+#          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_I_Nov19/4_alignement/postprocessed")
 
 if (length(args)!=2) {
   stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
@@ -21,6 +23,7 @@ cat("Directory for results (OUT): ")
 cat(args[2], sep="\n")
 
 setwd(args[1])
+
 temp = list.files(pattern="*.out")
 all_files = lapply(temp, function(x) read.csv(x,sep = "\t", header = FALSE))
 
@@ -41,43 +44,72 @@ merged <- do.call("cbind", all_files)
 to_delete <- seq(3, length(merged), 2)
 merged_final <- merged[,-to_delete]
 
-#Started job on                                   | Dec 12 18:46:27
-#Started mapping on                               | Dec 12 18:46:57
-#Finished on                                      | Dec 12 18:55:53
-#Mapping speed, Million of reads per hour         |          144.29
-#Number of input reads                            |        21483273
-#Average input read length                        |             150
-#UNIQUE READS:                
-#Uniquely mapped reads number                     |        17943309
-#Uniquely mapped reads %                          |          83.52%
-#Average mapped length                            |          150.44
-#Number of splices: Total                         |         9798337
-#Number of splices: Annotated (sjdb)              |         9709065
-#Number of splices: GT/AG                         |         9714551
-#Number of splices: GC/AG                         |           59166
-#Number of splices: AT/AC                         |            6910
-#Number of splices: Non-canonical                 |           17710
-#Mismatch rate per base, %                        |           0.51%
-#Deletion rate per base                           |           0.04%
-#Deletion average length                          |            1.90
-#Insertion rate per base                          |           0.00%
-#Insertion average length                         |            1.31
-#MULTI-MAPPING READS:                
-#Number of reads mapped to multiple loci          |         2282825
-#% of reads mapped to multiple loci               |          10.63%
-#Number of reads mapped to too many loci          |          444554
-#% of reads mapped to too many loci               |           2.07%
-#UNMAPPED READS:                
-#Number of reads unmapped: too many mismatches    |               0
-#% of reads unmapped: too many mismatches         |           0.00%
-#Number of reads unmapped: too short              |          633819
-#% of reads unmapped: too short                   |           2.95%
-#Number of reads unmapped: other                  |          178766
-#% of reads unmapped: other                       |           0.83%
-#CHIMERIC READS:                
-#Number of chimeric reads                         |               0
-#% of chimeric reads                              |           0.00%
+# extract 2nd & 3rd rows to calculate running time
+df_time <- merged_final[2:3, -1]
 
-# generate a table 
+RunningTime <- function(x){     # x -> data frame with 2nd & 3rd rows extracted from the main table
+  
+  # remove date, to keep time only (format HH:MM:SS)
+  dropped_date <- sapply(df_time, function(x) substr(x, 8,16))
+  
+  # split into starting & end time
+  df_start <- dropped_date[1,]
+  df_stop <- dropped_date[2,]
+  
+  # convert to seconds
+  df_start_converted <- sapply(df_start, function(x) period_to_seconds(hms(x)))
+  df_stop_converted <- sapply(df_stop, function(x) period_to_seconds(hms(x)))
+
+  # calculate running time (and add one second)
+  run_time <- (df_stop_converted - df_start_converted) + 1
+
+  # convert running time to seconds
+  run_time_converted <- seconds_to_period(run_time)
+  return(run_time_converted)
+}
+
+running_time <- RunningTime(df_time)
+
+# replace the first row with calculated running times
+df <- as.matrix(merged_final)
+df[1,2:42] <- sprintf('%02d:%02d:%02d', hour(running_time), minute(running_time), second(running_time))
+
+df_final <- data.frame(df[,-1], row.names = df[,1], stringsAsFactors = FALSE)
+
+# remove 2nd, 3rd, 5th and 20th row
+df_fin <- df_final[-c(2,3,7,22,27,34),]
+
+# remove "X" from each colname
+colnames(df_fin) <- colnames(merged_final)[-1]
+  
+# remove last 2 characters from each rowname and change first row and empty spaces
+rownames(df_fin) <- gsub('.{2}$', '', rownames(df_fin))
+rownames(df_fin)[1] <- "Running time of mapping"
+rownames(df_fin) <- trimws(rownames(df_fin))
+
+# generate a table (all together & split in 5)
+write.csv(df_fin, file="STAR_stats_all.csv")
+
+# general info
+df_sub1 <- df_fin[1:4,]
+write.csv(df_sub1, file="STAR_stats_sub1_general_info.csv")
+
+#UNIQUE READS section
+df_sub2 <- df_fin[5:18,]
+write.csv(df_sub2, file="STAR_stats_sub2_unique_reads.csv")
+
+#MULTI-MAPPING READS section
+df_sub3 <- df_fin[19:22,]
+write.csv(df_sub3, file="STAR_stats_sub3_multi-mapping_reads.csv")
+
+#UNMAPPED READS section
+df_sub4 <- df_fin[23:28,]
+write.csv(df_sub4, file="STAR_stats_sub4_unmapped_reads.csv")
+
+#CHIMERIC READS section
+df_sub5 <- df_fin[29:30,]
+write.csv(df_sub5, file="STAR_stats_sub5_chimeric_reads.csv")
+
+ 
 
 
