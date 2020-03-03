@@ -42,9 +42,9 @@ files_both <- list.files(args[1], pattern = "fastqc.zip$", full.names = TRUE)
 fdl_both <- FastqcDataList(files_both)
 
 # same as above but separately for R1 and R2
-files_R1 <- list.files(args[1], pattern = "R1_fastqc.zip$", full.names = TRUE)
+files_R1 <- list.files(args[1], pattern = "_R1.fastqc.zip$", full.names = TRUE)
 fdl_R1 <- FastqcDataList(files_R1)
-files_R2 <- list.files(args[1], pattern = "R2_fastqc.zip$", full.names = TRUE)
+files_R2 <- list.files(args[1], pattern = "_R2.fastqc.zip$", full.names = TRUE)
 fdl_R2 <- FastqcDataList(files_R2)
 
 ########## (1) plot with summary of all results for all QC metrics ##########
@@ -96,7 +96,7 @@ for (x in 1:length(fdl_R1)) {
 # NOTICE: max 12 plots (grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, ncol = 3))
 
 # WARN 
-# r1_w_1 <- plotGcContent(fdl_R1$`11028_S4_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
+# r1_w_1 <- plotGcContent(fdl_R1$`11028_R1.fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome") + theme(legend.position="none")
 # r1_w_1$labels$subtitle = NULL
 
 # jpeg('GC_content_R1_warn_I.jpg')
@@ -105,7 +105,7 @@ for (x in 1:length(fdl_R1)) {
 # dev.off()
 
 # FAIL 
-# r1_f_1 <- plotGcContent(fdl_R1$`12331_S14_L005_R1_001_fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome")
+# r1_f_1 <- plotGcContent(fdl_R1$`12331_R1.fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome")
 # r1_f_1$labels$subtitle = NULL
 
 #################################
