@@ -18,3 +18,6 @@ EXAMPLE:
 Rscript STAR_stats.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_I_Nov19/4_alignement/bam /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_I_Nov19/4_alignement
 ```
 
+## 3) featureCounts_merge.R
+
+USAGE: `Rscript featureCounts_merge.R [directory-to-results] [directory-for-output]`
