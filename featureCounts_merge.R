@@ -3,10 +3,10 @@
 # install (if necessary) and load packages
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 
-#args <- commandArgs(trailingOnly = TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
 # for running in R-studio
-args <- c("/Users/ummz/R_local/input", "/Users/ummz/R_local/output")
+# args <- c("/Users/ummz/R_local/input", "/Users/ummz/R_local/output")
 
 if (length(args)!=2) {
   stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
