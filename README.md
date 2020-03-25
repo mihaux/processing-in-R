@@ -24,7 +24,7 @@ USAGE: `Rscript featureCounts_merge.R [directory-to-results] [directory-for-outp
 
 EXAMPLE:
 ```
-Rscript 
+Rscript featureCounts_merge.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I
 ```
 
 ## 4) downstream.R
@@ -33,6 +33,6 @@ USAGE: `Rscript downstream.R [directory-to-results] [directory-for-output]`
 
 EXAMPLE: 
 ```
-Rscript downstream.R
+Rscript downstream.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end
 ```
 
