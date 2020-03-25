@@ -6,7 +6,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 args <- commandArgs(trailingOnly = TRUE)
 
 # for running in R-studio
-# args <- c("/Users/ummz/R_local/input", "/Users/ummz/R_local/output")
+#args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I", "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I")
 
 if (length(args)!=2) {
   stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
@@ -38,7 +38,7 @@ merged_counts_final <- merged_counts[,-to_delete]
 merged_stats_final <- merged_stats[,-to_delete]
 
 # remove unnecessary elements from colnames
-IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(merged_counts))
+IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(merged_counts_final))
 IDs_final <- sub("X*", "", IDs)
   
 colnames(merged_counts_final) <- IDs_final
@@ -46,5 +46,5 @@ colnames(merged_stats_final) <- IDs_final
 
 # write output table as .csv [rows = genes | cols = IDs]
 write.csv(merged_counts_final, file="counts_merged.csv")
-write.csv(merged_stats_final, file="counts_merged.csv")
+write.csv(merged_stats_final, file="stats_merged.csv")
 
