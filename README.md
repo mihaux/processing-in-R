@@ -21,3 +21,18 @@ Rscript STAR_stats.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/res
 ## 3) featureCounts_merge.R
 
 USAGE: `Rscript featureCounts_merge.R [directory-to-results] [directory-for-output]`
+
+EXAMPLE:
+```
+Rscript 
+```
+
+## 4) downstream.R
+
+USAGE: `Rscript downstream.R [directory-to-results] [directory-for-output]`
+
+EXAMPLE: 
+```
+Rscript downstream.R
+```
+
