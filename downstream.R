@@ -9,7 +9,6 @@
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) BiocManager::install("org.Hs.eg.db"); library(org.Hs.eg.db)
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
 if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); library(limma)
 
@@ -58,44 +57,54 @@ colnames(df) <- IDs_final
 # load annotation data
 anno <- read.csv(args[2], row.names = 1)
 
-# Visual loss at BL = reduced or lost vision (temporary or permanent) pre steroids or at BL assessment or AION or PION 
-# Jaw claudication at BL = present pre steroids or at baseline assessment visit
-# Ischaemic features at BL = jaw claudication, tongue claudication or visual loss (temporary or permanent) pre steroids or at baseline
-
-# for columns 3-9: 0 - NO | 1 - YES
-# for columns 5-6: 99 - not assessed
-# for column 9: 2 - unknown
-# for column 10: 1 - male | 2 - female
-
-# select only necessary columns from anno
-# [1] "Myriad" => not sure what it is ???                                    
-# [2] "Batch"                                      
-# [3] "visual_loss_at_BL"                  
-# [4] "visual_loss_ever"                  
-# [5] "AION_or_PION_BL"  
-# [6] "AION_or_PION_ever"
-# [7] "jaw_claudication_at_BL"            
-# [8] "ischaemic_features_at_BL"          
-# [9] "tongue_claudication"         
-# [10] "gender"                        
-# [11] "year_TAB_sample_was_collected"                    
-# [12] "number_of_days_on_steroids_at_TAB"                
-# [13] "number_of_days_between_TAB_and_BL_blood_sample" 
+if(FALSE){
+  # Visual loss at BL = reduced or lost vision (temporary or permanent) pre steroids or at BL assessment or AION or PION 
+  # Jaw claudication at BL = present pre steroids or at baseline assessment visit
+  # Ischaemic features at BL = jaw claudication, tongue claudication or visual loss (temporary or permanent) pre steroids or at baseline
+  
+  # for columns 3-9: 0 - NO | 1 - YES
+  # for columns 5-6: 99 - not assessed
+  # for column 9: 2 - unknown
+  # for column 10: 1 - male | 2 - female
+  
+  # select only necessary columns from anno
+  # [1] "Myriad" => not sure what it is ???                                    
+  # [2] "Batch"                                      
+  # [3] "visual_loss_at_BL"                  
+  # [4] "visual_loss_ever"                  
+  # [5] "AION_or_PION_BL"  
+  # [6] "AION_or_PION_ever"
+  # [7] "jaw_claudication_at_BL"            
+  # [8] "ischaemic_features_at_BL"          
+  # [9] "tongue_claudication"         
+  # [10] "gender"                        
+  # [11] "year_TAB_sample_was_collected"                    
+  # [12] "number_of_days_on_steroids_at_TAB"                
+  # [13] "number_of_days_between_TAB_and_BL_blood_sample" 
+  
+}
 
 #---------------------------------------------#
 ### Principal Component Analysis (STANDARD) ###
 #---------------------------------------------#
+
+# TODO: need to perfor some normalisation or log-transformation and also removing 0 or rows (genes) which contain mostly zeros
+
+
+# To perform (standard) principal component analysis (PCA), we use the wide format of the data. 
+# We need to substract the column means from each column. 
+# Effectively, the gene expressions are set to have zero mean for each probeset.
+
 # perform scaling of data
-dat <- scale(t(dat), scale=F)
+df_scaled <- scale(t(df), scale=F)
 
-#Therearetwobuilt-infunctionsinR toperformPCA:princompandprcomp.The former will perform eigen decomposition on the covariance matrix of the data, while the latter will perform singular value decomposition (SVD) on the data matrix. The latter is generally preferred. Eigen calculation on the covariance matrix (of size 22K by 22K in the original dimension of the data) can be time consuming. The calculation of SVD can be done more effectively on the data.
+# There are two built-in functions in R to perform PCA:
+# princomp() => it performs eigen decomposition on the covariance matrix of the data
+# prcomp() => it performs singular value decomposition (SVD) on the data matrix. (this one is preferred) 
 
+# Eigen calculation on a large covariance matrix can be time consuming. 
+# The calculation of SVD can be done more effectively on the data.
 
-# you will have your own list here
-symbols <- c("100287102", "653635", "102466751", "100302278")
-
-# use mapIds method to obtain Entrez IDs
-mapIds(org.Hs.eg.db, symbols, 'SYMBOL')
 
 
 
