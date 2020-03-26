@@ -41,7 +41,20 @@ Rscript downstream.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results
 USAGE: `Rscript changeAnno.R [counts.csv] [directory-for-output]`
 
 EXAMPLE:
+for mode_I
 ```
-Rscript changeAnno.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II
+Rscript changeAnno.R mode_I /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/single-end/processed/mode_I/counts_merged.csv /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/single-end/processed/mode_I/
+```
+and
+```
+Rscript changeAnno.R mode_I /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/paired-end/processed/mode_I/counts_merged.csv /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/paired-end/processed/mode_I/
+```
+for mode_II
+```
+Rscript changeAnno.R mode_II /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/
+```
+and
+```
+Rscript changeAnno.R mode_II /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/paired-end/processed/mode_II/all_counts_PE.csv /nobackup/ummz/analyses/run_IV_Feb20/5_featureCounts/paired-end/processed/mode_II/
 ```
 
