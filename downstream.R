@@ -9,9 +9,11 @@
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) BiocManager::install("org.Hs.eg.db"); library(org.Hs.eg.db)
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
+if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); library(limma)
 
-# INPUT (mode_I - many files | mode_II -> one file)
+# INPUT (mode_I - many files: counts_merged.csv & stats_merged.csv | mode_II -> one file: all_counts_SE.csv & all_stats_SE.csv)
 # /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I
 # /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II
 
@@ -24,29 +26,77 @@ if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); l
 
 #args <- commandArgs(trailingOnly = TRUE)
 
-args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II", 
+args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv",
+          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv",
           "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
 
-cat("Example of usage: \n Rscript downstream.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/report /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
+cat("Example of usage: \n Rscript downstream.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
 
-if (length(args)!=2) {
-  stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
+if (length(args)!=3) {
+  stop("3 arguments must be supplied: 
+       \n(1 - input) path to .csv file with count data, 
+       \n(2 - annotation) path to .csv annotation file 
+       \nand (3 - output) path where output files should be stored", call.=FALSE)
 }
 
 cat("Directories with data (IN): ")
 cat(args[1], sep="\n")
 
 cat("Directory for results (OUT): ")
-cat(args[2], sep="\n")
+cat(args[3], sep="\n")
 
-setwd(args[2])
+setwd(args[3])
 
-# select all zipped files and create an S4 object to store all results per sample
-files_both <- list.files(args[1], pattern = "fastqc.zip$", full.names = TRUE)
-fdl_both <- FastqcDataList(files_both)
+# load count data
+df <- read.csv(args[1], row.names = 1)
 
-# same as above but separately for R1 and R2
-files_R1 <- list.files(args[1], pattern = "_R1.fastqc.zip$", full.names = TRUE)
-fdl_R1 <- FastqcDataList(files_R1)
-files_R2 <- list.files(args[1], pattern = "_R2.fastqc.zip$", full.names = TRUE)
-fdl_R2 <- FastqcDataList(files_R2)
+# if running for mode_II then, the colnames need to be changed
+IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(df))
+IDs_final <- sub("X*", "", IDs)
+colnames(df) <- IDs_final
+
+# load annotation data
+anno <- read.csv(args[2], row.names = 1)
+
+# Visual loss at BL = reduced or lost vision (temporary or permanent) pre steroids or at BL assessment or AION or PION 
+# Jaw claudication at BL = present pre steroids or at baseline assessment visit
+# Ischaemic features at BL = jaw claudication, tongue claudication or visual loss (temporary or permanent) pre steroids or at baseline
+
+# for columns 3-9: 0 - NO | 1 - YES
+# for columns 5-6: 99 - not assessed
+# for column 9: 2 - unknown
+# for column 10: 1 - male | 2 - female
+
+# select only necessary columns from anno
+# [1] "Myriad" => not sure what it is ???                                    
+# [2] "Batch"                                      
+# [3] "visual_loss_at_BL"                  
+# [4] "visual_loss_ever"                  
+# [5] "AION_or_PION_BL"  
+# [6] "AION_or_PION_ever"
+# [7] "jaw_claudication_at_BL"            
+# [8] "ischaemic_features_at_BL"          
+# [9] "tongue_claudication"         
+# [10] "gender"                        
+# [11] "year_TAB_sample_was_collected"                    
+# [12] "number_of_days_on_steroids_at_TAB"                
+# [13] "number_of_days_between_TAB_and_BL_blood_sample" 
+
+#---------------------------------------------#
+### Principal Component Analysis (STANDARD) ###
+#---------------------------------------------#
+# perform scaling of data
+dat <- scale(t(dat), scale=F)
+
+#Therearetwobuilt-infunctionsinR toperformPCA:princompandprcomp.The former will perform eigen decomposition on the covariance matrix of the data, while the latter will perform singular value decomposition (SVD) on the data matrix. The latter is generally preferred. Eigen calculation on the covariance matrix (of size 22K by 22K in the original dimension of the data) can be time consuming. The calculation of SVD can be done more effectively on the data.
+
+
+# you will have your own list here
+symbols <- c("100287102", "653635", "102466751", "100302278")
+
+# use mapIds method to obtain Entrez IDs
+mapIds(org.Hs.eg.db, symbols, 'SYMBOL')
+
+
+
+
