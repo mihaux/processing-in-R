@@ -29,10 +29,19 @@ Rscript featureCounts_merge.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANA
 
 ## 4) downstream.R
 
-USAGE: `Rscript downstream.R [directory-to-results] [directory-for-output]`
+USAGE: `Rscript downstream.R [counts.csv] [annotation.csv] [directory-for-output]`
 
 EXAMPLE: 
 ```
-Rscript downstream.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end
+Rscript downstream.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end
+```
+
+## 5) changeAnno.R
+
+USAGE: `Rscript changeAnno.R [counts.csv] [directory-for-output]`
+
+EXAMPLE:
+```
+Rscript changeAnno.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II
 ```
 
