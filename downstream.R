@@ -54,7 +54,7 @@ IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(df))
 IDs_final <- sub("X*", "", IDs)
 colnames(df) <- IDs_final
 
-# load annotation data
+# load annotation (clinical) data
 anno <- read.csv(args[2], row.names = 1)
 
 if(FALSE){
