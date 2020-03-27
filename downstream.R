@@ -88,8 +88,18 @@ if(FALSE){
 ### Principal Component Analysis (STANDARD) ###
 #---------------------------------------------#
 
-# TODO: need to perfor some normalisation or log-transformation and also removing 0 or rows (genes) which contain mostly zeros
+# TODO: need to perform some normalisation or log-transformation and also removing 0 or rows (genes) which contain mostly zeros
 
+# wide    | un-stacked  | wide => is presented with each different data variable in a separate column.
+# narrow  | stacked     | tall => is presented with one column containing all the values and another column listing the context of the value
+# the narrow type is often easier to implement; addition of a new field does not require any changes to the structure of the table, however it can be harder for people to understand.
+
+# Wide format is where we have a single row for every data point with multiple columns to hold the values of various attributes. 
+# Long format is where, for each data point we have as many rows as the number of attributes and each row contains the value of a particular attribute for a given data point.
+
+# for gene expresson dataset:
+# narrow format: rows: genes | columns: samples
+# wide format: rows: samples | columns: genes
 
 # To perform (standard) principal component analysis (PCA), we use the wide format of the data. 
 # We need to substract the column means from each column. 
@@ -104,6 +114,78 @@ df_scaled <- scale(t(df), scale=F)
 
 # Eigen calculation on a large covariance matrix can be time consuming. 
 # The calculation of SVD can be done more effectively on the data.
+
+# perform singular value decomposition (SVD) on the data matrix
+res <- prcomp(df_scaled)
+
+# NOTE: by default, the function prcomp will center the columns of dat (we did it above for good practice). 
+
+# res$sdev      => contains the standard deviation of the data explained by each principal component (from the largest to the smallest). 
+# res$rotation  => a matrix of loadings, whose columns corre- spond to the loadings for each principal component (ordered from the first to the last, from the left). 
+# res$center    => a vector of column means of the data (which is subtracted from each column of the data before the calculation of principal component is done).
+# res$scale     =>
+# res$x         => contains a matrix of principal components (columns), sometimes called scores.
+
+# investigate the results of the PCA
+# make a scatter plot between the first and second loadings, and first and second PC’s
+par(mfrow=c(1,2), las=1)
+plot(res$rotation[,1], res$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings")
+plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components")
+
+# make another plot to see the variance explained by the different principal components
+par(mfrow=c(2,1), las=1)
+plot(res$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values")
+plot(cumsum(res$sdev^2)/sum(res$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values")
+
+# make another plot to see whether some PC’s are related to some of the clinical phenotypes
+# for example estrogen receptor (ER) status, we can make some plots such as the following.
+par(mfrow=c(1,2), las=1)
+plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="ER status", pch=19, cex=0.7, col=clinical[,8])
+legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
+plot(res$x[,3], res$x[,2], xlab = "PC3", ylab = "PC2", main="ER status", pch=19, cex=0.7, col=clinical[,8])
+legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
+
+#############################################
+#### Sparse Principal Component Analysis ####
+#############################################
+# There are several packages available to perform sparse PCA 
+# There is a function called arrayspc, however, we find that the results are not satisfactory (using default setting). 
+
+install.packages("elasticnet")
+library(elasticnet)
+
+# run the built-in function spca() to get sparse loadings for the first four components, (NOTE: it may take a while!)
+res2 <- spca(dat, K=4, rep(0.5,4))
+
+spca.score1 <- dat%*%res2$loadings[,1]
+spca.score2 <- dat%*%res2$loadings[,2]
+spca.score3 <- dat%*%res2$loadings[,3]
+
+# make similar plots as above to see the sparse loadings
+plot(res2$loadings[,1], type="h", ylab="Loadings", main="Loadings for PC1")
+
+# The proportion of variance explained for each principal component is contained in the component pev inside res2. 
+# Note that there are just four sparse loadings that we calculated. 
+# Had we calculated sparse loadings for a bigger number of loadings to calculate, then we can plot more points. 
+# However, to calculate more loadings, it would take a very (!) long time due to the calculation of percentage of variance explained.
+
+par(mfrow=c(2,1), las=1)
+plot(res2$pev, type="h", ylab="Proportion", main="Variance Explained")
+plot(cumsum(res2$pev), type="h", ylab = "Cummulative proportion", main="Variance explained", ylim=c(0,1))
+
+# make the same plot to see the scores (from sparse loadings).
+par(mfrow=c(1,2), las=1)
+plot(spca.score1, spca.score2, xlab="SPC1", ylab="SPC2",
+     main="ER Status (SPCA)", pch=19, cex=0.7, col=clinical[,8])
+legend(50,40, c("ER-", "ER+"), col=c(1,2), pch=19)
+plot(spca.score3, spca.score2, xlab="SPC3", ylab="SPC2",
+     main="ER Status (SPCA)", pch=19, cex=0.7, col=clinical[,8])
+legend(50,40, c("ER-", "ER+"), col=c(1,2), pch=19)
+
+# OBSERVATION:
+# the information on the scores are the same as the standard PCA. 
+# However, the sparse PCA allows investigation on which genes/probesets contribute to the construction of the scores/PC.
+
 
 
 
