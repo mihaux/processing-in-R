@@ -47,7 +47,7 @@ cat(args[3], sep="\n")
 setwd(args[3])
 
 # load count data
-df <- read.csv(args[1], row.names = 1)
+df <- read.csv(args[1], row.names = 1, header = TRUE)
 
 # if running for mode_II then, the colnames need to be changed
 IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(df))

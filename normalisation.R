@@ -19,9 +19,9 @@ if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); l
 
 #args <- commandArgs(trailingOnly = TRUE)
 
-args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv",
+args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/paired-end/processed/mode_II/all_counts_PE.csv",
           "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv",
-          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
+          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/paired-end")
 
 cat("Example of usage: \n Rscript normalisation.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
 
@@ -100,5 +100,5 @@ y_normalised$samples
 # cpm() => Compute counts per million (CPM) or reads per kilobase per million (RPKM).
 y_normalised_cpm <- cpm(y_normalised)
 
-
-
+# write normalised counts as .csv
+write.csv(y_normalised_cpm, "nomalised_cpm.csv")
