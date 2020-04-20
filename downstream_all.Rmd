@@ -1,0 +1,26 @@
+---
+title: "Downstream analyses (all)"
+author: "Michal"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+```{r cars}
+summary(cars)
+```
+
+
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+
