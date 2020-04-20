@@ -1,0 +1,10 @@
+TrimmomaticPE: Started with arguments:
+ -threads 4 -phred33 /nobackup/ummz/analyses/data/14927_R1.fastq.gz /nobackup/ummz/analyses/data/14927_R2.fastq.gz /nobackup/ummz/analyses/run_IV_Feb20/2_trimming/paired-end//processed_fastq/14927_R1_paired.fq /nobackup/ummz/analyses/run_IV_Feb20/2_trimming/paired-end//processed_fastq/14927_R1_unpaired.fq /nobackup/ummz/analyses/run_IV_Feb20/2_trimming/paired-end//processed_fastq/14927_R2_paired.fq /nobackup/ummz/analyses/run_IV_Feb20/2_trimming/paired-end//processed_fastq/14927_R2_unpaired.fq ILLUMINACLIP:/home/home02/ummz/tools/Trimmomatic-0.39/adapters/TruSeq3-PE-2.fa:2:30:10 LEADING:20 TRAILING:20 HEADCROP:10 SLIDINGWINDOW:4:15 MINLEN:36
+Using PrefixPair: 'TACACTCTTTCCCTACACGACGCTCTTCCGATCT' and 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
+Using Long Clipping Sequence: 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA'
+Using Long Clipping Sequence: 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
+Using Long Clipping Sequence: 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
+Using Long Clipping Sequence: 'TACACTCTTTCCCTACACGACGCTCTTCCGATCT'
+ILLUMINACLIP: Using 1 prefix pairs, 4 forward/reverse sequences, 0 forward only sequences, 0 reverse only sequences
+Input Read Pairs: 13900983 Both Surviving: 13262669 (95.41%) Forward Only Surviving: 435301 (3.13%) Reverse Only Surviving: 148854 (1.07%) Dropped: 54159 (0.39%)
+TrimmomaticPE: Completed successfully
