@@ -1,0 +1,26 @@
+---
+title: "RNA-Seq analysis - stats"
+author: "Michal"
+output:
+  html_document:
+    theme: cerulean
+  pdf_document: default
+---
+
+<style type="text/css">
+body, td{ font-size: 18px; }
+code.r{ font-size: 12px; }
+pre { font-size: 12px }
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment = NA)
+```
+
+
+```{r cars}
+summary(cars)
+```
+
+
