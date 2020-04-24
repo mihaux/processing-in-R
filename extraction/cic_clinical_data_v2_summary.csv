@@ -1,0 +1,42 @@
+﻿database code,Study ID,Centre,Study,RNA extraction,Library Prep,Myriad,Batch (Ian),"visual loss at BL (0=no, 1=yes)","visual loss ever  (0=no, 1=yes)","AION or PION BL  (0=no, 1=yes, 99=not assessed)","AION or PION ever  (0=no, 1=yes, 99=not assessed)","jaw claudication at BL  (0=no, 1=yes)","ischaemic features at BL  (0=no, 1=yes)","tongue claudication (0=no, 1=yes, 2=unk)",gender (1=male; 2=female),year TAB sample was collected,number of days on steroids at TAB,number of days between TAB and BL blood sample
+12331,Bio027,Leeds,UK GCA Consortium,yes,yes,yes,one,0,0,99,99,1,1,0,2,2012,9,10
+16082,EP-01-094,01,TABUL positive biopsy,yes,yes,no,two,0,0,99,99,0,0,0,1,2012,11,7
+14912,EP-01-098,01,TABUL positive biopsy,yes,yes,yes,one,1,1,99,99,0,1,0,2,2012,3,1
+16098,EP-01-116,01,TABUL positive biopsy,yes,yes,no,one,0,0,99,99,0,0,0,2,2013,4,2
+16109,EP-03-015,03,TABUL positive biopsy,yes,yes,no,one,0,0,99,99,1,1,0,2,2013,16,12
+16111,EP-03-018,03,TABUL positive biopsy,yes,yes,no,two,0,0,0,0,1,1,0,1,2013,16,15
+14925,EP-03-019,03,TABUL positive biopsy,yes,yes,yes,two,0,0,0,0,1,1,0,1,2013,7,6
+14926,EP-03-026,03,TABUL positive biopsy,yes,yes,yes,one,0,0,0,0,1,1,0,2,2013,6,3
+14927,EP-03-027,03,TABUL positive biopsy,yes,yes,yes,two,0,0,0,0,1,1,0,1,2013,7,6
+14920,EP-10-013,10,TABUL positive biopsy,yes,yes,yes,one,0,0,99,99,0,0,0,2,2012,6,0
+16125,EP-10-015,10,TABUL positive biopsy,yes,yes,no,one,1,1,99,99,1,1,0,2,2012,5,0
+14922,EP-10-018,10,TABUL positive biopsy,yes,yes,yes,two,1,1,99,1,1,1,0,1,2012,2,1
+14914,EP-12-003,12,TABUL positive biopsy,yes,yes,yes,one,0,0,0,0,0,0,0,2,2010,3,no sample
+16137,EP-12-012,12,TABUL positive biopsy,yes,yes,no,two,1,1,1,1,1,1,0,1,2010,3,1
+11037,EP-12-016,12,TABUL positive biopsy,yes,yes,yes,two,0,0,0,0,1,1,0,1,2011,3,1
+16142,EP-12-022,12,TABUL positive biopsy,yes,yes,no,two,1,1,1,1,1,1,0,1,2011,5,4
+12223,EP-12-024,12,TABUL positive biopsy,yes,yes,yes,one,1,1,0,0,1,1,0,2,2011,1,0
+14915,EP-12-038,12,TABUL positive biopsy,yes,yes,yes,one,1,1,99,99,1,1,0,2,2011,5,5
+14916,EP-12-040,12,TABUL positive biopsy,yes,yes,yes,two,0,0,99,99,1,1,0,1,2011,7,1
+16153,EP-12-047,12,TABUL positive biopsy,yes,yes,no,one,0,0,99,99,0,0,0,2,2012,7,2
+12389,EP-12-049,12,TABUL positive biopsy,yes,yes,no,one,0,0,99,99,1,1,0,2,2012,3,2
+12849,EP-12-050,12,TABUL positive biopsy,yes,yes,yes,one,0,0,99,99,1,1,0,2,2012,6,5
+16154,EP-12-051,12,TABUL positive biopsy,yes,yes,no,one,1,1,1,1,1,1,1,2,2012,6,4
+12855,EP-12-053,12,TABUL positive biopsy,yes,yes,yes,two,0,0,99,99,0,0,0,1,2012,6,6
+12388,EP-12-059,12,TABUL positive biopsy,yes,yes,no,one,1,1,99,99,1,1,0,2,2012,7,6
+12330,Bio023,Leeds,UK GCA Consortium,yes,yes,yes,one,0,0,99,99,0,0,0,2,2012,7,7
+14455,Bio067,Leeds,UK GCA Consortium,yes,yes,yes,one,0,0,99,99,1,1,2,2,2015,8,9
+12954,EP-12-086,12,TABUL positive biopsy,yes,yes,yes,two,1,1,1,1,0,1,0,1,2012,1,-1
+16167,EP-12-087,12,TABUL positive biopsy,yes,yes,no,two,1,1,99,99,0,1,0,1,2012,3,2
+14058,EP-12-089,12,TABUL positive biopsy,yes,yes,yes,two,0,0,0,0,0,0,0,1,2012,3,3
+12898,EP-12-093,12,TABUL positive biopsy,yes,yes,yes,one,1,1,99,99,1,1,0,2,2013,7,6
+14919,EP-12-102,12,TABUL positive biopsy,yes,yes,yes,two,0,0,0,0,1,1,0,1,2013,not started steroids,0
+14931,EP-15-005,15,TABUL positive biopsy,yes,yes,yes,one,0,0,99,99,1,1,1,2,2013,6,4
+14930,EP-18-002,18,TABUL positive biopsy,yes,yes,yes,one,0,0,99,99,1,1,1,2,2012,4,4
+16187,EP-21-001,21,TABUL positive biopsy,yes,yes,no,one,1,1,1,1,0,1,0,2,2012,4,0
+16648,EP-29-002,29,TABUL positive biopsy,yes,yes,no,two,1,1,0,0,0,1,1,1,2013,3,1
+16649,EP-29-005,29,TABUL positive biopsy,yes,yes,no,one,1,1,99,99,1,1,0,1,2013,7,6
+14929,EP-34-004,34,TABUL compatable with GCA and another biopsy,yes,yes,yes,one,1,1,99,99,0,1,0,2,2013,4,1
+11026,GCA210,Leeds,UK GCA Consortium,yes,yes,yes,one,0,0,99,99,0,0,0,2,2011,4,5
+11028,GCA309,Leeds,UK GCA Consortium,yes,yes,yes,one,0,0,99,99,0,0,0,2,2011,8,5
+8546,GCA35,Leeds,UK GCA Consortium,yes,yes,yes,one,1,1,99,99,0,1,1,2,2006,7,2
