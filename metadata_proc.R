@@ -27,42 +27,6 @@ cat(args[2], sep="\n")
 
 setwd(args[2])
 
-# TODO:
-# add HS (highest documented score) for each row of the resulting table in 'Section.number' column 
-# modify column names 12, 13, 14, 15 and 25 (see below)
-# if the score for GCA.present is zero then put a 0 in every column
-# ATTENTION: there is one exception which is 12331 – this should have 0 in GCA present and 1 in the PALI column – please retain data from section 3
-# 16648 is the one with no scores. 
-# There are two entries for 8546 and 14914 and possibly others.
-# sort on database number 
-
-# COLUMN NAMES
-# [1] "Database.number"                                                                                                             
-# [2] "Section.number"                                                                                                  
-# [3] "GCA.present."                                                                                                
-# [4] "Any.granulomatous.infiltrate."                                                                               
-# [5] "Granulomatous.infiltrate.in.adventitia."                                                                     
-# [6] "Granulomatous.infiltrate.in.media."                                                                          
-# [7] "Granulomatous.infiltrate.in.intima."                                                                         
-# [8] "Any.lymphocytic.infiltrate."                                                                                 
-# [9] "X"                                                                                                           
-# [10] "Lymphocytic.infiltrate.in.media."                                                                            
-# [11] "Lymphocytic.infiltrate.in.intima."                                                                           
-# [12] "Barcelona.score."                       => DROP: ..0..normal..1..adventitial..2..adventitial.invasive..3..concentric.bilayer..4..panarteritis."
-# [13] "Adventitia.pattern."                    => DROP: ..0..normal..1..focal..2..multifocal..3..diffuse."                                         
-# [14] "Media.pattern."                         => DROP: ..0..normal..1..focal..2..multifocal..3..diffuse."                                              
-# [15] "Intima.pattern."                        => DROP: ..0..normal..1..focal..2..multifocal..3..diffuse."                                             
-# [16] "Giant.cells."                                                                                                
-# [17] "Aggregates."                                                                                                 
-# [18] "Infiltrate.around.vasa.vasorum."                                                                             
-# [19] "PALI."                                                                                                       
-# [20] "Media.destruction."                                                                                          
-# [21] "Neoangiogenesis."                                                                                            
-# [22] "Hyperplasia."                                                                                                
-# [23] "Fibrosis."                                                                                                   
-# [24] "Oedema."                                                                                                     
-# [25] "Occlusion.grade."                       => DROP: ..0..none..1...50...2..50.75...3..75.100...4..complete."  
-
 # load slide scores table
 df <- read.csv(args[1], header = TRUE)
 
@@ -76,40 +40,6 @@ colnames(df)[25] <- "Occlusion.grade."
 
 # read IDsas vector
 IDs <- scan('sample_IDs.txt', character(), quote = "")
-
-# there are some "Database.number" that are incorrect
-# TODO: check if they are included in you cohort: 
-# 14714, 14767, 14883, 14933, 14581, 14582, 14583, 14584, 14585, 14586, 14587, 14588, 14708, 14709, 14H15502
-
-# 176 => [1] 14714  7-9
-# 179 => [1] 14714  4-6
-# 182 => [1] 14714 1-3
-# 184 => [1] 14767 7-9
-# 186 - 188 => [1] 14767 4-6 
-#                  14767 1-3 
-#                  14883 7-9
-# 190 - 192 => [1] 14883 4-6 
-#                  14883 1-3 
-#                  14933 7-9
-# 195 - 212 => [1] 14933 4-6 
-#                  14933 1-3 
-#                  14581 1-3 
-#                  14582 1-3 
-#                  14583 1-3 
-#                  14582 1-3 
-#                  14583 1-3 
-#                  14584 1-3 
-#                  14585 1-3
-#                  14586 1-3 
-#                  14583 1-3 
-#                  14584 1-3 
-#                  14585 1-3 
-#                  14586 1-3 
-#                  14587 1-3 
-#                  14588 1-3 
-#                  14708 1-3 
-#                  14709 1-3
-# 378 => [1] 14H15502
 
 to_be_checked <- c(14714, 14767, 14883, 14933, 14581, 14582, 14583, 14584, 14585, 14586, 14587, 14588, 14708, 14709)
 additional <- "14H15502" # => Wrong tissue

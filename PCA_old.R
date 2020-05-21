@@ -1,32 +1,14 @@
-# this script that to perform several analyses on read counts data (output from featureCounts)
-
-# Summary of results to be generated:
-# (1) removeBatchEffect() [edgeR package]
-# (2) normalisation (trimmd mean of M method) [edgeR package]
-# (3) hierarchical clustering
-# (4) PCA
-# (5) 
+# this script performs PCA analysis on read counts data (output from featureCounts)
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
 if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); library(limma)
 
-# INPUT (mode_I - many files: counts_merged.csv & stats_merged.csv | mode_II -> one file: all_counts_SE.csv & all_stats_SE.csv)
-# /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I
-# /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II
-
-# /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/paired-end/processed/mode_I
-# /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/paired-end/processed/mode_II
-
-# OUTPUT
-# /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end
-# /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/paired-end
-
 #args <- commandArgs(trailingOnly = TRUE)
 
-args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv",
-          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv",
+args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/paired-end/normalised_cpm.csv",
+          "/Users/ummz/Documents/OneDrive - University of Leeds/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv",
           "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
 
 cat("Example of usage: \n Rscript downstream.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
@@ -57,49 +39,8 @@ colnames(df) <- IDs_final
 # load annotation (clinical) data
 anno <- read.csv(args[2], row.names = 1)
 
-if(FALSE){
-  # Visual loss at BL = reduced or lost vision (temporary or permanent) pre steroids or at BL assessment or AION or PION 
-  # Jaw claudication at BL = present pre steroids or at baseline assessment visit
-  # Ischaemic features at BL = jaw claudication, tongue claudication or visual loss (temporary or permanent) pre steroids or at baseline
-  
-  # for columns 3-9: 0 - NO | 1 - YES
-  # for columns 5-6: 99 - not assessed
-  # for column 9: 2 - unknown
-  # for column 10: 1 - male | 2 - female
-  
-  # select only necessary columns from anno
-  # [1] "Myriad" => not sure what it is ???                                    
-  # [2] "Batch"                                      
-  # [3] "visual_loss_at_BL"                  
-  # [4] "visual_loss_ever"                  
-  # [5] "AION_or_PION_BL"  
-  # [6] "AION_or_PION_ever"
-  # [7] "jaw_claudication_at_BL"            
-  # [8] "ischaemic_features_at_BL"          
-  # [9] "tongue_claudication"         
-  # [10] "gender"                        
-  # [11] "year_TAB_sample_was_collected"                    
-  # [12] "number_of_days_on_steroids_at_TAB"                
-  # [13] "number_of_days_between_TAB_and_BL_blood_sample" 
-  
-}
-
-#---------------------------------------------#
-### Principal Component Analysis (STANDARD) ###
-#---------------------------------------------#
-
 # TODO: need to perform some normalisation or log-transformation and also removing 0 or rows (genes) which contain mostly zeros
-
-# wide    | un-stacked  | wide => is presented with each different data variable in a separate column.
-# narrow  | stacked     | tall => is presented with one column containing all the values and another column listing the context of the value
-# the narrow type is often easier to implement; addition of a new field does not require any changes to the structure of the table, however it can be harder for people to understand.
-
-# Wide format is where we have a single row for every data point with multiple columns to hold the values of various attributes. 
-# Long format is where, for each data point we have as many rows as the number of attributes and each row contains the value of a particular attribute for a given data point.
-
-# for gene expresson dataset:
-# narrow format: rows: genes | columns: samples
-# wide format: rows: samples | columns: genes
+# NOTE: the data used is normalised
 
 # To perform (standard) principal component analysis (PCA), we use the wide format of the data. 
 # We need to substract the column means from each column. 
@@ -116,7 +57,7 @@ df_scaled <- scale(t(df), scale=F)
 # The calculation of SVD can be done more effectively on the data.
 
 # perform singular value decomposition (SVD) on the data matrix
-res <- prcomp(df_scaled)
+res <- prcomp(df)
 
 # NOTE: by default, the function prcomp will center the columns of dat (we did it above for good practice). 
 
@@ -128,23 +69,27 @@ res <- prcomp(df_scaled)
 
 # investigate the results of the PCA
 # make a scatter plot between the first and second loadings, and first and second PC’s
-par(mfrow=c(1,2), las=1)
-plot(res$rotation[,1], res$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings")
-plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components")
+#par(mfrow=c(1,2), las=1)
+#plot(res$rotation[,1], res$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings")
+#plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components")
 
 # make another plot to see the variance explained by the different principal components
-par(mfrow=c(2,1), las=1)
-plot(res$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values")
-plot(cumsum(res$sdev^2)/sum(res$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values")
+#par(mfrow=c(2,1), las=1)
+#plot(res$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values")
+#plot(cumsum(res$sdev^2)/sum(res$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values")
 
-# make another plot to see whether some PC’s are related to some of the clinical phenotypes
-# for example estrogen receptor (ER) status, we can make some plots such as the following.
-par(mfrow=c(1,2), las=1)
-plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="ER status", pch=19, cex=0.7, col=clinical[,8])
-legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
-plot(res$x[,3], res$x[,2], xlab = "PC3", ylab = "PC2", main="ER status", pch=19, cex=0.7, col=clinical[,8])
+# plot PC’s to see how they are related to some of the clinical phenotypes
+
+#par(mfrow=c(1,2), las=1)
+
+plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Gender", col=anno[,15])
 legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
 
+plot(res$x[,3], res$x[,2], xlab = "PC3", ylab = "PC2", main="Gender", pch=19, cex=0.7, col=clinical[,8])
+legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
+
+
+if(FALSE){
 #############################################
 #### Sparse Principal Component Analysis ####
 #############################################
@@ -186,7 +131,7 @@ legend(50,40, c("ER-", "ER+"), col=c(1,2), pch=19)
 # the information on the scores are the same as the standard PCA. 
 # However, the sparse PCA allows investigation on which genes/probesets contribute to the construction of the scores/PC.
 
-
+}
 
 
 

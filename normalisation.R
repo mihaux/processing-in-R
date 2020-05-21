@@ -101,4 +101,4 @@ y_normalised$samples
 y_normalised_cpm <- cpm(y_normalised)
 
 # write normalised counts as .csv
-write.csv(y_normalised_cpm, "nomalised_cpm.csv")
+write.csv(y_normalised_cpm, "normalised_cpm.csv")
