@@ -32,9 +32,15 @@ for f in $data_dir/*metrics.txt*; do echo $f >> $out_dir/out_filenames.txt ; don
 # drop ‘_Aligned.sortedByCoord.out.bam.metrics.txt’
 cat $out_dir/out_filenames.txt | rev | cut -d'/' -f 1 | rev | cut -d "_" -f-2 > $out_dir/out_filenames_FINAL.txt
 
+# add 'ID' heading
+echo 'ID'$'\n'"$(cat $out_dir/out_filenames_FINAL.txt)" > $out_dir/out_filenames_FINAL_BIS.txt
+
+# combine in excel: out_metrics.txt and out_filenames_FINAL_BIS.txt
+paste -d , $out_dir/out_filenames_FINAL_BIS.txt $out_dir/out_metrics.txt > $out_dir/final.csv
+
 # remove unnecessary files
-rm out_filenames.txt out_l2.txt out_l7.txt out_l8.txt
+cd $out_dir
+rm out_filenames.txt out_l2.txt out_l7.txt out_l8.txt out_filenames_FINAL.txt out_filenames_FINAL_BIS.txt out_metrics.txt
 
 echo FINISHED !
-echo Now, combine in excel: out_metrics.txt and out_filenames_FINAL.txt
 
