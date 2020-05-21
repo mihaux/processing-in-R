@@ -36,7 +36,7 @@ cat $out_dir/out_filenames.txt | rev | cut -d'/' -f 1 | rev | cut -d "_" -f-2 > 
 echo 'ID'$'\n'"$(cat $out_dir/out_filenames_FINAL.txt)" > $out_dir/out_filenames_FINAL_BIS.txt
 
 # combine in excel: out_metrics.txt and out_filenames_FINAL_BIS.txt
-paste -d , $out_dir/out_filenames_FINAL_BIS.txt $out_dir/out_metrics.txt > $out_dir/final.csv
+paste -d "\t" $out_dir/out_filenames_FINAL_BIS.txt $out_dir/out_metrics.txt > $out_dir/final.csv
 
 # remove unnecessary files
 cd $out_dir
