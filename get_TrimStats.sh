@@ -17,7 +17,7 @@ data_dir=$1
 out_dir=$2
 
 # get rows of interest
-for f in $data_dir/*trim*; do head -n 9 $f | tail -n 1 >> $out_dir/out_l9.txt ; done
+for f in $data_dir/*trim.sh.e*; do head -n 9 $f | tail -n 1 >> $out_dir/out_l9.txt ; done
 
 # save only one line
 head -n 1 $out_dir/out_l9.txt > $out_dir/out_l9_bis.txt 
@@ -41,7 +41,7 @@ paste -d "," $out_dir/col_1.txt $out_dir/col_2.txt $out_dir/col_3.txt $out_dir/c
 cat $out_dir/line_1.txt $out_dir/cols_all.txt > $out_dir/out_stats.txt  # => output
 
 # extract line 2 to get file names
-for f in $data_dir/*trim*; do head -n 2 $f | tail -n 1 >> $out_dir/out_l2.txt ; done
+for f in $data_dir/*trim.sh.e*; do head -n 2 $f | tail -n 1 >> $out_dir/out_l2.txt ; done
 
 cat $out_dir/out_l2.txt | cut -d" " -f 5 | rev | cut -d"/" -f 1 | rev | cut -d"." -f 1 > $out_dir/out_filenames.txt
 
