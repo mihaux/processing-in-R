@@ -3,6 +3,7 @@
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) BiocManager::install("org.Hs.eg.db"); library(org.Hs.eg.db)
+if (!requireNamespace("clusterProfiler", quietly = TRUE)) BiocManager::install("clusterProfiler"); library(clusterProfiler)
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -62,6 +63,22 @@ if(args[1] == "mode_I"){
 } else {
 	stop("ERROR: running mode parameter must be defined as either mode_I or mode_II", call.= FALSE)
 }
+
+############################################################
+########## using Bitr - Biological Id TRanslator #########
+# Usage bitr(geneID, fromType, toType, OrgDb, drop = TRUE)
+############################################################
+# Ian's data
+dir_2 <- "/Users/ummz/Documents/OneDrive - University of Leeds/comparison_with_Ian_results/featureCounts_IAN/"
+
+# read count tables
+counts_2_dups <- read.csv(paste(dir_2, "gene_counts_withDups.csv", sep = ""), row.names = 1)
+counts_2_nodups <- read.csv(paste(dir_2, "gene_counts_withoutDups.csv", sep = ""), row.names = 1)
+
+
+
+
+
 
 
 

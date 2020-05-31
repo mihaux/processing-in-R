@@ -16,8 +16,8 @@ library(gridExtra)
 #          "/Users/ummz/Documents/OneDrive - University of Leeds/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv",
 #          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/paired-end")
 
-args <- c("/Users/ummz/Documents/OneDrive - University of Leeds/comparison_with_Ian_results/rerun_3/featCounts/all_counts_dups.csv",
-          "/Users/ummz/Documents/OneDrive - University of Leeds/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv",
+args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/paired-end/processed/mode_II/all_counts_PE.csv",
+          "/Users/ummz/Documents/OneDrive - University of Leeds/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv",
           "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/paired-end")
 
 
@@ -181,7 +181,7 @@ pl3 <- pl_bis+
 
 # write each plot as jpg file
 setwd(paste(args[3], "/batch_effect", sep = ""))
-jpeg('PCA_batch_effect_PE_no_labels.jpg'); pl1; dev.off()
+jpeg('PCA_batch_effect_PE_no_labels_NEW.jpg'); pl1; dev.off()
 jpeg('PCA_batch_effect_PE_labels.jpg'); pl2; dev.off()
 jpeg('PCA_batch_effect_PE_outliers_labelled.jpg'); pl3; dev.off()
 
