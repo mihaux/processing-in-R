@@ -1,5 +1,7 @@
 # script to perform Mann-Whitney U test
 
+# NOTE: if there are confounders, then you would need to rather use something like logistic regression, not Mann-Whitney test
+
 # http://www.sthda.com/english/wiki/unpaired-two-samples-wilcoxon-test-in-r
 
 # there was a link sent by Mark with some sources about this test
@@ -14,7 +16,7 @@
 # look at genes one-by-one to see ; 
 # the comparison groups are: visual loss vs no visual loss
 
-# exposure: visual loss
+# exposure: visual loss (=> the most powerful outcome (focus on it in your analysis, don't need to look at the other outcomes)
 # outcome: GCA presence
 
 # WHAT TO TEST: statistical test between 2 groups: visual loss vs no visual loss,
