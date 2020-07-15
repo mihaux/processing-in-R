@@ -1,6 +1,10 @@
 # processing-in-R
 
-## 1) FastQC_report.R
+LAST UPDATED: 2020-07-09
+
+# TODO: no need to place usage and example here; move them to each script (at the beginning) and here just brief description about each script
+
+## 1) FastQC_report.R => 
 
 USAGE: `Rscript FastQC_report.R [directory-to-results] [directory-for-output]`
 
@@ -27,13 +31,13 @@ EXAMPLE:
 Rscript featureCounts_merge.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_I
 ```
 
-## 4) downstream.R
+## 4) PCA.R (or PCR_old.R or PCA_another.R)
 
-USAGE: `Rscript downstream.R [counts.csv] [annotation.csv] [directory-for-output]`
+USAGE: `Rscript PCA.R [counts.csv] [annotation.csv] [directory-for-output]`
 
 EXAMPLE: 
 ```
-Rscript downstream.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end
+Rscript PCA.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end
 ```
 
 ## 5) changeAnno.R

@@ -1,4 +1,4 @@
-# FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
+#FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
 
 # TODO: add if else statement to automate it for Read1 only or paired-end
 
