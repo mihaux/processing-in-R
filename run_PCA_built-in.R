@@ -9,6 +9,7 @@ if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); l
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
 # main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
 
+# run for all_counts_dups_run1_SE_mod.csv
 #################################################### INPUT data description #################################################### 
 # there are 2 runs (run_1 & run_2), 2 running modes (SE & PE) within each and 2 options ("dups" & "nodups") within each
 # /run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv      # /run_1/featCounts_SE/all_counts_nodups_run1_SE_mod.csv
@@ -17,8 +18,6 @@ main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on m
 # /run_2/featCounts_SE/all_counts_dups_run2_SE_mod.csv      # /run_2/featCounts_SE/all_counts_nodups_run2_SE_mod.csv
 # /run_2/featCounts_PE/all_counts_dups_run2_PE_mod.csv      # /run_2/featCounts_PE/all_counts_nodups_run2_PE_mod.csv
 ################################################################################################################################
-
-# run for all_counts_dups_run1_SE_mod.csv
 
 #args <- commandArgs(trailingOnly = TRUE)
 
