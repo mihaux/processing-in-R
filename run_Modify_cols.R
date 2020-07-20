@@ -32,4 +32,4 @@ colnames(df) <- IDs_final
 # write modified count tables as .csv with "_mod" added in the new file name
 write.csv(df, str_replace(args[1], ".csv", "_mod.csv"))
 
-cat("Finished! Created:", str_replace(args[1], ".csv", "_mod.csv"))
+cat("Finished!", "\nCreated:", str_replace(args[1], ".csv", "_mod.csv"))
