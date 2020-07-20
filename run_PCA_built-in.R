@@ -13,14 +13,14 @@ main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on m
 
 #################################################### INPUT data description #################################################### 
 # there are 2 runs (run_1 & run_2), 2 running modes (SE & PE) within each and 2 options ("dups" & "nodups") within each
-# /run_1/featCounts_SE/all_counts_dups_run1_SE.csv      # /run_1/featCounts_SE/all_counts_nodups_run1_SE.csv
-# /run_1/featCounts_PE/all_counts_dups_run1_PE.csv      # /run_1/featCounts_PE/all_counts_nodups_run1_PE.csv
+# /run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv      # /run_1/featCounts_SE/all_counts_nodups_run1_SE_mod.csv
+# /run_1/featCounts_PE/all_counts_dups_run1_PE_mod.csv      # /run_1/featCounts_PE/all_counts_nodups_run1_PE_mod.csv
 
-# /run_2/featCounts_SE/all_counts_dups_run2_SE.csv      # /run_2/featCounts_SE/all_counts_nodups_run2_SE.csv
-# /run_2/featCounts_PE/all_counts_dups_run2_PE.csv      # /run_2/featCounts_PE/all_counts_nodups_run2_PE.csv
+# /run_2/featCounts_SE/all_counts_dups_run2_SE_mod.csv      # /run_2/featCounts_SE/all_counts_nodups_run2_SE_mod.csv
+# /run_2/featCounts_PE/all_counts_dups_run2_PE_mod.csv      # /run_2/featCounts_PE/all_counts_nodups_run2_PE_mod.csv
 ################################################################################################################################
 
-# run for all_counts_dups_run1_SE.csv
+# run for all_counts_dups_run1_SE_mod.csv
 
 if (length(args)!=3) {
   stop("3 arguments must be supplied: 
@@ -29,10 +29,11 @@ if (length(args)!=3) {
        \n(3 - output) path where output files should be stored", call.=FALSE)
 }
 
-cat("Example of usage: \nRscript run_PCA_built-in.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1")              
+# Example of usage: 
+# Rscript run_PCA_built-in.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1             
 
-args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_PE.csv"),
-          paste0(main_dir, "/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv"),
+args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
+          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv"),
           paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1"))
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
@@ -40,51 +41,14 @@ cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 setwd(args[3])
 
 # load count data
-df <- read.csv(args[1], row.names = 1, header = TRUE) # data.frame with counts only | cols=
+df <- read.csv(args[1], row.names = 1, header = TRUE) # data.frame with counts only | 28278    41
 
-################################################################################################################################
-if(FALSE){
-# run for all datasets
-dir1 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv"
-dir2 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_nodups_run1_SE.csv"
-
-dir3 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_PE/all_counts_dups_run1_PE.csv"
-dir4 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_PE/all_counts_nodups_run1_PE.csv"
-
-dir5 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_2/featCounts_SE/all_counts_dups_run2_SE.csv"
-dir6 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_2/featCounts_SE/all_counts_nodups_run2_SE.csv"
-
-dir7 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_2/featCounts_PE/all_counts_dups_run2_PE.csv"
-dir8 <- "/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_2/featCounts_PE/all_counts_nodups_run2_PE.csv"
-list_dir <- list(dir1, dir2, dir3, dir4, dir5, dir6, dir7, dir8)
-
-for (i in list_dir) {
-  print(i)
-  df <- read.csv(i, row.names = 1, header = TRUE)
-  print(df[1:5,1:5])
-  #print(dim(df))
-  #print(head(colnames(df)))
-  #print(head(rownames(df)))
-  cat("############################")
-}
-}
-################################################################################################################################
-
-df <- read.csv(dir1, row.names = 1, header = TRUE)
-# head(rowsnames(df))
-# head(rownames(df))
-cat("############################")
-
-# if running for mode_II then, the colnames need to be changed
-IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(df))
-IDs_final <- sub("X*", "", IDs)
-colnames(df) <- IDs_final
-
-# load annotation (clinical) data
+# load annotation (clinical data)
 anno <- read.csv(args[2], row.names = 1)
 
+# NOTE: use the wide format in PCA, i.e. samples on rows and genes on columns (transpose if necessary)
+
 # TODO: need to perform some normalisation or log-transformation and also removing 0 or rows (genes) which contain mostly zeros
-# NOTE: the data used is normalised
 
 # To perform (standard) principal component analysis (PCA), we use the wide format of the data. 
 # We need to substract the column means from each column. 
