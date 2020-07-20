@@ -5,8 +5,6 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
 if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); library(limma)
 
-#args <- commandArgs(trailingOnly = TRUE)
-
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
 # main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
@@ -21,6 +19,8 @@ main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on m
 ################################################################################################################################
 
 # run for all_counts_dups_run1_SE_mod.csv
+
+#args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=3) {
   stop("3 arguments must be supplied: 
