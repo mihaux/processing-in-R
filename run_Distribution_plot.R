@@ -11,7 +11,12 @@ if (length(args)!=1) {
 }
 
 # Example of usage: 
-# Rscript run_Modify_cols.R /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv
+# Rscript run_Distribution_plot.R
+
+
+
+
+/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv
 
 # INPUT examples
 # /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv
