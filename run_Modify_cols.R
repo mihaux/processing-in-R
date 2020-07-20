@@ -6,7 +6,7 @@ if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); l
 
 if (length(args)!=1) {
   stop("1 argument must be supplied: 
-       \n(1 - input) path to .csv file with count data , call.=FALSE)
+       \n(1 - input) path to .csv file with count data", call.=FALSE)
 }
 
 cat("Example of usage: \nRscript run_Modify_cols.R /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv")
