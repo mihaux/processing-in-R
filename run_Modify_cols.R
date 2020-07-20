@@ -4,6 +4,8 @@
 # install (if necessary) and load package
 if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
 
+args <- commandArgs(trailingOnly = TRUE)
+
 if (length(args)!=1) {
   stop("1 argument must be supplied: 
        \n(1 - input) path to .csv file with count data", call.=FALSE)
@@ -18,8 +20,6 @@ if (length(args)!=1) {
 
 # OUTPUT examples
 # /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv
-
-args <- commandArgs(trailingOnly = TRUE)
 
 # load count data
 df <- read.csv(args[1], row.names = 1, header = TRUE)
