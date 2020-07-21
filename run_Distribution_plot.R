@@ -4,17 +4,17 @@
 # interesting source: http://www.nathalievialaneix.eu/doc/pdf/tutorial-rnaseq.pdf
 
 # install (if necessary) and load package
-if (!requireNamespace("DESeq", quietly = TRUE)) BiocManager::install("DESeq"); library(DESeq)
-if (!requireNamespace("tidyverse", quietly = TRUE)) install.packages("tidyverse"); library(tidyverse)
-if (!requireNamespace("gridExtra", quietly = TRUE)) install.packages("gridExtra"); library(gridExtra)
-if (!requireNamespace("grid", quietly = TRUE)) install.packages("grid"); library(grid)
-library(ggplot2)
+if (!requireNamespace("DESeq", quietly = TRUE)) BiocManager::install("DESeq"); suppressMessages(library(DESeq))
+if (!requireNamespace("tidyverse", quietly = TRUE)) install.packages("tidyverse"); suppressMessages(library(tidyverse))
+if (!requireNamespace("gridExtra", quietly = TRUE)) install.packages("gridExtra"); suppressMessages(library(gridExtra))
+if (!requireNamespace("grid", quietly = TRUE)) install.packages("grid"); suppressMessages(library(grid))
+library(ggplot2); library(lattice)
 
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
 # main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
 
-#args <- commandArgs(trailingOnly = TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=2) {
   stop("2 argument must be supplied: 
@@ -32,8 +32,8 @@ if (length(args)!=2) {
 # OUTPUT examples
 # /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/downstream/rerun_FINAL_July20/run_1/distribution_plot/[TO BE COMPLETED]
 
-args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
-          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/distribution_plots/"))
+#args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
+#          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/distribution_plots/"))
 
 # extract info about data from input filename
 info_1 <- tail(unlist(str_split(args[1], "/")), n=1)
@@ -77,26 +77,39 @@ grid.arrange(histo_list[[37]], histo_list[[38]], histo_list[[39]], histo_list[[4
                             gp=gpar(fontsize=20,font=3)))
 dev.off()
 
-# Possible ways of transforming RNA-seq data:
+# switch from data.frame to matrix and to integer
+counts_mat <- as.matrix(df)                     # class: matrix | type: double
+storage.mode(counts_mat) <- "integer"           # class: matrix | type: integer
+
+# raw counts
+data.raw <- counts_mat
+
 # logarithm transformation => it will get rid of some extreme values. 
+data.log2 <- log2(data.raw + 1)
+
 # variance-stabilizing transformation (VST), implemented in the DESeq package (Anders and Huber, 2010)
+data.vst <- vst(data.raw)
 
+# visualise 4 genes: 1st, 2nd, 14th and 18th; can't just take random genes as there are many with counts around 0
 
-#vst <- function(countdata){
-#  condition <- factor(rep("Tumour", ncol(countdata)))
-#  countdata <- newCountDataSet(countdata,condition )
-#  countdata <- estimateSizeFactors( countdata )
-#  cdsBlind <- DESeq::estimateDispersions( countdata, method="blind")
-#  vstdata <- varianceStabilizingTransformation( cdsBlind )
-#  return(exprs(vstdata))
-#}
- 
-#load("rnaseq_lusc_example_SeqQC.Rda")
-#data.log2 <- log2(data+1)
-#data.vst <- vst(data)
+pdf(file=paste0(args[2], "density_plots_", info_3, ".pdf"), width=12, height=12)
+par(mfrow=c(3,4))
+plot(density(as.numeric(data.raw[1,])), main=paste0("raw - ", rownames(data.raw)[1]), cex.main=2,)
+plot(density(as.numeric(data.raw[2,])), main=paste0("raw - ", rownames(data.raw)[2]), cex.main=2, ylab="")
+plot(density(as.numeric(data.raw[14,])), main=paste0("raw - ", rownames(data.raw)[14]), cex.main=2, ylab="")
+plot(density(as.numeric(data.raw[18,])), main=paste0("raw - ", rownames(data.raw)[18]), cex.main=2, ylab="")
 
-# write plots
-#write.csv(df, str_replace(args[1], ".csv", "_mod.csv"))
+plot(density(as.numeric(data.log2[1,])), main=paste0("log2 - ", rownames(data.raw)[1]), cex.main=2)
+plot(density(as.numeric(data.log2[2,])), main=paste0("log2 - ", rownames(data.raw)[2]), cex.main=2, ylab="")
+plot(density(as.numeric(data.log2[14,])), main=paste0("log2 - ", rownames(data.raw)[14]), cex.main=2, ylab="")
+plot(density(as.numeric(data.log2[18,])), main=paste0("log2 - ", rownames(data.raw)[18]), cex.main=2, ylab="")
+
+plot(density(as.numeric(data.vst[1,])), main=paste0("VST - ", rownames(data.raw)[1]), cex.main=2)
+plot(density(as.numeric(data.vst[2,])), main=paste0("VST - ", rownames(data.raw)[2]), cex.main=2, ylab="")
+plot(density(as.numeric(data.vst[14,])), main=paste0("VST - ", rownames(data.raw)[14]), cex.main=2, ylab="")
+plot(density(as.numeric(data.vst[18,])), main=paste0("VST - ", rownames(data.raw)[18]), cex.main=2, ylab="")
+dev.off()
+
 
 #cat("Finished!", "\nCreated:", str_replace(args[1], ".csv", "_mod.csv"))
 
