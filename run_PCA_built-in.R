@@ -2,8 +2,9 @@
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
-if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); library(limma)
+if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); suppressMessages(library(edgeR))
+if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); suppressMessages(library(limma))
+if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
 
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
@@ -45,8 +46,19 @@ anno <- read.csv(args[2], row.names = 1)
 # We need to substract the column means from each column. 
 # Effectively, the gene expressions are set to have zero mean for each probeset.
 
-# perform scaling of data
+# perform scaling of data (and transpose)
 df_scaled <- scale(t(df), scale=F)
+
+# perform log-transformation
+df_log2 <- log2(df + 1)
+
+# perform some kind of normalisation (e.g. VST from DESeq2 package)
+# switch from data.frame to matrix and to integer
+counts_mat <- as.matrix(df)                       # class: matrix | type: double
+storage.mode(counts_mat) <- "integer"             # class: matrix | type: integer
+
+df_vst <- vst(counts_mat)
+
 
 # There are two built-in functions in R to perform PCA:
 # princomp() => it performs eigen decomposition on the covariance matrix of the data
@@ -56,7 +68,9 @@ df_scaled <- scale(t(df), scale=F)
 # The calculation of SVD can be done more effectively on the data.
 
 # perform singular value decomposition (SVD) on the data matrix
-res <- prcomp(df)
+res_scaled <- prcomp(df_scaled)
+res_log2 <- prcomp(t(df_log2))
+res_vst <- prcomp(t(df_vst))
 
 # NOTE: by default, the function prcomp will center the columns of dat (we did it above for good practice). 
 
@@ -68,18 +82,20 @@ res <- prcomp(df)
 
 # investigate the results of the PCA
 # make a scatter plot between the first and second loadings, and first and second PC’s
-#par(mfrow=c(1,2), las=1)
-#plot(res$rotation[,1], res$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings")
-#plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components")
+par(mfrow=c(1,2), las=1)
+plot(res$rotation[,1], res$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings")
+plot(res_scaled$x[,1], res_scaled$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components (scaled data)")
+plot(res_log2$x[,1], res_log2$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components (log2 transformed data)")
+plot(res_vst$x[,1], res_vst$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components (vst normalised data)")
 
 # make another plot to see the variance explained by the different principal components
-#par(mfrow=c(2,1), las=1)
-#plot(res$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values")
-#plot(cumsum(res$sdev^2)/sum(res$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values")
+par(mfrow=c(2,1), las=1)
+plot(res$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values")
+plot(cumsum(res$sdev^2)/sum(res$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values")
 
-# plot PC’s to see how they are related to some of the clinical phenotypes
+# plot PC’s to see how they are related to some of the clinical phenotypes (male and female)
 
-#par(mfrow=c(1,2), las=1)
+par(mfrow=c(1,2), las=1)
 
 plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Gender", col=anno[,15])
 legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
