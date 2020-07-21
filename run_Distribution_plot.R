@@ -110,6 +110,8 @@ plot(density(as.numeric(data.vst[14,])), main=paste0("VST - ", rownames(data.raw
 plot(density(as.numeric(data.vst[18,])), main=paste0("VST - ", rownames(data.raw)[18]), cex.main=2, ylab="")
 dev.off()
 
+cat("Finished!")
+cat("Created:", paste0(args[2], "raw_counts_histo_", info_3, ".pdf"))
+cat("Created:", paste0(args[2], "density_plots_", info_3, ".pdf"))
 
-#cat("Finished!", "\nCreated:", str_replace(args[1], ".csv", "_mod.csv"))
 
