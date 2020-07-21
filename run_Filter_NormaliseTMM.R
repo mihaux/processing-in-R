@@ -94,3 +94,7 @@ info_3 <- paste(info_2[1], info_2[2], info_2[3], sep = "_")
 write.csv(y_filtered$counts, file=paste0(args[3], "filtered_counts_", info_3, ".csv"))
 write.csv(y_normalised_cpm, file=paste0(args[3], "normalised_cpm_counts_", info_3, ".csv"))
 
+cat("Finished!")
+cat("Created:", paste0(args[3], "filtered_counts_", info_3, ".csv"))
+cat("Created:", paste0(args[3], "normalised_cpm_counts_", info_3, ".csv"))
+
