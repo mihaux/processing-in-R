@@ -5,6 +5,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); suppressMessages(library(edgeR))
 if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); suppressMessages(library(limma))
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
+if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
 
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
@@ -25,8 +26,8 @@ if (length(args)!=3) {
 # Rscript run_PCA_built-in.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1             
 
 args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
-          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary.csv"),
-          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1"))
+          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/"))
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[3], sep="\n")
@@ -37,6 +38,13 @@ df <- read.csv(args[1], row.names = 1, header = TRUE) # data.frame with counts o
 
 # load annotation (clinical data)
 anno <- read.csv(args[2], row.names = 1)
+
+# add "ID_" to all rownames
+rownames(anno) <- paste0("ID_", rownames(anno))
+
+# replace 1 - male and 2 - female in "gender..1.male..2.female." column
+#anno[,15] <- str_replace(anno[,15], "1", "male")
+#anno[,15] <- str_replace(anno[,15], "2", "female")
 
 # NOTE: use the wide format in PCA, i.e. samples on rows and genes on columns (transpose if necessary)
 
@@ -59,7 +67,6 @@ storage.mode(counts_mat) <- "integer"             # class: matrix | type: intege
 
 df_vst <- vst(counts_mat)
 
-
 # There are two built-in functions in R to perform PCA:
 # princomp() => it performs eigen decomposition on the covariance matrix of the data
 # prcomp() => it performs singular value decomposition (SVD) on the data matrix. (this one is preferred) 
@@ -80,34 +87,74 @@ res_vst <- prcomp(t(df_vst))
 # res$scale     =>
 # res$x         => contains a matrix of principal components (columns), sometimes called scores.
 
+# extract info about data from input filename
+info_1 <- tail(unlist(str_split(args[1], "/")), n=1)
+info_2 <- unlist(str_split(info_1, "_"))[3:5]
+info_3 <- paste(info_2[1], info_2[2], info_2[3], sep = "_")
+
 # investigate the results of the PCA
 # make a scatter plot between the first and second loadings, and first and second PC’s
-par(mfrow=c(1,2), las=1)
-plot(res$rotation[,1], res$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings")
+pdf(file=paste0(args[3], "scatter_plots_", info_3, ".pdf"), width=12, height=12)
+par(mfrow=c(3,2), las=1)
+plot(res_scaled$rotation[,1], res_scaled$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings (scaled data)")
 plot(res_scaled$x[,1], res_scaled$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components (scaled data)")
+
+plot(res_log2$rotation[,1], res_log2$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings (log2 transformed data)")
 plot(res_log2$x[,1], res_log2$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components (log2 transformed data)")
+
+plot(res_vst$rotation[,1], res_vst$rotation[,2], xlab = "Loading 1", ylab = "Loading 2", main="Loadings (vst normalised data)")
 plot(res_vst$x[,1], res_vst$x[,2], xlab = "PC1", ylab = "PC2", main="Principal components (vst normalised data)")
+dev.off()
+
+cat("Created:", paste0(args[3], "scatter_plots_", info_3, ".pdf"))
 
 # make another plot to see the variance explained by the different principal components
-par(mfrow=c(2,1), las=1)
-plot(res$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values")
-plot(cumsum(res$sdev^2)/sum(res$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values")
+pdf(file=paste0(args[3], "variance_plots_", info_3, ".pdf"), width=12, height=12)
+par(mfrow=c(3,2), las=1)
+plot(res_scaled$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values (scaled data)")
+plot(cumsum(res_scaled$sdev^2)/sum(res_scaled$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values (scaled data)")
+
+plot(res_log2$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values (log2 transformed data)")
+plot(cumsum(res_log2$sdev^2)/sum(res_log2$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values (log2 transformed data)")
+
+plot(res_vst$sdev^2, type="h", xlab = "", ylab = "", main="Eigen values (vst normalised data)")
+plot(cumsum(res_vst$sdev^2)/sum(res_vst$sdev^2), xlab = "Number of PC", ylab = "Cummulative proportion", main="Cummulative eigen values (vst normalised data)")
+dev.off()
+
+cat("Created:", paste0(args[3], "variance_plots_", info_3, ".pdf"))
 
 # plot PC’s to see how they are related to some of the clinical phenotypes (male and female)
+# pdf(file = "test.pdf", width=4, height=4)
+pdf(file=paste0(args[3], "by_gender_plots_", info_3, ".pdf"), width=12, height=12)
+par(mfrow=c(3,2), las=1)
+plot(res_scaled$x[,1], res_scaled$x[,2], xlab = "PC1", ylab = "PC2", main="Labeled by gender (scaled data)", pch=16, cex=1.2, col=anno[,15])
+plot(res_scaled$x[,3], res_scaled$x[,2], xlab = "PC3", ylab = "PC2", main="Labeled by gender (scaled data)", pch=16, cex=1.2, col=anno[,15])
 
-par(mfrow=c(1,2), las=1)
+plot(res_log2$x[,1], res_log2$x[,2], xlab = "PC1", ylab = "PC2", main="Labeled by gender (log2 transformed data)", pch=16, cex=1.2, col=anno[,15])
+plot(res_log2$x[,3], res_log2$x[,2], xlab = "PC3", ylab = "PC2", main="Labeled by gender (log2 transformed data)", pch=16, cex=1.2, col=anno[,15])
 
-plot(res$x[,1], res$x[,2], xlab = "PC1", ylab = "PC2", main="Gender", col=anno[,15])
-legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
+plot(res_vst$x[,1], res_vst$x[,2], xlab = "PC1", ylab = "PC2", main="Labeled by gender (vst normalised data)", pch=16, cex=1.2, col=anno[,15])
+plot(res_vst$x[,3], res_vst$x[,2], xlab = "PC3", ylab = "PC2", main="Labeled by gender (vst normalised data)", pch=16, cex=1.2, col=anno[,15])
+dev.off()
 
-plot(res$x[,3], res$x[,2], xlab = "PC3", ylab = "PC2", main="Gender", pch=19, cex=0.7, col=clinical[,8])
-legend(50,40, c("ER-", "ER+"), col = c(1,2), pch=19)
+cat("Created:", paste0(args[3], "by_gender_plots_", info_3, ".pdf"))
+
+# plot legend only as separate plot
+pdf(file = "legend.pdf", width=3, height=3)
+par(mfrow=c(1,1), las=1)
+plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
+legend("center", c("Male", "Female"), pch=16, pt.cex=2, cex=1.5, col = c(1,2))
+mtext("Gender", cex=2)
+dev.off()
 
 
-if(FALSE){
-#############################################
+cat("Created:", paste0(args[3], "by_legend_plot.pdf"))
+
+cat("Finished!")
+
 #### Sparse Principal Component Analysis ####
-#############################################
+if(FALSE){
+
 # There are several packages available to perform sparse PCA 
 # There is a function called arrayspc, however, we find that the results are not satisfactory (using default setting). 
 
