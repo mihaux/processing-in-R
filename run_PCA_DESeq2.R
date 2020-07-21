@@ -5,14 +5,11 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
 
+# create a shortcut for the OneDrive directory where all files are stored
+main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
+# main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
 
 #args <- commandArgs(trailingOnly = TRUE)
-
-args <- c("/cloud/project/normalised_cpm.csv",
-          "/cloud/project/cic_clinical_data_v2_summary.csv",
-          "/cloud/project/outputs")
-
-cat("Example of usage: \n Rscript downstream.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/5_featureCounts/single-end/processed/mode_II/all_counts_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/CiC_Clinical_data_FINAL.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV_Feb20/6_downstream_analysis/single-end")
 
 if (length(args)!=3) {
   stop("3 arguments must be supplied: 
@@ -21,34 +18,29 @@ if (length(args)!=3) {
        \nand (3 - output) path where output files should be stored", call.=FALSE)
 }
 
-cat("Directories with data (IN): ")
-cat(args[1], sep="\n")
+args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
+          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2"))
 
-cat("Directory for results (OUT): ")
-cat(args[3], sep="\n")
+# Example of usage: 
+# Rscript run_PCA_DESeq2.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2            
 
+cat("Directories with data (IN): "); cat(args[1], sep="\n")
+cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 setwd(args[3])
 
 # load count data
-df <- read.csv(args[1], row.names = 1, header = TRUE)
-
-# if running for mode_II then, the colnames need to be changed
-IDs <- sub(".Aligned.sortedByCoord.out.bam*", "", colnames(df))
-IDs_final <- sub("X*", "", IDs)
-colnames(df) <- IDs_final
+df <- read.csv(args[1], row.names = 1, header = TRUE)     # data.frame with counts only
 
 # load annotation (clinical) data
 anno <- read.csv(args[2], row.names = 1)
 
-#Create working folder and get data
-dir.create(paste(workFolder, "std_DeSeq2", sep="/"), recursive = TRUE)
-setwd(paste(workFolder, "std_DeSeq2", sep="/"))
-counts <- read.delim(rSubReadFile)
+# switch from data.frame to matrix and to integer
+counts_mat <- as.matrix(df)                       # class: matrix | type: double  | dim: 28278    41
+storage.mode(counts_mat) <- "integer"             # class: matrix | type: integer
 
-#subset data and filter it for empty rows
-counts <- as.matrix(counts[, columnsFromDataFile])
-storage.mode(counts)<-"integer"
-counts <-counts[rowSums(counts>3)>2,]
+# filter 
+counts_mat_filtered <- counts_mat[rowSums(counts_mat > 3) > 2,]   # | dim: 21577    41  (6701 genes filtered out)
 
 #Create experiment design model
 sampleConditions=conditionGroupsForeachBamFile
