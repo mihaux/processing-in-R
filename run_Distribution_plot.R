@@ -4,7 +4,7 @@
 # interesting source: http://www.nathalievialaneix.eu/doc/pdf/tutorial-rnaseq.pdf
 
 # install (if necessary) and load package
-if (!requireNamespace("DESeq", quietly = TRUE)) BiocManager::install("DESeq"); suppressMessages(library(DESeq))
+if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
 if (!requireNamespace("tidyverse", quietly = TRUE)) install.packages("tidyverse"); suppressMessages(library(tidyverse))
 if (!requireNamespace("gridExtra", quietly = TRUE)) install.packages("gridExtra"); suppressMessages(library(gridExtra))
 if (!requireNamespace("grid", quietly = TRUE)) install.packages("grid"); suppressMessages(library(grid))
@@ -78,8 +78,8 @@ grid.arrange(histo_list[[37]], histo_list[[38]], histo_list[[39]], histo_list[[4
 dev.off()
 
 # switch from data.frame to matrix and to integer
-counts_mat <- as.matrix(df)                     # class: matrix | type: double
-storage.mode(counts_mat) <- "integer"           # class: matrix | type: integer
+counts_mat <- as.matrix(df)                       # class: matrix | type: double
+storage.mode(counts_mat) <- "integer"             # class: matrix | type: integer
 
 # raw counts
 data.raw <- counts_mat
@@ -91,7 +91,6 @@ data.log2 <- log2(data.raw + 1)
 data.vst <- vst(data.raw)
 
 # visualise 4 genes: 1st, 2nd, 14th and 18th; can't just take random genes as there are many with counts around 0
-
 pdf(file=paste0(args[2], "density_plots_", info_3, ".pdf"), width=12, height=12)
 par(mfrow=c(3,4))
 plot(density(as.numeric(data.raw[1,])), main=paste0("raw - ", rownames(data.raw)[1]), cex.main=2,)
@@ -113,5 +112,4 @@ dev.off()
 cat("Finished!")
 cat("Created:", paste0(args[2], "raw_counts_histo_", info_3, ".pdf"))
 cat("Created:", paste0(args[2], "density_plots_", info_3, ".pdf"))
-
 
