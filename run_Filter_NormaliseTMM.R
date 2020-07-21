@@ -5,6 +5,7 @@
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
+if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
 #if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); library(limma)
 
 # create a shortcut for the OneDrive directory where all files are stored
