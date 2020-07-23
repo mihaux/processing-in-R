@@ -11,7 +11,7 @@ if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); l
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
 # main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
 
-args <- commandArgs(trailingOnly = TRUE)
+#args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=3) {
   stop("3 arguments must be supplied: 
@@ -23,9 +23,15 @@ if (length(args)!=3) {
 # Example of usage: 
 # Rscript run_PCA_built-in.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1/PCA_plots             
 
-# args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
+#args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
 #          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
 #          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/PCA_plots"))
+
+# /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_nodups_rr5.csv
+
+args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5.csv"),
+          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/PCA_plots/"))
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[3], sep="\n")
@@ -39,6 +45,9 @@ anno <- read.csv(args[2], row.names = 1)
 
 # add "ID_" to all rownames
 rownames(anno) <- paste0("ID_", rownames(anno))
+
+# make df colnames matchin the annotation rownames
+colnames(df) <- str_replace(colnames(df), "X", "ID_")
 
 # replace 1 - male and 2 - female in "gender..1.male..2.female." column
 #anno[,15] <- str_replace(anno[,15], "1", "male")

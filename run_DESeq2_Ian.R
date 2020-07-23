@@ -16,19 +16,24 @@ main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on m
 
 if (length(args)!=3) {
   stop("3 arguments must be supplied: 
-       \n(1 - input) path to .csv file with count data, 
-       \n(2 - annotation) path to .csv annotation file 
+       \n(1 - input) path to _x.csv file with count data, 
+       \n(2 - annotation) path to _x.csv annotation file 
        \nand (3 - output) path where output files should be stored", call.=FALSE)
 }
 
-args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
-          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2/"))
+#args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod_x.csv"),
+#          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+#          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2/"))
 
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 
+args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5.csv"),
+          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/DESeq2/"))
+
+
 # Example of usage: 
-# Rscript run_PCA_DESeq2.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2            
+# Rscript run_DESeq2.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_x.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED_x.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2/            
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[3], sep="\n")
@@ -39,6 +44,12 @@ df <- read.csv(args[1], row.names = 1, header = TRUE)     # data.frame with coun
 
 # load annotation (clinical) data
 anno <- read.csv(args[2], row.names = 1)
+
+# add "ID_" to all rownames
+rownames(anno) <- paste0("ID_", rownames(anno))
+
+# make df colnames matchin the annotation rownames
+colnames(df) <- str_replace(colnames(df), "X", "ID_")
 
 # switch from data.frame to matrix and to integer
 counts_mat <- as.matrix(df)                       # class: matrix | type: double  | dim: 28278    41
@@ -93,32 +104,28 @@ info_2 <- unlist(str_split(info_1, "_"))[3:5]
 info_3 <- paste(info_2[1], info_2[2], info_2[3], sep = "_")
 
 # write results names, summary and data
-write.csv(resultsNames(dds), file=paste0(args[3], "Analysis_names_", info_3, ".csv"))
-sink(file=paste0(args[3], "Res_summary_", info_3, ".txt")); summary(res); sink()
-save(dds, file=paste0(args[3], "DESeqDataSet_", info_3, ".Rda"))
-write.csv(ras.data.frame(res), file=paste0(args[3], "standard_analysis_Deseq2_", info_3, ".csv"))
+write.csv(resultsNames(dds), file=paste0(args[3], "Analysis_names_", info_3, "_x.csv"))
+sink(file=paste0(args[3], "Res_summary_", info_3, "_x.txt")); summary(res); sink()
+save(dds, file=paste0(args[3], "DESeqDataSet_", info_3, "_x.Rda"))
+write.csv(as.data.frame(res), file=paste0(args[3], "standard_analysis_Deseq2_", info_3, "_x.csv"))
 
-dev.copy(png, paste0(args[3], "standard_analysis_MA_Plot_Deseq2_", info_3, ".png"))
 plotMA(res, ylim=c(-2,2), main='STD')
+dev.copy(png, paste0(args[3], "standard_analysis_MA_Plot_Deseq2_", info_3, "_x.png"))
 dev.off()
 
 # get only significant results (with pvalue < 0.01)
 resSig <- subset(res, padj < 0.01)
 
-write.csv(as.data.frame(resSig), file=paste0(args[3], "standard_analysis_sig_Deseq2_", info_3, ".csv"))
-save(res, file=paste0(args[3], "DESeq_standard_Result_dataset_", info_3, ".Rda"))
-save(resSig, file=paste0(args[3], "DESeq_standard_Result_dataset_sig_", info_3, ".Rda"))
+write.csv(as.data.frame(resSig), file=paste0(args[3], "standard_analysis_sig_Deseq2_", info_3, "_x.csv"))
+save(res, file=paste0(args[3], "DESeq_standard_Result_dataset_", info_3, "_x.Rda"))
+save(resSig, file=paste0(args[3], "DESeq_standard_Result_dataset_sig_", info_3, "_x.Rda"))
 
 # normalise counts
 nt <- normTransform(dds)
-save(nt, file=paste0(args[3], "Normalised_DESeq_normal_transformation_dataset_", info_3, ".Rda"))
+save(nt, file=paste0(args[3], "Normalised_DESeq_normal_transformation_dataset_", info_3, "_x.Rda"))
 
-dev.copy(png, paste0(args[3], "Normalised_DESeq_normal_transformation_mean_Sd_Plot_", info_3, ".png"))
 meanSdPlot(assay(nt))
+dev.copy(png, paste0(args[3], "Normalised_DESeq_normal_transformation_mean_Sd_Plot_", info_3, "_x.png"))
 dev.off()
 
 head(assay(nt), 10)
-
-
-
-
