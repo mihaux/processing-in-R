@@ -10,7 +10,7 @@ if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); s
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
 if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
 if (!requireNamespace("qqman", quietly = TRUE)) install.packages("qqman"); library(qqman)
-
+library(dplyr)
 
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
@@ -213,6 +213,10 @@ legend(50,40, c("ER-", "ER+"), col=c(1,2), pch=19)
 # PCA LOADINGS INVESTIGATION
 
 # check loading in terms of their location 
+
+# load positions list
+all_positions <- read.csv("/Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/PCA_plots/all_positions_unique.csv")
+
 # => how many on which chromosome and 
 cat(length(which(transcript_chr$chromosomes == "chr1")), "on chr1")
 
@@ -270,26 +274,62 @@ my_snp <- as.character(as.vector(transcript_chr$IDs[-unnecessary_indices]))
 my_chr <- as.vector(transcript_chr$chromosomes[-unnecessary_indices])
 my_p1 <- as.vector(res_scaled$rotation[,1])
   
+# load pc1_ordered 
+pc1_ordered <- read.csv(paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/PCA_plots/pc1_ordered.csv"))
+
+to_be_matched <- data.frame(cbind(rownames(res_scaled$rotation), res_scaled$rotation[,1]))
+
+# length(rownames(res_scaled$rotation)) => 58608 
+# length(all_positions$x)               => 58586 (22 IDs fewer)
+
+#diff_to_remove <- setdiff(rownames(res_scaled$rotation), all_positions$x)
+#to_be_removed <- which(rownames(res_scaled$rotation) %in% diff_to_remove)
+#my_p1_trimmed <- res_scaled$rotation[-to_be_removed,]
+#write.csv(my_p1_trimmed, file = "pc1.csv")
+
+# add ranking column to my_p1_trimmed[,1]
+
+
+
+
+
+# length(rownames(my_p1_trimmed))   => 58586 OK
+
+
+
 my_chr_fin_1 <- gsub("chr", "", my_chr)
 
-# need to replace "chrM"  "chrX" and "chrY" with numerics: 100, 101, 102
-my_chr_fin_2 <- gsub("M", "100", my_chr_fin_1)
-my_chr_fin_3 <- gsub("X", "101", my_chr_fin_2)
-my_chr_fin_4 <- gsub("Y", "102", my_chr_fin_3)
+# need to replace "chrM"  "chrX" and "chrY" with numerics: 23, 24, 25
+my_chr_fin_2 <- gsub("M", "23", my_chr_fin_1)
+my_chr_fin_3 <- gsub("X", "24", my_chr_fin_2)
+my_chr_fin_4 <- gsub("Y", "25", my_chr_fin_3)
 my_chr_final <- as.numeric(as.vector(my_chr_fin_4))
 
 
-mygwas_list <- list(as.character(my_snp), as.vector(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices]))
+mygwas_list <- list(my_snp, as.integer(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices])*(-1))
+names(mygwas_list) <- c("SNP", "CHR", "BP", "P")
+
+mygwas_list_bis <- list(as.character(as.vector(pc1_ordered$ID)), as.integer(my_chr_final), as.integer(my_bp), pc1_ordered$PC1*(-1))
 
 #mygwas <- cbind(as.character(my_snp), as.vector(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices]))
-mygwas_fin <- as.data.frame(mygwas)
+mygwas_fin <- as.data.frame(mygwas_list)
+mygwas_fin_bis <- as.data.frame(mygwas_list_bis)
 
 names(mygwas_fin) <- c("SNP", "CHR", "BP", "P")
-  
+names(mygwas_fin_bis) <- c("SNP", "CHR", "BP", "P")
 
-manhattan(mygwas_fin, chr="CHR", bp="BP", snp="SNP", p="P" )
+manhattan(mygwas_fin, chr="CHR", bp="BP", snp="SNP", p="P", logp=FALSE, ylim = c(-0.05, 0.45))
+
+manhattan(mygwas_fin_bis, chr="CHR", bp="BP", snp="SNP", p="P", logp=FALSE, ylim = c(-0.05, 0.45))
+
+manhattan(mygwas_fin_bis, main = "Manhattan Plot - PC1", ylim = c(-0.05, 0.45), cex = 0.6, logp=FALSE,
+          cex.axis = 0.9, col = c("blue4", "orange3"), suggestiveline = F, genomewideline = F, 
+          chrlabs = c(1:22, "M", "X", "Y"))
 
 # => what exactly they are 
+
+
+
 
 
 
