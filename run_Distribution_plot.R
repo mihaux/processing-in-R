@@ -3,6 +3,9 @@
 
 # interesting source: http://www.nathalievialaneix.eu/doc/pdf/tutorial-rnaseq.pdf
 
+# source about the 3 transformation methods used in the script
+# https://seqqc.wordpress.com/2015/02/16/should-you-transform-rna-seq-data-log-vst-voom/
+
 # install (if necessary) and load package
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
 if (!requireNamespace("tidyverse", quietly = TRUE)) install.packages("tidyverse"); suppressMessages(library(tidyverse))

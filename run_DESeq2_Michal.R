@@ -1,12 +1,17 @@
-# this script performs DESeq2 analysis on read counts data (output from featureCounts) [adapted mostly from Ian's script]
-# use 'run_PCA_DESeq2.R' for running PCA analysis afterwards
+# this script performs DESeq2 analysis on read counts data (output from featureCounts)
+# created based DESeq2 vignette on https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+# DESEq2 manual: https://bioconductor.org/packages/release/bioc/manuals/DESeq2/man/DESeq2.pdf 
+
+# The package DESeq2 provides methods to test for differential expression by use of negative binomial generalized linear models; 
+# the estimates of dispersion and logarithmic fold changes incorporate data-driven prior distributions.
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
-if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
-if (!requireNamespace("vsn", quietly = TRUE)) install.packages("vsn"); library(vsn)
+
+# if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
+# if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
+# if (!requireNamespace("vsn", quietly = TRUE)) install.packages("vsn"); library(vsn)
 
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
@@ -27,9 +32,9 @@ if (length(args)!=3) {
 
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 
-args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5.csv"),
-          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/DESeq2/"))
+#args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5.csv"),
+#          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+ #         paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/DESeq2/"))
 
 
 # Example of usage: 
@@ -39,8 +44,18 @@ cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 setwd(args[3])
 
-# load count data
+# load count data (cols -> samples | rows -> genes)
 df <- read.csv(args[1], row.names = 1, header = TRUE)     # data.frame with counts only
+
+# NOTICE: It is important to never provide counts that were pre-normalized for sequencing depth/library size, 
+# as the statistical model is most powerful when applied to un-normalized counts, 
+# and is designed to account for library size differences internally.
+
+# NOTICE: the counts table must be in the form of a matrix of integer values
+# switch from data.frame to matrix and to integer
+counts_mat <- as.matrix(df)                       # class: matrix | type: double  | dim: 28278    41
+storage.mode(counts_mat) <- "integer"             # class: matrix | type: integer
+
 
 # load annotation (clinical) data
 anno <- read.csv(args[2], row.names = 1)
@@ -51,81 +66,5 @@ rownames(anno) <- paste0("ID_", rownames(anno))
 # make df colnames matchin the annotation rownames
 colnames(df) <- str_replace(colnames(df), "X", "ID_")
 
-# switch from data.frame to matrix and to integer
-counts_mat <- as.matrix(df)                       # class: matrix | type: double  | dim: 28278    41
-storage.mode(counts_mat) <- "integer"             # class: matrix | type: integer
 
-# filter out genes that ... (adapted from Ian, not sure how it is filtered)
-counts_mat_filtered <- counts_mat[rowSums(counts_mat > 3) > 2,]   # | dim: 21577    41  (6701 genes filtered out)
 
-cat(dim(counts_mat)[1] - dim(counts_mat_filtered)[1], "genes were dropped. Filtered counts matrix dimension:", dim(counts_mat_filtered)[1], "x", dim(counts_mat_filtered)[2])
-
-# define conditions for experiment ( gender as conditions, replace 1-"male" and 2-"female")
-sampleConditions_temp <- str_replace(anno[,15], "1", "male")    
-sampleConditions <- str_replace(sampleConditions_temp, "2", "female")
-
-# Sample set name
-conditionGroupsForDataFirstIsReference = c("male","female")
-
-# Create experiment design model
-sampleTable <- data.frame(sample=colnames(df), condition=sampleConditions)
-
-# Set row names in model design to sample names
-rownames(sampleTable) <- sampleTable$sample
-
-# Check all is well with names
-all(rownames(sampleTable) %in% colnames(counts_mat_filtered))
-
-# put data from counts file in to correct format and set factors and levels
-dds <- DESeqDataSetFromMatrix(countData=counts_mat_filtered, colData=sampleTable, design=~condition)
-
-colData(dds)$condition <- factor(colData(dds)$condition, levels=conditionGroupsForDataFirstIsReference)
-
-# set up the dds object
-featureData <- data.frame(gene=rownames(counts_mat_filtered))
-head(featureData)
-
-mcols(dds)<- DataFrame(mcols(dds), featureData)
-mcols(dds)
-
-#does the work of the differential expression analysis
-dds <- DESeq(dds)
-
-resultsNames(dds)
-
-# make a number of result objects based on their different analysis methods
-res <- results(dds)
-
-summary(res)
-
-### SAVE RESULTS
-info_1 <- tail(unlist(str_split(args[1], "/")), n=1)
-info_2 <- unlist(str_split(info_1, "_"))[3:5]
-info_3 <- paste(info_2[1], info_2[2], info_2[3], sep = "_")
-
-# write results names, summary and data
-write.csv(resultsNames(dds), file=paste0(args[3], "Analysis_names_", info_3, "_x.csv"))
-sink(file=paste0(args[3], "Res_summary_", info_3, "_x.txt")); summary(res); sink()
-save(dds, file=paste0(args[3], "DESeqDataSet_", info_3, "_x.Rda"))
-write.csv(as.data.frame(res), file=paste0(args[3], "standard_analysis_Deseq2_", info_3, "_x.csv"))
-
-plotMA(res, ylim=c(-2,2), main='STD')
-dev.copy(png, paste0(args[3], "standard_analysis_MA_Plot_Deseq2_", info_3, "_x.png"))
-dev.off()
-
-# get only significant results (with pvalue < 0.01)
-resSig <- subset(res, padj < 0.01)
-
-write.csv(as.data.frame(resSig), file=paste0(args[3], "standard_analysis_sig_Deseq2_", info_3, "_x.csv"))
-save(res, file=paste0(args[3], "DESeq_standard_Result_dataset_", info_3, "_x.Rda"))
-save(resSig, file=paste0(args[3], "DESeq_standard_Result_dataset_sig_", info_3, "_x.Rda"))
-
-# normalise counts
-nt <- normTransform(dds)
-save(nt, file=paste0(args[3], "Normalised_DESeq_normal_transformation_dataset_", info_3, "_x.Rda"))
-
-meanSdPlot(assay(nt))
-dev.copy(png, paste0(args[3], "Normalised_DESeq_normal_transformation_mean_Sd_Plot_", info_3, "_x.png"))
-dev.off()
-
-head(assay(nt), 10)

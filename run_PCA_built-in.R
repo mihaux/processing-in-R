@@ -1,5 +1,8 @@
 # this script performs PCA analysis on read counts data (output from featureCounts)
 
+# tuto on datacamp
+# https://www.datacamp.com/community/tutorials/pca-analysis-r
+
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); suppressMessages(library(edgeR))
