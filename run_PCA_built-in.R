@@ -32,7 +32,7 @@ if (length(args)!=3) {
 
 # /Users/michal/Documents/OneDrive - University of Leeds/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_nodups_rr5.csv
 
-args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5.csv"),
+args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5_x.csv"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
           paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/PCA_plots/"))
 
@@ -92,7 +92,7 @@ res_vst <- prcomp(t(df_vst))
 # NOTE: by default, the function prcomp will center the columns of dat (we did it above for good practice). 
 
 # res$sdev      => contains the standard deviation of the data explained by each principal component (from the largest to the smallest). 
-# res$rotation  => a matrix of loadings, whose columns corre- spond to the loadings for each principal component (ordered from the first to the last, from the left). 
+# res$rotation  => a matrix of loadings, whose columns correspond to the loadings for each principal component (ordered from the first to the last, from the left). 
 # res$center    => a vector of column means of the data (which is subtracted from each column of the data before the calculation of principal component is done).
 # res$scale     =>
 # res$x         => contains a matrix of principal components (columns), sometimes called scores.

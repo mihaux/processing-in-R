@@ -17,7 +17,7 @@ library(ggplot2); library(lattice)
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
 # main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
 
-args <- commandArgs(trailingOnly = TRUE)
+#args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=2) {
   stop("2 argument must be supplied: 
@@ -38,13 +38,21 @@ if (length(args)!=2) {
 #args <- c(paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_mod.csv"),
 #          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/distribution_plots/"))
 
+args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5_x.csv"),
+          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/distribution_plots/"))
+
 # extract info about data from input filename
 info_1 <- tail(unlist(str_split(args[1], "/")), n=1)
-info_2 <- unlist(str_split(info_1, "_"))[3:5]
-info_3 <- paste(info_2[1], info_2[2], info_2[3], sep = "_")
+#info_2 <- unlist(str_split(info_1, "_"))[3:5]
+info_2 <- unlist(str_split(info_1, "_"))[3:4]
+#info_3 <- paste(info_2[1], info_2[2], info_2[3], sep = "_")
+info_3 <- paste(info_2[1], info_2[2], sep = "_")
 
 # load count data
 df <- read.csv(args[1], row.names = 1, header = TRUE)
+
+# make df colnames matchin the annotation rownames
+colnames(df) <- str_replace(colnames(df), "X", "ID_")
 
 # histogram of raw counts data per sample
 histo_list <- list()
