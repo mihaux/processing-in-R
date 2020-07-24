@@ -9,6 +9,8 @@ if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); s
 if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma"); suppressMessages(library(limma))
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
 if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
+if (!requireNamespace("qqman", quietly = TRUE)) install.packages("qqman"); library(qqman)
+
 
 # create a shortcut for the OneDrive directory where all files are stored
 main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
@@ -45,6 +47,9 @@ df <- read.csv(args[1], row.names = 1, header = TRUE) # data.frame with counts o
 
 # load annotation (clinical data)
 anno <- read.csv(args[2], row.names = 1)
+
+# load file with Transcripts by chromosome information
+transcript_chr <- read.csv(paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/table_TranscriptsByChromosome.csv"), header = TRUE, sep = ";", row.names = 1)
 
 # add "ID_" to all rownames
 rownames(anno) <- paste0("ID_", rownames(anno))
@@ -204,6 +209,87 @@ legend(50,40, c("ER-", "ER+"), col=c(1,2), pch=19)
 # However, the sparse PCA allows investigation on which genes/probesets contribute to the construction of the scores/PC.
 
 }
+
+# PCA LOADINGS INVESTIGATION
+
+# check loading in terms of their location 
+# => how many on which chromosome and 
+cat(length(which(transcript_chr$chromosomes == "chr1")), "on chr1")
+
+col1 <- c()
+col2 <- c()
+for (i in 1:length(unique(transcript_chr$chromosomes))) {
+  col1[i] <- as.character(unique(transcript_chr$chromosomes)[i])
+  col2[i] <- length(which(transcript_chr$chromosomes == unique(transcript_chr$chromosomes)[i]))
+}
+
+nb_loadings <- data.frame(cbind(col1, col2))
+rownames(nb_loadings) <- col1
+
+# remove unecessary elements:
+unnecessary_ele <- c("chr1_KI270713v1_random", "chr14_GL000194v1_random", "chr17_GL000205v2_random", 
+                     "chr22_KI270734v1_random", "chr4_GL000008v2_random", "chrUn_GL000195v1",
+                     "chrUn_GL000213v1", "chrUn_GL000218v1", "chrUn_GL000219v1", "chrUn_GL000224v1", 
+                     "chrUn_KI270741v1")
+
+nb_loadings_final <- nb_loadings[-which(rownames(nb_loadings) %in% unnecessary_ele),]
+
+unnecessary_indices <- which(transcript_chr$chromosomes %in% unnecessary_ele)
+
+
+# it's not in desired order, create a new one
+nb_loadings_new <- rbind(nb_loadings_final[1,], nb_loadings_final[12,],nb_loadings_final[16:22,], 
+      nb_loadings_final[2:11,], nb_loadings_final[13:15,], nb_loadings_final[23:25,])
+
+
+pdf(file=paste0(args[3], "PCA_loadings_per_chromosome.pdf"), width=12, height=12)
+barplot(as.numeric(as.vector(nb_loadings_new$col2)), main="Number of loadings per chromosome", 
+        xlab="Chromosomes", names.arg=nb_loadings_new$col1, las=2)
+dev.off()
+
+
+# => plot them in chromosome order (chr1, chr2, chr3 etc.) => Manhattan plot for PC1, PC2, PC3 and PC4
+
+# in my case: one plot per PC | make for PC1, PC2, PC3 and PC4
+# SNP => list with ID (NM_)       => [1] "character"
+# CHR => list with chromosomes    => [1] "integer"
+# BP  => generate separate list for each chromosome   => [1] "integer"
+# P   => PC1 loadnings            => [1] "numeric"
+
+# generate BP
+ranges <- as.numeric(as.vector(nb_loadings_new$col2))
+#[1] 5827 4008 3274 2189 2643 3025 2703 2040 2255 2822 3443 2924 1105 1858 2060 2359 3242  874 3705 1668
+#[21]  793 1258    2 2269  240
+my_bp <- c(seq(1,ranges[1]), seq(1,ranges[2]), seq(1,ranges[3]), seq(1,ranges[4]), seq(1,ranges[5]),
+           seq(1,ranges[6]), seq(1,ranges[7]), seq(1,ranges[8]), seq(1,ranges[9]), seq(1,ranges[10]),
+           seq(1,ranges[11]), seq(1,ranges[12]), seq(1,ranges[13]), seq(1,ranges[14]), seq(1,ranges[15]),
+           seq(1,ranges[16]), seq(1,ranges[17]), seq(1,ranges[18]), seq(1,ranges[19]), seq(1,ranges[20]),
+           seq(1,ranges[21]), seq(1,ranges[22]), seq(1,ranges[23]), seq(1,ranges[24]), seq(1,ranges[25]))
+
+my_snp <- as.character(as.vector(transcript_chr$IDs[-unnecessary_indices]))
+my_chr <- as.vector(transcript_chr$chromosomes[-unnecessary_indices])
+my_p1 <- as.vector(res_scaled$rotation[,1])
+  
+my_chr_fin_1 <- gsub("chr", "", my_chr)
+
+# need to replace "chrM"  "chrX" and "chrY" with numerics: 100, 101, 102
+my_chr_fin_2 <- gsub("M", "100", my_chr_fin_1)
+my_chr_fin_3 <- gsub("X", "101", my_chr_fin_2)
+my_chr_fin_4 <- gsub("Y", "102", my_chr_fin_3)
+my_chr_final <- as.numeric(as.vector(my_chr_fin_4))
+
+
+mygwas_list <- list(as.character(my_snp), as.vector(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices]))
+
+#mygwas <- cbind(as.character(my_snp), as.vector(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices]))
+mygwas_fin <- as.data.frame(mygwas)
+
+names(mygwas_fin) <- c("SNP", "CHR", "BP", "P")
+  
+
+manhattan(mygwas_fin, chr="CHR", bp="BP", snp="SNP", p="P" )
+
+# => what exactly they are 
 
 
 
