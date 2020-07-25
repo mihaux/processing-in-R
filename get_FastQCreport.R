@@ -1,6 +1,7 @@
-#FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
+# FastQC postprocessing script that allows to generate several plots and tables to summarize the FastQC results 
 
 # TODO: add if else statement to automate it for Read1 only or paired-end
+# TODO: figure out some way of name convention
 
 # Summary of results to be generated:
 # (1) plot with summary of all results for all QC metrics [sum_R1 & sum_R2]
@@ -18,44 +19,136 @@ if (!requireNamespace("pander", quietly = TRUE)) BiocManager::install("pander");
 if (!requireNamespace("xtable", quietly = TRUE)) BiocManager::install("xtable"); library(xtable)
 if (!requireNamespace("gridExtra", quietly = TRUE)) BiocManager::install("gridExtra"); require(gridExtra)
 
-args <- commandArgs(trailingOnly = TRUE)
+# get working directory to recognise the machine
+w_dir <- getwd()
 
-#args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/report", 
-#          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
-
-cat("Example of usage: \n Rscript FastQC_report.R /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/report /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed")
-
-if (length(args)!=2) {
-  stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
+# create a shortcut for the OneDrive directory where all files are stored
+if(startsWith(w_dir, "/Users/michal")){           
+  main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
+} else if (startsWith(w_dir, "/Users/ummz")) {    
+  main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac    
+} else {
+  print("Unrecognised machine.")
 }
 
-cat("Directories with data (IN): ")
-cat(args[1], sep="\n")
+#args <- commandArgs(trailingOnly = TRUE)
 
-cat("Directory for results (OUT): ")
-cat(args[2], sep="\n")
+# args <- c("ALL", paste0(main_dir, "/ANALYSES/results_run_IV_Feb20/1_quality_control/report"), paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/1_quality_control/ALL"))
+# args <- c("SE", paste0(main_dir, "/ANALYSES/results_run_IV_Feb20/3_quality_control_trimmed/single-end/report"), paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/3_qc_after_trimming/SE"))
+# args <- c("PE", paste0(main_dir, "/ANALYSES/results_run_IV_Feb20/3_quality_control_trimmed/paired-end/report/paired"), paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/3_qc_after_trimming/PE"))
 
-setwd(args[2])
+
+# Example of usage: 
+# Rscript FastQC_report.R ALL /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/1_quality_control/report /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed
+
+if (length(args)!=3) {
+  stop("3 arguments must be supplied: 
+        \n(1 - mode) running parameter (SE, PE or ALL),
+        \n(2 - input) path to directory with data and 
+        \n(3 - output) path where output files should be stored", call.=FALSE)
+}
+
+# ALL => for step_1 | SE => step_3 single-end | PE => step_3 paired-end
+
+cat("Directory with data (IN): "); cat(args[2], sep="\n")
+cat("Directory for results (OUT): "); cat(args[3], sep="\n")
+
+setwd(args[3])
 
 # select all zipped files and create an S4 object to store all results per sample
-files_both <- list.files(args[1], pattern = "fastqc.zip$", full.names = TRUE)
+# could be used for ALL, but the plots looks better separately for R1 and R2
+files_both <- list.files(args[2], pattern = "fastqc.zip$", full.names = TRUE)
 fdl_both <- FastqcDataList(files_both)
 
-# same as above but separately for R1 and R2
-files_R1 <- list.files(args[1], pattern = "_R1.fastqc.zip$", full.names = TRUE)
-fdl_R1 <- FastqcDataList(files_R1)
-files_R2 <- list.files(args[1], pattern = "_R2.fastqc.zip$", full.names = TRUE)
-fdl_R2 <- FastqcDataList(files_R2)
+if (args[1] == "ALL") {
+  
+  files_R1 <- list.files(args[2], pattern = "_R1.fastqc.zip$", full.names = TRUE)
+  files_R2 <- list.files(args[2], pattern = "_R2.fastqc.zip$", full.names = TRUE)
+  fdl_R1 <- FastqcDataList(files_R1)
+  fdl_R2 <- FastqcDataList(files_R2)
+  
+} else if (args[1] == "SE") {  
+  
+  files_R1 <- list.files(args[2], pattern = "_R1_single_fastqc.zip$", full.names = TRUE)
+  fdl_R1 <- FastqcDataList(files_R1)
+
+} else if (args[1] == "PE") {  
+    
+  files_R1 <- list.files(args[2], pattern = "_R1_paired_fastqc.zip$", full.names = TRUE)
+  files_R2 <- list.files(args[2], pattern = "_R2_paired_fastqc.zip$", full.names = TRUE)
+  fdl_R1 <- FastqcDataList(files_R1)
+  fdl_R2 <- FastqcDataList(files_R2)
+
+} else {
+  print("ERROR: args[1] must be provided as: SE, PE or ALL.")
+}
 
 ########## (1) plot with summary of all results for all QC metrics ##########
-
 # create a plot with PASS/WARN/FAIL Status of each module
-sum_R1 <- plotSummary(fdl_R1)
-sum_R2 <- plotSummary(fdl_R2)
-# sum_both <- plotSummary(fdl_both)           # R1 & R2 separately are much better
 
-sum_R1$labels$x <- "QC metrics"; sum_R1$labels$y <- "Sample IDs"
-sum_R2$labels$x <- "QC metrics"; sum_R2$labels$y <- "Sample IDs"
+########## (3) plot with percentages of each duplication level ##########
+########## (4) .txt file with overepresented sequences ##########
+
+if (args[1] == "SE") {
+  sum_R1 <- plotSummary(fdl_R1)
+  sum_R1$labels$x <- "QC metrics"; sum_R1$labels$y <- "Sample IDs"
+  jpeg('summary_plot_SE_R1.jpg'); print(sum_R1); dev.off()
+  cat("Created: summary_plot_SE_R1.jpg")
+  
+  duplic_plot_R1 <- plotDupLevels(fdl_R1)
+  jpeg("duplication_level_plot_SE_R1.jpg"); print(duplic_plot_R1); dev.off()
+  cat("Created: duplication_level_plot_SE_R1.jpg")
+  
+  over_seq_R1 <- list()
+  for (x in 1:length(fdl_R1)) {
+    over_seq_R1[[x]] <- fdl_R1[[x]]@Overrepresented_sequences$Sequence
+  }
+  sink("overrepresented_seqs_SE_R1.txt"); cat(unlist(over_seq_R1)); sink()
+  cat("Created: overrepresented_seqs_SE_R1.txt")
+  
+  } else {
+    
+  sum_R1 <- plotSummary(fdl_R1)
+  sum_R1$labels$x <- "QC metrics"; sum_R1$labels$y <- "Sample IDs"
+  
+  jpeg(paste0("summary_plot_", args[1], "_R1.jpg")); print(sum_R1); dev.off()
+  cat("Created: ", paste0("summary_plot_", args[1], "_R1.jpg"))
+  
+  duplic_plot_R1 <- plotDupLevels(fdl_R1)
+  
+  jpeg(paste0("duplication_level_plot_",  args[1], "_R1.jpg")); print(duplic_plot_R1); dev.off()
+  cat("Created: ", paste0("duplication_level_plot_",  args[1], "_R1.jpg"))
+  
+######  ######  ######  ######  ######  ######  ######  ######  ######  ######  ######  ######  
+  
+  sum_R2 <- plotSummary(fdl_R2)
+  sum_R2$labels$x <- "QC metrics"; sum_R2$labels$y <- "Sample IDs"
+  
+  jpeg(paste0("summary_plot_", args[1], "_R2.jpg")); print(sum_R2); dev.off()
+  cat("Created: ", paste0("summary_plot_", args[1], "_R2.jpg"))
+  
+  duplic_plot_R2 <- plotDupLevels(fdl_R2)
+  
+  jpeg(paste0("duplication_level_plot_",  args[1], "_R2.jpg")); print(duplic_plot_R2); dev.off()
+  cat("Created: ", paste0("duplication_level_plot_",  args[1], "_R2.jpg"))
+  
+######  ######  ######  ######  ######  ######  ######  ######  ######  ######  ######  ######  
+
+  over_seq_R1 <- list(); over_seq_R2 <- list()
+  for (x in 1:length(fdl_R1)) {
+    over_seq_R1[[x]] <- fdl_R1[[x]]@Overrepresented_sequences$Sequence
+    over_seq_R2[[x]] <- fdl_R2[[x]]@Overrepresented_sequences$Sequence
+  }
+  
+  sink(paste0("overrepresented_seqs_",  args[1], "_R1.txt")); cat(unlist(over_seq_R1)); sink()
+  sink(paste0("overrepresented_seqs_",  args[1], "_R2.txt")); cat(unlist(over_seq_R2)); sink()
+  cat("Created: ", paste0("overrepresented_seqs_",  args[1], "_R1.txt"))
+  cat("Created: ", paste0("overrepresented_seqs_",  args[1], "_R2.txt"))
+  
+}
+
+# sum_both <- plotSummary(fdl_both)           # R1 & R2 separately are much better
+#jpeg('summary_plot_R1.jpg', width = 880, height = 880, pointsize = 12, quality = 100, bg = "white")
 
 ########## (2) plots with total number of reads obtained for R1 and R2 ##########
 
@@ -67,18 +160,8 @@ total_reads_plot <- total_reads_plot + theme(text = element_text(size=7),
                                              axis.title.x = element_text(size=9),
                                              axis.title.y = element_text(size=9))
 
-########## (3) plot with percentages of each duplication level ##########
-
-duplic_plot_R1 <- plotDupLevels(fdl_R1)
-duplic_plot_R2 <- plotDupLevels(fdl_R2)
-
-########## (4) .txt file with overepresented sequences ##########
-
-over_seq_R1 <- list(); over_seq_R2 <- list()
-for (x in 1:length(fdl_R1)) {
-  over_seq_R1[[x]] <- fdl_R1[[x]]@Overrepresented_sequences$Sequence
-  over_seq_R2[[x]] <- fdl_R2[[x]]@Overrepresented_sequences$Sequence
-}
+jpeg(paste0("total_reads_plot_", args[1], ".jpg")); print(total_reads_plot); dev.off()
+cat("Created: ", paste0("total_reads_plot_", args[1], ".jpg"))
 
 ########## (5) plot with GC content distribution for all samples in one ##########
 
@@ -107,22 +190,6 @@ for (x in 1:length(fdl_R1)) {
 # FAIL 
 # r1_f_1 <- plotGcContent(fdl_R1$`12331_R1.fastqc.zip`, species = "Hsapiens", gcType = "Transcriptome")
 # r1_f_1$labels$subtitle = NULL
-
-#################################
-# save all plots and .txt files #
-#################################
-
-jpeg('summary_plot_R1.jpg'); sum_R1; dev.off()
-jpeg('summary_plot_R2.jpg'); sum_R2; dev.off()
-#jpeg('summary_plot_R1.jpg', width = 880, height = 880, pointsize = 12, quality = 100, bg = "white")
-
-jpeg('total_reads_plot.jpg'); total_reads_plot; dev.off()
-
-jpeg('duplication_level_plot_R1.jpg'); duplic_plot_R1; dev.off()
-jpeg('duplication_level_plot_R2.jpg'); duplic_plot_R2; dev.off()
-
-sink("overrepresented_seqs_R1.txt"); cat(unlist(over_seq_R1)); sink()
-sink("overrepresented_seqs_R2.txt"); cat(unlist(over_seq_R2)); sink()
 
 ###################################################################################################
 ########################## other code that might be useful at some time ###########################
