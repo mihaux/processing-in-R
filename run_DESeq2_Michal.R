@@ -1,6 +1,10 @@
 # this script performs DESeq2 analysis on read counts data (output from featureCounts)
 # created based DESeq2 vignette on https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
-# DESEq2 manual: https://bioconductor.org/packages/release/bioc/manuals/DESeq2/man/DESeq2.pdf 
+# DESEq2 manual:        https://bioconductor.org/packages/release/bioc/manuals/DESeq2/man/DESeq2.pdf 
+# guide for beginners:  https://bioc.ism.ac.jp/packages/2.14/bioc/vignettes/DESeq2/inst/doc/beginner.pdf
+
+# Why do we use the negative binomial distribution for analysing RNAseq data?
+# http://bridgeslab.sph.umich.edu/posts/why-do-we-use-the-negative-binomial-distribution-for-rnaseq
 
 # The package DESeq2 provides methods to test for differential expression by use of negative binomial generalized linear models; 
 # the estimates of dispersion and logarithmic fold changes incorporate data-driven prior distributions.

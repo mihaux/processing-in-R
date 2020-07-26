@@ -10,11 +10,6 @@
 
 # NOTE: if there are confounders, then you would need to rather use something like logistic regression, not Mann-Whitney test
 
-# there was a link sent by Mark with some sources about this test
-# other sources about statistical testing:
-# https://www.mayo.edu/research/documents/parametric-and-nonparametric-demystifying-the-terms/doc-20408960
-# https://www.ajodo.org/action/showPdf?pii=S0889-5406%2815%2900840-9
-
 # WHAT TO TEST: statistical test between 2 groups: visual loss vs no visual loss,
 # to see if patients with visual loss are more likely to have GCA or not (if not, then there's no association)
 
@@ -62,6 +57,7 @@ setwd(args[3])
 # load normalised counts from DESeq
 df <- read.csv(args[1], row.names = 1)
 
+# change data format to matrix and integer
 dat <- as.matrix(df)   
 storage.mode(dat) <- "integer"             # class: matrix | type: integer
 
@@ -72,7 +68,10 @@ anno <- read.csv(args[2], row.names = 1)
 rownames(anno) <- paste0("ID_", rownames(anno))
 
 # define groups to be compared
-group = anno$gender..1.male..2.female.                # group labels
+#group = anno$gender..1.male..2.female.                     # group labels as gender
+group = anno$visual.loss.at.BL..0.no..1.yes.                # group labels as visual loss
+
+# NOTE: anno$visual.loss.ever...0.no..1.yes. is exactly the same
 
 # RUN STATISTICAL TESTING
 
@@ -98,9 +97,9 @@ for(j in 1:nrow(dat)){
   # get data frame for one gene at a time
   temp = dat[j, ]
   
-  # perform statistical testing 
-  res[[j]] = wilcox.test(temp[group==1], 
-                         temp[group==2], 
+  # perform statistical testing CHANGE TO group==1 AND group==2 WHEN RUNNING FOR 'gender
+  res[[j]] = wilcox.test(temp[group==0], 
+                         temp[group==1], 
                          alternative = "two.sided",
                          exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
                                                       # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
@@ -114,6 +113,15 @@ for(j in 1:nrow(dat)){
 # W = 254.5, p-value = 0.07999
 # alternative hypothesis: true location shift is not equal to 0
 
+# in the OUTPUT: (assume there are 2 groups: A and B)
+# => W is a rank sum subtracted by a constant. 
+# => if group A is the reference level in the factor variable group, the rank sum is computed for the data in group A
+# => the value of W is the rank sum for group A subtracted by nA(nA+1)/2. 
+# => the value of W is not important, as we perform the Wilcoxon Mann-Whitney test to determine if there is significant difference between the two groups. 
+# => we are primarily interested in the p-value
+# => by default wilcox.test() calculates an exact p-value if the samples contain less than 50 finite values and there are no ties. 
+# => Otherwise, a normal approximation is used. R uses normal approximation to calculate the p-value.
+  
 # retrieve t-statistic for each gene,
 all_stat = unlist(lapply(res, function(x) x$statistic))
 
@@ -144,15 +152,24 @@ length(which(result.table2$pvalue < 0.05))
 length(which(result.table2$fdr.pvalue < 0.05))
 
 # save results
-write.csv(result.table2.sorted, file="results_table_Mann-Whitney_sorted_norm.csv")
+#write.csv(result.table2.sorted, file="results_table_Mann-Whitney_gender_norm.csv")
+write.csv(result.table2.sorted, file="results_table_Mann-Whitney_visual-loss_norm.csv")
 
 #---------------------------- use another method GSALightning package ----------------------------#
 
+# source: https://www.bioconductor.org/packages/release/bioc/vignettes/GSALightning/inst/doc/vignette.html
+
+# the GSALightning package offers the Mann-Whitney U test for single-gene testing. 
+# Mann-Whitney U test is the non-parametric version of the independent t-test for two-sample problem. 
+# To perform the Mann-Whitney U test, call the wilcoxTest() function:
+  
+#singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$gender..1.male..2.female.), tests = "unpaired")
+singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$visual.loss.at.BL..0.no..1.yes.), tests = "unpaired")
 
 
-
-
-
+# save results
+#write.csv(singleWilcox, file="results_table_Mann-Whitney_gender_GSALightning_norm.csv")
+write.csv(singleWilcox, file="results_table_Mann-Whitney_visual-loss_GSALightning_norm.csv")
 
 
 
