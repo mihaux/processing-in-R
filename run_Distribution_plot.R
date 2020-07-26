@@ -13,10 +13,17 @@ if (!requireNamespace("gridExtra", quietly = TRUE)) install.packages("gridExtra"
 if (!requireNamespace("grid", quietly = TRUE)) install.packages("grid"); suppressMessages(library(grid))
 library(ggplot2); library(lattice)
 
-# create a shortcut for the OneDrive directory where all files are stored
-main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
-# main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
+# get working directory to recognise the machine
+w_dir <- getwd()
 
+# create a shortcut for the OneDrive directory where all files are stored
+if(startsWith(w_dir, "/Users/michal")){           
+  main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
+} else if (startsWith(w_dir, "/Users/ummz")) {    
+  main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac    
+} else {
+  print("Unrecognised machine.")
+}
 #args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=2) {

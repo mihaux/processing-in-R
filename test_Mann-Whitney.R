@@ -1,28 +1,162 @@
-# script to perform Mann-Whitney U test
+# script to perform Mann-Whitney U test (also known as Wilcoxon rank sum test or Mann-Whitney test)
+# 2 methods: wilcox.test() [built-in R function] and wilcoxTest() [GSALightning package]
+
+# very clear source: http://courses.atlas.illinois.edu/spring2016/STAT/STAT200/RProgramming/NonParametricStats.html
+
+# The unpaired two-samples Wilcoxon test (also known as Wilcoxon rank sum test or Mann-Whitney test) 
+# => is a non-parametric alternative to the unpaired two-samples t-test, 
+# => can be used to compare two independent groups of samples. 
+# => is used when your data are not normally distributed.
 
 # NOTE: if there are confounders, then you would need to rather use something like logistic regression, not Mann-Whitney test
-
-# http://www.sthda.com/english/wiki/unpaired-two-samples-wilcoxon-test-in-r
 
 # there was a link sent by Mark with some sources about this test
 # other sources about statistical testing:
 # https://www.mayo.edu/research/documents/parametric-and-nonparametric-demystifying-the-terms/doc-20408960
 # https://www.ajodo.org/action/showPdf?pii=S0889-5406%2815%2900840-9
 
-# The comparison groups would be: affected (case) vs unaffected (controls) for the GCA.present feature 
-# and similarly for the other outcomes: visual loss vs. no visual loss for the visual.loss.at.BL feature, etc.
-
-# the Mann–Whitney test will be used to see if there's a correlation between visual loss and presents of GCA; 
-# look at genes one-by-one to see ; 
-# the comparison groups are: visual loss vs no visual loss
-
-# exposure: visual loss (=> the most powerful outcome (focus on it in your analysis, don't need to look at the other outcomes)
-# outcome: GCA presence
-
 # WHAT TO TEST: statistical test between 2 groups: visual loss vs no visual loss,
 # to see if patients with visual loss are more likely to have GCA or not (if not, then there's no association)
 
-# CAN DO SIMALARLLY FOR OTHER CLINICAL FEATURES AS WELL
+# To perform two-samples Wilcoxon test comparing the means of two independent samples (x & y), 
+# we perform a t-test on each gene (i.e. each row) by running the function wilcox.test() for each row, in a two-sample setting between group_1 and group_2.
+
+# install (if necessary) and load package
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!requireNamespace("GSALightning", quietly = TRUE)) BiocManager::install("GSALightning"); library(GSALightning)
+
+# get working directory to recognise the machine
+w_dir <- getwd()
+
+# create a shortcut for the OneDrive directory where all files are stored
+if(startsWith(w_dir, "/Users/michal")){           
+  main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
+} else if (startsWith(w_dir, "/Users/ummz")) {    
+  main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac    
+} else {
+  print("Unrecognised machine.")
+}
+
+#args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args)!=3) {
+  stop("3 arguments must be supplied: 
+       \n(1 - input) path to _x.csv file with count data, 
+       \n(2 - annotation) path to _x.csv annotation file and
+       \n(3 - output) path where output files should be stored", call.=FALSE)
+}
+
+# NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
+
+args <- c(paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/DESeq2/norm_counts.csv"),
+          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/statistical_testing/"))
+
+# Example of usage: 
+# Rscript test_Mann_Whitney.R 
+
+cat("Directories with data (IN): "); cat(args[1], sep="\n")
+cat("Directory for results (OUT): "); cat(args[3], sep="\n")
+setwd(args[3])
+
+# load normalised counts from DESeq
+df <- read.csv(args[1], row.names = 1)
+
+dat <- as.matrix(df)   
+storage.mode(dat) <- "integer"             # class: matrix | type: integer
+
+# load annotation (clinical) data which will be used for coldata
+anno <- read.csv(args[2], row.names = 1)
+
+# add "ID_" to all rownames
+rownames(anno) <- paste0("ID_", rownames(anno))
+
+# define groups to be compared
+group = anno$gender..1.male..2.female.                # group labels
+
+# RUN STATISTICAL TESTING
+
+# HYPOTHISES: we want to know if the mean of group 1 differs from the mean of group 2.
+
+# NOTE: no metter the comparison group_1 vs group_2 or group_2 vs group_1, 
+# the results are the same, just the 'statistic' component differs (but all is proportional)
+
+# 'alternative' argument => "two,sided" (default)
+# if you want to test whether the mean of group_1 is less than the mean of group_2    => alternative = "less"
+# if you want to test whether the mean of group_1 is greater than the mean of group_2 => alternative = "greater"
+
+# INTERPRETATION:
+# if the p-value of the test is less than the significance level alpha = 0.05. 
+# we can conclude that the mean of group 1 is significantly different from the mean of group 2 with a p-value of [p-value =].
+
+# initiate list for results
+res <- list()
+
+# iteration over all genes (as we perform statistical testing for each gene)
+for(j in 1:nrow(dat)){
+  
+  # get data frame for one gene at a time
+  temp = dat[j, ]
+  
+  # perform statistical testing 
+  res[[j]] = wilcox.test(temp[group==1], 
+                         temp[group==2], 
+                         alternative = "two.sided",
+                         exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
+                                                      # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
+}
+# might need to add as.numeric() if does not work
+
+# the object 'res' contains the result of the test | length = 52239
+#res[[1]]
+# Wilcoxon rank sum test with continuity correction
+# data:  temp[group == 2] and temp[group == 1]
+# W = 254.5, p-value = 0.07999
+# alternative hypothesis: true location shift is not equal to 0
+
+# retrieve t-statistic for each gene,
+all_stat = unlist(lapply(res, function(x) x$statistic))
+
+# retrieve its corresponding p-value
+all_pval = unlist(lapply(res, function(x) x$p.value))
+
+# Multiplicity adjustment
+# After obtaining the p-values, you can make multiplicity correction to the pvalue. 
+all_adj.pval <- p.adjust(all_pval, "BH")    # Benjamini & Hochberg (1995) ("BH" or its alias "fdr")
+
+# result table
+# create a table as R data frame
+result.table2 = data.frame(ID=rownames(dat), statistic=all_stat, pvalue=all_pval, fdr.pvalue=all_adj.pval)
+
+# sort the table based on the order of the (adjusted) p-values
+result.table2.sorted = result.table2[order(all_adj.pval),]
+
+# and then show the top 10 (most) significant genes.
+result.table2.sorted[1:10,]       # listing the top 10 genes
+
+# select only significant genes
+significant.cutoff <- length(which(result.table2.sorted$fdr.pvalue < 0.05))
+
+result.table2.significant <- result.table2.sorted[1:significant.cutoff,]
+
+# get the number of genes with pval < 5 % and padj < 5 %
+length(which(result.table2$pvalue < 0.05))
+length(which(result.table2$fdr.pvalue < 0.05))
+
+# save results
+write.csv(result.table2.sorted, file="results_table_Mann-Whitney_sorted_norm.csv")
+
+#---------------------------- use another method GSALightning package ----------------------------#
+
+
+
+
+
+
+
+
+
+
 
 
 
