@@ -3,31 +3,49 @@
 # install (if necessary) and load packages
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("lubridate", quietly = TRUE)) install.packages("lubridate")
-
 library(lubridate)
 
-args <- commandArgs(trailingOnly = TRUE)
+# get working directory to recognise the machine
+w_dir <- getwd()
 
-# for running in R-studio
-# args <- c("/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_I_Nov19/4_alignement/bam", 
-#          "/Users/ummz/OneDrive - University of Leeds/ANALYSES/results_run_I_Nov19/4_alignement/postprocessed")
-
-if (length(args)!=2) {
-  stop("2 arguments must be supplied: \n(1 - input) path to directory with data and \n(2 - output) path where output files should be stored", call.=FALSE)
+# create a shortcut for the OneDrive directory where all files are stored
+if(startsWith(w_dir, "/Users/michal")){           
+  main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
+} else if (startsWith(w_dir, "/Users/ummz")) {    
+  main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac    
+} else {
+  print("Unrecognised machine.")
 }
 
-cat("Directories with data (IN): ")
-cat(args[1], sep="\n")
+#args <- commandArgs(trailingOnly = TRUE)
 
-cat("Directory for results (OUT): ")
-cat(args[2], sep="\n")
+if (length(args)!=3) {
+  stop("3 arguments must be supplied: 
+       \n(1 - mode) running parameter (SE or PE),
+       \n(2 - input) path to directory with data and 
+       \n(3 - output) path where output files should be stored", call.=FALSE)
+}
 
-setwd(args[1])
+#args <- c("SE", 
+#          paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/alignment_SE/bam/"),
+#          paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/4_alignment/SE"))
 
-temp = list.files(pattern="*.out")
-all_files = lapply(temp, function(x) read.csv(x,sep = "\t", header = FALSE))
+args <- c("PE",
+          paste0(main_dir, "/ANALYSES/rerun_FINAL_July20/run_1/alignment_PE/bam/"),
+          paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/4_alignment/PE"))
+
+# Example of usage: 
+# Rscript get_STARstats.R [arg1] [arg2] [args3]
+
+cat("Directories with data (IN): "); cat(args[2], sep="\n")
+cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 
 setwd(args[2])
+
+temp = list.files(pattern="*Log.final.out")
+all_files = lapply(temp, function(x) read.csv(x,sep = "\t", header = FALSE))
+
+setwd(args[3])
 
 # extract IDs from file names 
 IDs <- sub("_.*", "", temp)
@@ -88,28 +106,32 @@ rownames(df_fin)[1] <- "Running time of mapping"
 rownames(df_fin) <- trimws(rownames(df_fin))
 
 # generate a table (all together & split in 5)
-write.csv(df_fin, file="STAR_stats_all.csv")
+write.csv(df_fin, file=paste0("STAR_stats_all_",  args[1], ".csv"))
+cat("Created: ", paste0("STAR_stats_all_",  args[1], ".csv"))
 
 # general info
 df_sub1 <- df_fin[1:4,]
-write.csv(df_sub1, file="STAR_stats_sub1_general_info.csv")
+write.csv(df_sub1, file=paste0("STAR_stats_sub1_general_info_",  args[1], ".csv"))
+cat("Created: ", paste0("STAR_stats_sub1_general_info_",  args[1], ".csv"))
 
 #UNIQUE READS section
 df_sub2 <- df_fin[5:18,]
-write.csv(df_sub2, file="STAR_stats_sub2_unique_reads.csv")
+write.csv(df_sub2, file=paste0("STAR_stats_sub2_unique_reads_",  args[1], ".csv"))
+cat("Created: ", paste0("STAR_stats_sub2_unique_reads_",  args[1], ".csv"))
 
 #MULTI-MAPPING READS section
 df_sub3 <- df_fin[19:22,]
-write.csv(df_sub3, file="STAR_stats_sub3_multi-mapping_reads.csv")
+write.csv(df_sub3, file=paste0("STAR_stats_sub3_multi-mapping_reads_",  args[1], ".csv"))
+cat("Created: ", paste0("STAR_stats_sub3_multi-mapping_reads_",  args[1], ".csv"))
 
 #UNMAPPED READS section
 df_sub4 <- df_fin[23:28,]
-write.csv(df_sub4, file="STAR_stats_sub4_unmapped_reads.csv")
+write.csv(df_sub4, file=paste0("STAR_stats_sub4_unmapped_reads_",  args[1], ".csv"))
+cat("Created: ", paste0("STAR_stats_sub4_unmapped_reads_",  args[1], ".csv"))
 
 #CHIMERIC READS section
 df_sub5 <- df_fin[29:30,]
-write.csv(df_sub5, file="STAR_stats_sub5_chimeric_reads.csv")
-
- 
+write.csv(df_sub5, file=paste0("STAR_stats_sub5_chimeric_reads_",  args[1], ".csv"))
+cat("Created: ", paste0("STAR_stats_sub5_chimeric_reads_",  args[1], ".csv"))
 
 

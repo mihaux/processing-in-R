@@ -37,7 +37,6 @@ if(startsWith(w_dir, "/Users/michal")){
 # args <- c("SE", paste0(main_dir, "/ANALYSES/results_run_IV_Feb20/3_quality_control_trimmed/single-end/report"), paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/3_qc_after_trimming/SE"))
 # args <- c("PE", paste0(main_dir, "/ANALYSES/results_run_IV_Feb20/3_quality_control_trimmed/paired-end/report/paired"), paste0(main_dir, "/ANALYSES/RNA-seq_pipeline_QC/3_qc_after_trimming/PE"))
 
-
 # Example of usage: 
 # Rscript FastQC_report.R ALL /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV_Feb20/1_quality_control/report /Users/ummz/OneDrive\ -\ University\ of\ Leeds/ANALYSES/results_run_IV/1_quality_control/postprocessed
 
