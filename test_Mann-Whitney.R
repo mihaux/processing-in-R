@@ -68,8 +68,8 @@ anno <- read.csv(args[2], row.names = 1)
 rownames(anno) <- paste0("ID_", rownames(anno))
 
 # define groups to be compared
-#group = anno$gender..1.male..2.female.                     # group labels as gender
-group = anno$visual.loss.at.BL..0.no..1.yes.                # group labels as visual loss
+group = anno$gender..1.male..2.female.                     # group labels as gender
+#group = anno$visual.loss.at.BL..0.no..1.yes.                # group labels as visual loss
 
 # NOTE: anno$visual.loss.ever...0.no..1.yes. is exactly the same
 
@@ -98,8 +98,8 @@ for(j in 1:nrow(dat)){
   temp = dat[j, ]
   
   # perform statistical testing CHANGE TO group==1 AND group==2 WHEN RUNNING FOR 'gender
-  res[[j]] = wilcox.test(temp[group==0], 
-                         temp[group==1], 
+  res[[j]] = wilcox.test(temp[group==1], 
+                         temp[group==2], 
                          alternative = "two.sided",
                          exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
                                                       # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
@@ -139,6 +139,9 @@ result.table2 = data.frame(ID=rownames(dat), statistic=all_stat, pvalue=all_pval
 # sort the table based on the order of the (adjusted) p-values
 result.table2.sorted = result.table2[order(all_adj.pval),]
 
+# the 'statistic' column is not necessary
+result.table2.sorted_final <- result.table2.sorted[,-2]
+
 # and then show the top 10 (most) significant genes.
 result.table2.sorted[1:10,]       # listing the top 10 genes
 
@@ -151,9 +154,18 @@ result.table2.significant <- result.table2.sorted[1:significant.cutoff,]
 length(which(result.table2$pvalue < 0.05))
 length(which(result.table2$fdr.pvalue < 0.05))
 
+# create a data frame with summary of genes with pval < 5 % and padj < 5 %
+sum_table <- matrix(c("number of genes with pval < 5 %", length(which(result.table2$pvalue < 0.05)), 
+                      "number of genes with padj < 5 %", length(which(result.table2$fdr.pvalue < 0.05))), 
+                    nrow = 2, ncol = 2, byrow = TRUE)
+
 # save results
-#write.csv(result.table2.sorted, file="results_table_Mann-Whitney_gender_norm.csv")
-write.csv(result.table2.sorted, file="results_table_Mann-Whitney_visual-loss_norm.csv")
+write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_gender_norm.csv")
+write.csv(sum_table, file="summary_table_Mann-Whitney_gender_norm.csv")
+
+#write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_visual-loss_norm.csv")
+#write.csv(sum_table, file="summary_table_Mann-Whitney_visual-loss_norm.csv")
+
 
 #---------------------------- use another method GSALightning package ----------------------------#
 
@@ -170,11 +182,5 @@ singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$visual.loss.at.BL..0.no
 # save results
 #write.csv(singleWilcox, file="results_table_Mann-Whitney_gender_GSALightning_norm.csv")
 write.csv(singleWilcox, file="results_table_Mann-Whitney_visual-loss_GSALightning_norm.csv")
-
-
-
-
-
-
 
 
