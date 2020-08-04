@@ -72,6 +72,9 @@ y_filtered <- y[keep, , keep.lib.sizes=FALSE]       # dim(y_filtered) => [1] 164
 
 cat(dim(y)[1] - dim(y_filtered)[1], "genes were dropped. Filtered counts matrix dimension:", dim(y_filtered)[1], "x", dim(y_filtered)[2])
 
+# => another way of filtering could be just removing genes with 0 sample variance:
+# expression <- expression[apply(expression,1,sd) != 0,]
+
 ### 2) Normalization
 
 # The calcNormFactors() function normalizes for RNA composition by finding a set of scaling factors for the library sizes that minimize the log-fold changes between the samples for most genes. 

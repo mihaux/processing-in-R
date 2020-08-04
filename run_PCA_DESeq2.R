@@ -27,8 +27,7 @@ if (length(args)!=3) {
 #          paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/PCA_DESeq2/"))
 
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
-
-args <- c(paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/DESeq2/Normalised_DESeq_normal_transformation_dataset_dups_rr5.csv_NA_x.Rda"),
+args <- c(paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2/Normalised_DESeq_normal_transformation_dataset_nodups_run1_PE_x.Rda"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
           paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/PCA_DESeq2/"))
 

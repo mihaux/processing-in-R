@@ -79,7 +79,7 @@ tab_1_chrM <- tab_1[which(tab_1$chromosomes == "chrM"),]
 tab_1_chrX <- tab_1[which(tab_1$chromosomes == "chrX"),]
 tab_1_chrY <- tab_1[which(tab_1$chromosomes == "chrY"),]
 
-# sort within chr1 only
+# sort within chr only
 tab_1_chr1_sorted_pos <- tab_1_chr1[order(tab_1_chr1$positions),]
 tab_1_chr2_sorted_pos <- tab_1_chr2[order(tab_1_chr2$positions),]
 tab_1_chr3_sorted_pos <- tab_1_chr3[order(tab_1_chr3$positions),]
