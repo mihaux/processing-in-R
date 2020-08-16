@@ -44,3 +44,24 @@ rm out_filenames.txt out_l2.txt out_l7.txt out_l8.txt out_filenames_FINAL.txt ou
 
 echo FINISHED !
 
+# it dosesn't work to run in the script, but can be run as each command separately
+
+# for f in *metrics*; do  head -n 2 $f | tail -n 1 >> out_l2.txt ; done
+# for f in *metrics*; do  head -n 7 $f | tail -n 1 >> out_l7.txt ; done 
+# for f in *metrics*; do  head -n 8 $f | tail -n 1 >> out_l8.txt ; done 
+
+# uniq out_l7.txt >> out_metrics.txt
+# cat out_l8.txt >> out_metrics.txt 
+#for f in *metrics.txt*; do echo $f >> out_filenames.txt ; done
+
+#Remove the last column manually [open file in TextEdit]
+#cat out_filenames.txt | rev | cut -d'/' -f 1 | rev | cut -d "_" -f-2 > out_filenames_FINAL.txt
+
+#echo 'ID'$'\n'"$(cat out_filenames_FINAL.txt)" > out_filenames_FINAL_BIS.txt
+
+# combine in excel: out_metrics.txt and out_filenames_FINAL_BIS.txt
+#paste -d "\t" out_filenames_FINAL_BIS.txt out_metrics.txt > final.csv
+
+# remove unnecessary files
+#cd $out_dir
+#rm out_filenames.txt out_l2.txt out_l7.txt out_l8.txt out_filenames_FINAL.txt out_filenames_FINAL_BIS.txt out_metrics.txt
