@@ -16,11 +16,10 @@
 dir.create("/Users/ummz/PCA_tutorial")
 setwd("/Users/ummz/PCA_tutorial")
 
-# A note on quality control
-
+# A note on quality control:
 # Before carrying out a genetic analysis, like PCA, it's important to have a good-quality dataset, and this typically means carrying out careful quality control (QC) first.  
 
-# The cleaned data consists of genotype calls at different sites.
+# INPUT DATA: cleaned data of genotype calls at different sites.
 
 ### LD pruning of SNPs
 
