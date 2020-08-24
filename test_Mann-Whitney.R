@@ -49,11 +49,13 @@ if (length(args)!=4) {
 # Normalised_DESeq_rlog_dataset_all.Rda | Normalised_DESeq_rlog_dataset_chr1_22.Rda   | Normalised_DESeq_rlog_dataset_chrXY.Rda
 # Normalised_DESeq_vst_dataset_all.Rda  | Normalised_DESeq_vst_dataset_chr1_22.Rda    | Normalised_DESeq_vst_dataset_chrXY.Rda
 
-#args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
-#          #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-#          paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
-#          "GCA_present",
-#          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
+#if(FALSE){
+args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
+          #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
+          "GCA_present",
+          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
+#}
 
 # Example of usage: 
 # Rscript test_Mann_Whitney.R 
@@ -63,9 +65,11 @@ cat("Directory for results (OUT): "); cat(args[4], sep="\n")
 setwd(args[4])
 
 # load normalised counts from DESeq
-load(paste0(args[1], "Raw_DESeq_dataset_all.Rda"))              # dds_all
-load(paste0(args[1], "Normalised_DESeq_vst_dataset_all.Rda"))   # vst_all
-load(paste0(args[1], "Normalised_DESeq_rlog_dataset_all.Rda"))  # rlog_all
+input_list <- list.files(args[1], pattern = "\\.Rda$")
+
+load(paste0(args[1], input_list[3]))              # dds_all
+load(paste0(args[1], input_list[2]))              # vst_all
+load(paste0(args[1], input_list[1]))              # rlog_all
 
 # change data format to matrix and integer
 dat_raw <- as.matrix(assay(dds_all))
