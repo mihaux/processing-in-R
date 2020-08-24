@@ -33,7 +33,7 @@ if(startsWith(w_dir, "/Users/michal")){
   print("Unrecognised machine.")
 }
 
-#args <- commandArgs(trailingOnly = TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=4) {
   stop("4 arguments must be supplied: 
@@ -49,11 +49,11 @@ if (length(args)!=4) {
 # Normalised_DESeq_rlog_dataset_all.Rda | Normalised_DESeq_rlog_dataset_chr1_22.Rda   | Normalised_DESeq_rlog_dataset_chrXY.Rda
 # Normalised_DESeq_vst_dataset_all.Rda  | Normalised_DESeq_vst_dataset_chr1_22.Rda    | Normalised_DESeq_vst_dataset_chrXY.Rda
 
-args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
-          #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
-          "GCA_present",
-          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
+#args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
+#          #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+#          paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
+#          "GCA_present",
+#          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
 
 # Example of usage: 
 # Rscript test_Mann_Whitney.R 
@@ -270,7 +270,6 @@ write.csv(sum_table_all, file = paste0("results_", running, "_summary.csv"))
 write.csv(result.table2.significant_raw, file = paste0("results_raw_", running, "_list.csv"))
 write.csv(result.table2.significant_vst, file = paste0("results_vst_", running, "_list.csv"))
 write.csv(result.table2.significant_rlog, file = paste0("results_rlog_", running, "_list.csv"))
-
 
 cat("Finished for", running, "\n")
 cat("OUTPUT dir:", paste0(args[4], running), "\n")
