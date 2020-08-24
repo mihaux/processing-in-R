@@ -20,7 +20,7 @@
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 #if (!requireNamespace("GSALightning", quietly = TRUE)) BiocManager::install("GSALightning"); library(GSALightning)
 if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt"); library(biomaRt)
-library(DESeq2)
+suppressMessages(library(DESeq2))
 # get working directory to recognise the machine
 w_dir <- getwd()
 
@@ -49,13 +49,13 @@ if (length(args)!=4) {
 # Normalised_DESeq_rlog_dataset_all.Rda | Normalised_DESeq_rlog_dataset_chr1_22.Rda   | Normalised_DESeq_rlog_dataset_chrXY.Rda
 # Normalised_DESeq_vst_dataset_all.Rda  | Normalised_DESeq_vst_dataset_chr1_22.Rda    | Normalised_DESeq_vst_dataset_chrXY.Rda
 
-#if(FALSE){
+if(FALSE){
 args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
           #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
           paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
           "GCA_present",
           paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
-#}
+}
 
 # Example of usage: 
 # Rscript test_Mann_Whitney.R 
@@ -246,13 +246,13 @@ result.table2.significant_vst <- result.table2.sorted_vst[1:significant.cutoff_v
 result.table2.significant_rlog <- result.table2.sorted_rlog[1:significant.cutoff_rlog,]
 
 # get the number of genes with pval < 5 % and padj < 5 %
-length(which(result.table2_raw$pvalue < 0.05))
-length(which(result.table2_vst$pvalue < 0.05))
-length(which(result.table2_rlog$pvalue < 0.05))
+#length(which(result.table2_raw$pvalue < 0.05))
+#length(which(result.table2_vst$pvalue < 0.05))
+#length(which(result.table2_rlog$pvalue < 0.05))
 
-length(which(result.table2_raw$fdr.pvalue < 0.05))
-length(which(result.table2_vst$fdr.pvalue < 0.05))
-length(which(result.table2_rlog$fdr.pvalue < 0.05))
+#length(which(result.table2_raw$fdr.pvalue < 0.05))
+#length(which(result.table2_vst$fdr.pvalue < 0.05))
+#length(which(result.table2_rlog$fdr.pvalue < 0.05))
 
 # create a data frame with summary of genes with pval < 5 % and padj < 5 %
 sum_table_all <- matrix(c("number of genes with pval < 0.05", 
@@ -322,13 +322,11 @@ sink()
 # use gene_list to create venn diagram:
 # http://bioinformatics.psb.ugent.be/cgi-bin/liste/Venn/calculate_venn.htpl
 
-
 # create venn diagram to see how many genes are in common between these 3 methods
 #library(VennDiagram)
 #venn.diagram(list(g_names_raw$hgnc_symbol, g_names_raw$hgnc_symbol, g_names_raw$hgnc_symbol),
 #             category.names = c("Raw", "VST", "rlog"),
 #             filename = 'venn_diagramm.png')
-  
 
 # save results
 #write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_gender_norm.csv")

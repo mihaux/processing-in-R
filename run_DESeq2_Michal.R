@@ -17,10 +17,10 @@
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
-if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
-if (!requireNamespace("vsn", quietly = TRUE)) BiocManager::install("vsn"); library(vsn)
-library(ggplot2)
+if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); suppressMessages(library(DESeq2))
+if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); suppressMessages(library(stringr))
+if (!requireNamespace("vsn", quietly = TRUE)) BiocManager::install("vsn"); suppressMessages(library(vsn))
+suppressMessages(library(ggplot2))
 
 # if (!requireNamespace("edgeR", quietly = TRUE)) BiocManager::install("edgeR"); library(edgeR)
 # if (!requireNamespace("vsn", quietly = TRUE)) install.packages("vsn"); library(vsn)
@@ -32,7 +32,7 @@ w_dir <- getwd()
 if(startsWith(w_dir, "/Users/michal")){           
   main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
 } else if (startsWith(w_dir, "/Users/ummz")) {    
-  main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac    
+  main_dir <- "/Users/ummz/Documents/OneDrive - University of Leeds"                # on uni mac    
 } else {
   print("Unrecognised machine.")
 }
@@ -49,11 +49,19 @@ if (length(args)!=4) {
 
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 
-args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/5_counting/PE_noXY/all_counts_dups_PE_noXY_mod.csv"),
+args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/5_counting/SE_all/all_counts_dups_SE_all_mod.csv"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
           paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
-          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/DESeq2_analysis/no_chrXY/"))
+          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/all_chr/INPUT_counts"))
 
+# for SE
+# (IN) /ANALYSES/run_12_Aug20/5_counting/SE_all/all_counts_dups_SE_all_mod.csv
+# (OUT) /ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/all_chr/INPUT_counts
+
+# (IN) /ANALYSES/run_12_Aug20/5_counting/SE_noXY/all_counts_dups_SE_noXY_mod.csv
+# (OUT) /ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/no_chrXY/INPUT_counts
+    
+# for PE
 # (IN) /ANALYSES/run_12_Aug20/5_counting/PE_all/all_counts_dups_PE_all_mod.csv
 # (OUT) /ANALYSES/run_12_Aug20/6_downstream/DESeq2_analysis/all_chr/
 
@@ -105,30 +113,30 @@ all(rownames(anno_1) == colnames(counts_mat))
 all(rownames(anno_2) %in% colnames(counts_mat))
 #all(rownames(anno_2) == colnames(counts_mat))  # doesn't work as the anno_2 is shorter due to lack of samples ID_14058
 
-coldata_1 <- cbind(rownames(anno_1), anno_1[,c("visual.loss.at.BL..0.no..1.yes.", 
-                                               "jaw.claudication.at.BL...0.no..1.yes.", 
-                                               "ischaemic.features.at.BL...0.no..1.yes.", 
-                                               "gender..1.male..2.female.", 
+coldata_1 <- cbind(rownames(anno_1), anno_1[,c("visual_loss", 
+                                               "jaw_claudication", 
+                                               "ischaemic_features", 
+                                               "gender", 
                                                "year.TAB.sample.was.collected", 
                                                "number.of.days.on.steroids.at.TAB", 
                                                "age.at.BL")])
 
 names(coldata_1) <- c("sample", "visual_loss", "jaw_claudication", "ischaemic_features", "gender", "year_TAB_collected", "days_on_steroids", "age")
 
-coldata_2 <- cbind(rownames(anno_2), anno_2[,c("GCA.present.",                          
+coldata_2 <- cbind(rownames(anno_2), anno_2[,c("GCA_present",                          
                                                "Lymphocytic.infiltrate.in.media.",
                                                "Lymphocytic.infiltrate.in.intima.",      
                                                "Adventitia.pattern.",     
                                                "Media.pattern.",
-                                               "Intima.pattern.",                        
-                                               "Giant.cells.",                      
-                                               "Infiltrate.around.vasa.vasorum.",                               
-                                               "Media.destruction.",
-                                               "Neoangiogenesis.",                    
+                                               "Intima_pattern",                        
+                                               "Giant_cells",                      
+                                               "Infiltrate_around_vasa_vasorum",                               
+                                               "Media_destruction",
+                                               "Neoangiogenesis",                    
                                                "Hyperplasia.",
                                                "Fibrosis.",                          
                                                "Oedema.",
-                                               "Occlusion.grade.")])
+                                               "Occlusion_grade")])
   
 names(coldata_2) <- c("sample", "GCA_present", "Lymphocytic_infiltrate_media", "Lymphocytic_infiltrate_intima", "Adventitia_pattern", "Media_pattern", "Intima_pattern", "Giant_cells", "Infiltrate_vasa", "Media_destruction", "Neoangiogenesis", "Hyperplasia", "Fibrosis", "Oedema", "Occlusion_grade")
 
@@ -235,7 +243,10 @@ vst_all     <- vst(dds, blind=FALSE)
 rlog_all       <- rlog(dds, blind=FALSE)
 
 # save transformed data and unnormalised as well
-save(dds_all, file="Raw_DESeq_dataset_noXY.Rda")
-save(vst_all, file="Normalised_DESeq_vst_dataset_noXY.Rda")
-save(rlog_all, file="Normalised_DESeq_rlog_dataset_noXY.Rda")
+save(dds_all, file="Raw_DESeq_dataset_all.Rda")
+save(vst_all, file="Normalised_DESeq_vst_dataset_all.Rda")
+save(rlog_all, file="Normalised_DESeq_rlog_dataset_all.Rda")
 
+#save(dds_all, file="Raw_DESeq_dataset_noXY.Rda")
+#save(vst_all, file="Normalised_DESeq_vst_dataset_noXY.Rda")
+#save(rlog_all, file="Normalised_DESeq_rlog_dataset_noXY.Rda")
