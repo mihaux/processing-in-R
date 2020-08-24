@@ -18,10 +18,9 @@
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("GSALightning", quietly = TRUE)) BiocManager::install("GSALightning"); library(GSALightning)
+#if (!requireNamespace("GSALightning", quietly = TRUE)) BiocManager::install("GSALightning"); library(GSALightning)
 if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt"); library(biomaRt)
-
-
+library(DESeq2)
 # get working directory to recognise the machine
 w_dir <- getwd()
 
@@ -29,36 +28,39 @@ w_dir <- getwd()
 if(startsWith(w_dir, "/Users/michal")){           
   main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
 } else if (startsWith(w_dir, "/Users/ummz")) {    
-  main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac    
+  main_dir <- "/Users/ummz/Documents/OneDrive - University of Leeds"      # on uni mac    
 } else {
   print("Unrecognised machine.")
 }
 
 #args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args)!=3) {
-  stop("3 arguments must be supplied: 
+if (length(args)!=4) {
+  stop("4 arguments must be supplied: 
        \n(1 - input) path to _x.csv file with count data (or just the directory), 
-       \n(2 - annotation) path to _x.csv annotation file and
-       \n(3 - output) path where output files should be stored", call.=FALSE)
+       \n(2 - annotation) path to _x.csv annotation file,
+       \n(3 - feature) name of the feature for running and
+       \n(4 - output) path where output files should be stored", call.=FALSE)
 }
 
-# NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
+# NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 4
 
 # Raw_DESeq_dataset_all.Rda             | Raw_DESeq_dataset_chr1_22.Rda               | Raw_DESeq_dataset_chrXY.Rda
 # Normalised_DESeq_rlog_dataset_all.Rda | Normalised_DESeq_rlog_dataset_chr1_22.Rda   | Normalised_DESeq_rlog_dataset_chrXY.Rda
 # Normalised_DESeq_vst_dataset_all.Rda  | Normalised_DESeq_vst_dataset_chr1_22.Rda    | Normalised_DESeq_vst_dataset_chrXY.Rda
 
-args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/DESeq2_analysis/all_chr/"),
-          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/DESeq2_analysis/all_chr/mann_whitney/"))
+args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
+          #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+          paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
+          "GCA_present",
+          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
 
 # Example of usage: 
 # Rscript test_Mann_Whitney.R 
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
-cat("Directory for results (OUT): "); cat(args[3], sep="\n")
-setwd(args[3])
+cat("Directory for results (OUT): "); cat(args[4], sep="\n")
+setwd(args[4])
 
 # load normalised counts from DESeq
 load(paste0(args[1], "Raw_DESeq_dataset_all.Rda"))              # dds_all
@@ -66,78 +68,78 @@ load(paste0(args[1], "Normalised_DESeq_vst_dataset_all.Rda"))   # vst_all
 load(paste0(args[1], "Normalised_DESeq_rlog_dataset_all.Rda"))  # rlog_all
 
 # change data format to matrix and integer
-#dat <- as.matrix(df)   
-#storage.mode(dat) <- "integer"             # class: matrix | type: integer
-
 dat_raw <- as.matrix(assay(dds_all))
-storage.mode(dat_raw) <- "integer"             # class: matrix | type: integer
+storage.mode(dat_raw) <- "integer"          # class: matrix | type: integer
 
 dat_vst <- as.matrix(assay(vst_all))
-storage.mode(dat_vst) <- "integer"             # class: matrix | type: integer
+storage.mode(dat_vst) <- "integer"          # class: matrix | type: integer
 
 dat_rlog <- as.matrix(assay(rlog_all))
-storage.mode(dat_rlog) <- "integer"             # class: matrix | type: integer
+storage.mode(dat_rlog) <- "integer"         # class: matrix | type: integer
 
 # load annotation (clinical) data which will be used for coldata
-anno_1 <- read.csv(args[2], row.names = 1)
+anno <- read.csv(args[2], row.names = 1)
 
 # add "ID_" to all rownames for clinical data
-rownames(anno_1) <- paste0("ID_", rownames(anno_1))
-
-# load slide scores data as well
-anno_2 <- read.csv(paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"), row.names = 1)
+rownames(anno) <- paste0("ID_", rownames(anno))
 
 # NOTE: sample "ID_14058" is missing in 'slide_sc', needs to be removed from 
 
-# add "ID_" to all rownames for slide scores data
-rownames(anno_2) <- paste0("ID_", rownames(anno_2))
+# if running for slide scores => remove sample "ID_14058" from all three datasets
 
-# features to be used:
+if(nrow(anno) == ncol(dat_raw)){
+  
+  print("Running for clinical features")
+  
+  # modify 'gender' column to replace 1 -> 0 and 2 -> 1 (to make it match the format of all other features)
+  gender_new <- c(1:41)
+  gender_new[which(anno$gender == 1)] <- 0      # 1 (male)    => replace with 0
+  gender_new[which(anno$gender == 2)] <- 1      # 2 (female)  => replace with 1
+  anno$gender <- gender_new
+  
+} else {
+  
+  print("Running for histological features")
+  dat_raw <- dat_raw[,-which(colnames(dat_raw) == "ID_14058")]
+  dat_vst <- dat_vst[,-which(colnames(dat_vst) == "ID_14058")]
+  dat_rlog <- dat_rlog[,-which(colnames(dat_rlog) == "ID_14058")]
 
-# => clinical_feature (anno_1)
-# gender..1.male..2.female.                 # => anno_1$gender                                    (1 vs. 2)
-# visual.loss.at.BL..0.no..1.yes.           # => anno_1$visual.loss.at.BL..0.no..1.yes.           (0 vs. 1)
-# jaw.claudication.at.BL...0.no..1.yes.     # => anno_1$jaw.claudication.at.BL...0.no..1.yes.     (0 vs. 1)
-# ischaemic.features.at.BL...0.no..1.yes.   # => anno_1$ischaemic.features.at.BL...0.no..1.yes.   (0 vs. 1)
+  # modify Occlusion.grade. and Intima.pattern. to make it 2 comparison groups
+  Occlusion_grade_new <- c(1:40)
+  Occlusion_grade_new[which(anno$Occlusion_grade < 3)] <- 0      # less than 3           => replace with 0
+  Occlusion_grade_new[which(anno$Occlusion_grade >= 3)] <- 1     # equal or more than 3  => replace with 1
+  anno$Occlusion_grade <- Occlusion_grade_new
 
-# => slide_scores (anno_2)
-# GCA.present.                              # => anno_2$GCA.present.                              (0 vs. 1)
-# Giant.cells.                              # => anno_2$Giant.cells.                              (0 vs. 1)
-# Media.destruction.                        # => anno_2$Media.destruction.                        (0 vs. 1)
-# Occlusion.grade.                          # => anno_2$Occlusion.grade. [Occlusion.grade.new]    (0 vs. 1)
-# Neoangiogenesis.                          # => anno_2$Neoangiogenesis.                          (0 vs. 1)
-# Intima.pattern.                           # => anno_2$Intima.pattern. [Intima.pattern.new]      (0 vs. 1)
-# Infiltrate.around.vasa.vasorum.           # => anno_2$Infiltrate.around.vasa.vasorum.           (0 vs. 1)
+  Intima_pattern_new <- c(1:40)
+  Intima_pattern_new[which(anno$Intima_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
+  Intima_pattern_new[which(anno$Intima_pattern > 1)] <- 1        # 2 and 3                => replace with 1
+  anno$Intima_pattern <- Intima_pattern_new
 
-# modify Occlusion.grade. and Intima.pattern. to make it 2 comparison groups
-Occlusion.grade.new <- c(1:40)
-Occlusion.grade.new[which(anno_2$Occlusion.grade. < 3)] <- 0      # less than 3           => replace with 0
-Occlusion.grade.new[which(anno_2$Occlusion.grade. >= 3)] <- 1     # equal or more than 3  => replace with 1
+}
 
-Intima.pattern.new <- c(1:40)
-Intima.pattern.new[which(anno_2$Intima.pattern. <= 1)] <- 0       # 0 and 1                => replace with 0
-Intima.pattern.new[which(anno_2$Intima.pattern. > 1)] <- 1        # 2 and 3                => replace with 1
+# get index of the feature for running
+running <- args[3]
+run_ind <- which(colnames(anno) == running)
 
 # define groups for comparison
+group = as.vector(unlist(anno[run_ind]))
 
-# => from 'anno_1'
-#group = anno_1$gender..1.male..2.female.                   # (1 vs. 2)
-#group = anno_1$visual.loss.at.BL..0.no..1.yes.             # (0 vs. 1)
-#group = anno_1$jaw.claudication.at.BL...0.no..1.yes.       # (0 vs. 1)
-#group = anno_1$ischaemic.features.at.BL...0.no..1.yes.    # (0 vs. 1)
+if(FALSE){
+# => in clinical features
+#group = anno$gender                  # (1 vs. 2)
+#group = anno$visual_loss             # (0 vs. 1)
+#group = anno$jaw_claudication        # (0 vs. 1)
+#group = anno$ischaemic_features      # (0 vs. 1)
 
-# => from 'anno_2'
-group = anno_2$GCA.present.                               # (0 vs. 1)
-#group = anno_2$Giant.cells.                               # (0 vs. 1)
-# group = anno_2$Media.destruction.                         # (0 vs. 1)
-# group = Occlusion.grade.new                               # (0 vs. 1)
-# group = anno_2$Neoangiogenesis.                           # (0 vs. 1)
-# group = Intima.pattern.new                                # (0 vs. 1)
-# group = anno_2$Infiltrate.around.vasa.vasorum.            # (0 vs. 1)
-
-# RUN STATISTICAL TESTING
-
-running <- 'GCA_present'
+# => in histological features
+#group = annoGCA_present                              # (0 vs. 1)
+#group = anno$Giant_cells                             # (0 vs. 1)
+#group = anno$Media_destruction                       # (0 vs. 1)
+#group = Occlusion_grade_new                          # (0 vs. 1)
+#group = anno$Neoangiogenesis                         # (0 vs. 1)
+#group = Intima_pattern_new                           # (0 vs. 1)
+#group = anno$Infiltrate_around_vasa_vasorum          # (0 vs. 1)
+}
 
 # HYPOTHISES: we want to know if the mean of group 1 differs from the mean of group 2.
 
@@ -152,18 +154,13 @@ running <- 'GCA_present'
 # if the p-value of the test is less than the significance level alpha = 0.05. 
 # we can conclude that the mean of group 1 is significantly different from the mean of group 2 with a p-value of [p-value =].
 
-# if running for slide scores (anno_2) => remove sample "ID_14058" from all three datasets
-#which(colnames(dat_raw) == "ID_14058")
-dat_raw <- dat_raw[,-which(colnames(dat_raw) == "ID_14058")]
-dat_vst <- dat_vst[,-which(colnames(dat_vst) == "ID_14058")]
-dat_rlog <- dat_rlog[,-which(colnames(dat_rlog) == "ID_14058")]
-
 # initiate list for results
 res_raw <- list()
 res_vst <- list()
 res_rlog <- list()
 
 # iteration over all genes (as we perform statistical testing for each gene)
+
 for(j in 1:nrow(dat_raw)){
   
   # get data frame for one gene at a time
@@ -183,31 +180,6 @@ for(j in 1:nrow(dat_raw)){
   
 }
 # might need to add as.numeric() if does not work
-
-#---------------------------------------------------------------------------------------------------------
-# running for 'gender' => group==1 AND group==2 
-if(FALSE){
-for(j in 1:nrow(dat_raw)){
-
-  # get data frame for one gene at a time
-  print(j)
-  temp_raw = dat_raw[j, ]
-  temp_vst = dat_vst[j, ]
-  temp_rlog = dat_rlog[j, ]
-  
-  # perform statistical testing 
-  res_raw[[j]] = wilcox.test(temp_raw[group==1], 
-                             temp_raw[group==2], 
-                             alternative = "two.sided",
-                             exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
-  # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
-  
-  res_vst[[j]] = wilcox.test(temp_vst[group==1], temp_vst[group==2], alternative = "two.sided", exact = FALSE)              
-  res_rlog[[j]] = wilcox.test(temp_rlog[group==1], temp_rlog[group==2], alternative = "two.sided", exact = FALSE)              
-  
-  }
-}
-#---------------------------------------------------------------------------------------------------------
 
 # the object 'res' contains the result of the test | length = 52239
 # res[[1]]
@@ -283,13 +255,13 @@ sum_table_all <- matrix(c("number of genes with pval < 0.05",
                           length(which(result.table2_raw$pvalue < 0.05)), length(which(result.table2_vst$pvalue < 0.05)), length(which(result.table2_rlog$pvalue < 0.05)),
                           "number of genes with padj (FDR) < 0.05 ", 
                           length(which(result.table2_raw$fdr.pvalue < 0.05)), length(which(result.table2_vst$fdr.pvalue < 0.05)), length(which(result.table2_rlog$fdr.pvalue < 0.05))), 
-                        nrow = 2, ncol = 4, byrow = TRUE)
+                          nrow = 2, ncol = 4, byrow = TRUE)
 
 colnames(sum_table_all) <- c("metrics", "raw", "vst", "rlog")
 
 # create output directory
-dir.create(paste0(args[3], running))
-setwd(paste0(args[3], running))
+dir.create(paste0(args[4], running))
+setwd(paste0(args[4], running))
 
 # save result tables
 write.csv(sum_table_all, file = paste0("results_", running, "_summary.csv"))
@@ -299,6 +271,18 @@ write.csv(result.table2.significant_raw, file = paste0("results_raw_", running, 
 write.csv(result.table2.significant_vst, file = paste0("results_vst_", running, "_list.csv"))
 write.csv(result.table2.significant_rlog, file = paste0("results_rlog_", running, "_list.csv"))
 
+
+cat("Finished for", running, "\n")
+cat("OUTPUT dir:", paste0(args[4], running), "\n")
+cat("Created in ", "\n",
+    paste0("results_", running, "_summary.csv"), "\n",
+    paste0("results_raw_", running, "_list.csv"), "\n",
+    paste0("results_vst_", running, "_list.csv"), "\n",
+    paste0("results_rlog_", running, "_list.csv"))
+
+# MERGE ALL OUTPUT SUMMARY FILES AND MODIFY THIER FORMAT MANUALLY IN EXCEL 
+# (clinical and histological separately: Mann-Whitney_PE_summary_clinical.xlsx and Mann-Whitney_PE_summary_histological.xlsx
+# THEN IMPORT TO POWERPOINT
 
 if(FALSE){
 # switch to gene names and check chromosome location for obtained genes
@@ -355,6 +339,7 @@ sink()
 #write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_visual-loss_VST.csv")
 #write.csv(sum_table, file="summary_table_Mann-Whitney_visual-loss_VST.csv")
 
+if(FALSE){
 #---------------------------- use another method GSALightning package ----------------------------#
 
 # source: https://www.bioconductor.org/packages/release/bioc/vignettes/GSALightning/inst/doc/vignette.html
@@ -370,5 +355,5 @@ singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$visual.loss.at.BL..0.no
 # save results
 #write.csv(singleWilcox, file="results_table_Mann-Whitney_gender_GSALightning_norm.csv")
 write.csv(singleWilcox, file="results_table_Mann-Whitney_visual-loss_GSALightning_norm.csv")
-
+}
 
