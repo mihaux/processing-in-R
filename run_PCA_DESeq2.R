@@ -10,8 +10,8 @@ if (!requireNamespace("vsn", quietly = TRUE)) install.packages("vsn"); library(v
 library(clusterProfiler); library(readr); library(pheatmap); library(RColorBrewer); library(ggplot2)
 
 # create a shortcut for the OneDrive directory where all files are stored
-main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
-# main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
+#main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
+main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
 
 #args <- commandArgs(trailingOnly = TRUE)
 
