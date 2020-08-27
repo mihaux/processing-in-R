@@ -356,7 +356,60 @@ loadings_dds <- as.data.frame(pca_dds$rotation)
 loadings_rlog <- as.data.frame(pca_rlog$rotation)
 loadings_vst <- as.data.frame(pca_vst$rotation)
 
+# load modified subset of gtf file
+
+gtf_new <- read.csv(file = paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/", "table_TranscriptsByChromosome_modified.csv"), row.names = 1)
+
 # => need to look at the difference between chrX and chrY (check thair contribution in PCA loadings)
+
+dim(gtf_new)                  # [1] 3968352       2
+length(unique(gtf_new$IDs))
+
+# TODO: match rownames(loadings_dds) [l=26 486] with unique(gtf_new$IDs) [l=38 214]
+
+for (i in 1:length(rownames(loadings_dds))) {
+  which(rownames(loadings_dds)[i] == unique(gtf_new$IDs))
+  
+}
+
+
+my_chr_fin_1 <- gsub("chr", "", my_chr)
+
+# need to replace "chrM"  "chrX" and "chrY" with numerics: 23, 24, 25
+my_chr_fin_2 <- gsub("M", "23", my_chr_fin_1)
+my_chr_fin_3 <- gsub("X", "24", my_chr_fin_2)
+my_chr_fin_4 <- gsub("Y", "25", my_chr_fin_3)
+my_chr_final <- as.numeric(as.vector(my_chr_fin_4))
+
+
+mygwas_list <- list(my_snp, as.integer(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices])*(-1))
+names(mygwas_list) <- c("SNP", "CHR", "BP", "P")
+
+mygwas_list_bis <- list(as.character(as.vector(pc1_ordered$ID)), as.integer(my_chr_final), as.integer(my_bp), pc1_ordered$PC1*(-1))
+
+#mygwas <- cbind(as.character(my_snp), as.vector(my_chr_final), as.integer(my_bp), as.numeric(my_p1[-unnecessary_indices]))
+mygwas_fin <- as.data.frame(mygwas_list)
+mygwas_fin_bis <- as.data.frame(mygwas_list_bis)
+
+names(mygwas_fin) <- c("SNP", "CHR", "BP", "P")
+names(mygwas_fin_bis) <- c("SNP", "CHR", "BP", "P")
+
+manhattan(mygwas_fin, chr="CHR", bp="BP", snp="SNP", p="P", logp=FALSE, ylim = c(-0.05, 0.45))
+
+manhattan(mygwas_fin_bis, chr="CHR", bp="BP", snp="SNP", p="P", logp=FALSE, ylim = c(-0.05, 0.45))
+
+manhattan(mygwas_fin_bis, main = "Manhattan Plot - PC1", ylim = c(-0.05, 0.45), cex = 0.6, logp=FALSE,
+          cex.axis = 0.9, col = c("blue4", "orange3"), suggestiveline = F, genomewideline = F, 
+          chrlabs = c(1:22, "M", "X", "Y"))
+
+# => what exactly they are 
+
+
+
+
+
+
+
 
 
 ####################################################################

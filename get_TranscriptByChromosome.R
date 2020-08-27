@@ -2,9 +2,17 @@
 
 if (!requireNamespace("stringr", quietly = TRUE)) install.packages("stringr"); library(stringr)
 
+# get working directory to recognise the machine
+w_dir <- getwd()
+
 # create a shortcut for the OneDrive directory where all files are stored
-main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"      # on my mac
-# main_dir <- "/Users/ummz/OneDrive - University of Leeds"                # on uni mac
+if(startsWith(w_dir, "/Users/michal")){           
+  main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
+} else if (startsWith(w_dir, "/Users/ummz")) {    
+  main_dir <- "/Users/ummz/Documents/OneDrive - University of Leeds"                # on uni mac    
+} else {
+  print("Unrecognised machine.")
+}
 
 #args <- commandArgs(trailingOnly = TRUE)
 
@@ -15,33 +23,39 @@ if (length(args)!=3) {
        \n(3 - output) path where output files should be stored", call.=FALSE)
 }
 
-args <- c(paste0(main_dir, "/ANALYSES/comparison_with_Ian_results/rerun_5/featCounts/all_counts_dups_rr5_x.csv"),
-          paste0(main_dir, "/gtf_files/hg38_Ian.gtf"),
+# USE ONLY raw - PE - all_chr DATA AS THEY ARE ALL THE SAME
+args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts"),
+          paste0(main_dir, "/RNA-Sequencing/gtf_files/annotation/processed_hg38.ncbiRefSeq.gtf"),
           paste0(main_dir, "/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/"))
 
-df <- read.csv(args[1], row.names = 1, header = TRUE) # data.frame with counts only
+load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"))
+
+df <- assay(dds_all)        # data.frame with counts only
 
 gtf <- read.delim(args[2], header = FALSE)
 
 # gtf[1] => chromosome info
 # gtf[9] => transcript info (to be split)
 
-transcript_info <- gtf[9]
-transcript_pos <- gtf[4]
+#transcript_info <- gtf[9]
+#transcript_pos <- gtf[4]
 
-transcript_ID <- matrix(apply(transcript_info, 1, function(x) str_split_fixed(x,pattern = " ", n=4)),ncol = 4, byrow = TRUE)
+#transcript_ID <- matrix(apply(gtf, 1, function(x) str_split_fixed(x,pattern = "\t", n=4)),ncol = 4, byrow = TRUE)
 
+# TODO: these lines need to be modified to make them up to date for the current .gtf file
 # transcript_ID[,1] <- "gene_id"
 # transcript_ID[,2] <- "NM_001276352;"     => in case of duplicates, the ID is just repeated
 # transcript_ID[,3] <- "transcript_id"
 # transcript_ID[,4] <- "NM_001276352; "    => in case of duplicates, "_dupX" is added (where X is a number)
 # NOTE: transcript_ID[,4] needs to be modified to remove the space at the end => trimws(kot[,4])
 
+# TODO: need to make sure that the column with 'gene_id' always equals the column with 'gene_name'
+
 # check which transcript_ID[,2] does not correspond totranscript_ID[,4]
-length(which(transcript_ID[,2] != trimws(transcript_ID[,4]))) 
+#length(which(transcript_ID[,2] != trimws(transcript_ID[,4]))) 
 
 # remove ";" from the end of each element
-transcript_ID[,2] <- gsub(";", "", transcript_ID[,2])
+#transcript_ID[,2] <- gsub(";", "", transcript_ID[,2])
 
 # => there are 10 707 rows, because they have "_dupX" included at the end but it always matches
 # get these rows and remove "_dup1" from them
@@ -49,62 +63,97 @@ transcript_ID[,2] <- gsub(";", "", transcript_ID[,2])
 #unlist(strsplit(transcript_ID[which(transcript_ID[,2] != trimws(transcript_ID[,4])),4], "_dup1"))
 
 # create a table with chr & transcript_ID[,2] 
-tab_1 <- cbind(as.vector(gtf[1]), transcript_ID[,2], transcript_pos$V4)
-names(tab_1) <- c("chromosomes", "IDs", "positions")
+#tab_1 <- cbind(as.vector(gtf[1]), transcript_ID[,2], transcript_pos$V4)
+#names(tab_1) <- c("chromosomes", "IDs", "positions")
+
+names(gtf) <- c("chromosomes", "IDs")   # => 4 131 447
+
+uniq_chr <- as.vector(unique(gtf$chromosomes))
+
+chr_min_coords <- list()
+chr_max_coords <- list()
+
+for(i in 1:length(uniq_chr)){
+  print(uniq_chr[i])
+  chr_min_coords[i] <- min(which(gtf$chromosomes == uniq_chr[i]))
+  chr_max_coords[i] <- max(which(gtf$chromosomes == uniq_chr[i]))
+}
+
+names(chr_min_coords) <- uniq_chr
+names(chr_max_coords) <- uniq_chr
+
+# create a new gtf matrix (with columns of 'chromosomes' and 'IDs' ordered correctly)
+
+# keep only chr1 - chr22 and chrX, chrY and chrM
 
 # subset for each chromosome and then sort it
-tab_1_chr1 <- tab_1[which(tab_1$chromosomes == "chr1"),]
-tab_1_chr2 <- tab_1[which(tab_1$chromosomes == "chr2"),]
-tab_1_chr3 <- tab_1[which(tab_1$chromosomes == "chr3"),]
-tab_1_chr4 <- tab_1[which(tab_1$chromosomes == "chr4"),]
-tab_1_chr5 <- tab_1[which(tab_1$chromosomes == "chr5"),]
-tab_1_chr6 <- tab_1[which(tab_1$chromosomes == "chr6"),]
-tab_1_chr7 <- tab_1[which(tab_1$chromosomes == "chr7"),]
-tab_1_chr8 <- tab_1[which(tab_1$chromosomes == "chr8"),]
-tab_1_chr9 <- tab_1[which(tab_1$chromosomes == "chr9"),]
-tab_1_chr10 <- tab_1[which(tab_1$chromosomes == "chr10"),]
-tab_1_chr11 <- tab_1[which(tab_1$chromosomes == "chr11"),]
-tab_1_chr12 <- tab_1[which(tab_1$chromosomes == "chr12"),]
-tab_1_chr13 <- tab_1[which(tab_1$chromosomes == "chr13"),]
-tab_1_chr14 <- tab_1[which(tab_1$chromosomes == "chr14"),]
-tab_1_chr15 <- tab_1[which(tab_1$chromosomes == "chr15"),]
-tab_1_chr16 <- tab_1[which(tab_1$chromosomes == "chr16"),]
-tab_1_chr17 <- tab_1[which(tab_1$chromosomes == "chr17"),]
-tab_1_chr18 <- tab_1[which(tab_1$chromosomes == "chr18"),]
-tab_1_chr19 <- tab_1[which(tab_1$chromosomes == "chr19"),]
-tab_1_chr20 <- tab_1[which(tab_1$chromosomes == "chr20"),]
-tab_1_chr21 <- tab_1[which(tab_1$chromosomes == "chr21"),]
-tab_1_chr22 <- tab_1[which(tab_1$chromosomes == "chr22"),]
-tab_1_chrM <- tab_1[which(tab_1$chromosomes == "chrM"),]
-tab_1_chrX <- tab_1[which(tab_1$chromosomes == "chrX"),]
-tab_1_chrY <- tab_1[which(tab_1$chromosomes == "chrY"),]
+gtf_chr1 <- gtf[which(gtf$chromosomes == "chr1"),]
+gtf_chr2 <- gtf[which(gtf$chromosomes == "chr2"),]
+gtf_chr3 <- gtf[which(gtf$chromosomes == "chr3"),]
+gtf_chr4 <- gtf[which(gtf$chromosomes == "chr4"),]
+gtf_chr5 <- gtf[which(gtf$chromosomes == "chr5"),]
+gtf_chr6 <- gtf[which(gtf$chromosomes == "chr6"),]
+gtf_chr7 <- gtf[which(gtf$chromosomes == "chr7"),]
+gtf_chr8 <- gtf[which(gtf$chromosomes == "chr8"),]
+gtf_chr9 <- gtf[which(gtf$chromosomes == "chr9"),]
+gtf_chr10 <- gtf[which(gtf$chromosomes == "chr10"),]
+gtf_chr11 <- gtf[which(gtf$chromosomes == "chr11"),]
+gtf_chr12 <- gtf[which(gtf$chromosomes == "chr12"),]
+gtf_chr13 <- gtf[which(gtf$chromosomes == "chr13"),]
+gtf_chr14 <- gtf[which(gtf$chromosomes == "chr14"),]
+gtf_chr15 <- gtf[which(gtf$chromosomes == "chr15"),]
+gtf_chr16 <- gtf[which(gtf$chromosomes == "chr16"),]
+gtf_chr17 <- gtf[which(gtf$chromosomes == "chr17"),]
+gtf_chr18 <- gtf[which(gtf$chromosomes == "chr18"),]
+gtf_chr19 <- gtf[which(gtf$chromosomes == "chr19"),]
+gtf_chr20 <- gtf[which(gtf$chromosomes == "chr20"),]
+gtf_chr21 <- gtf[which(gtf$chromosomes == "chr21"),]
+gtf_chr22 <- gtf[which(gtf$chromosomes == "chr22"),]
+gtf_chrM <- gtf[which(gtf$chromosomes == "chrM"),]
+gtf_chrX <- gtf[which(gtf$chromosomes == "chrX"),]
+gtf_chrY <- gtf[which(gtf$chromosomes == "chrY"),]
+
+gtf_new <- rbind(gtf_chr1, gtf_chr2, gtf_chr3, gtf_chr4, gtf_chr5, gtf_chr6, gtf_chr7, gtf_chr8,
+                 gtf_chr9, gtf_chr10, gtf_chr11, gtf_chr12, gtf_chr13, gtf_chr14, gtf_chr15,
+                 gtf_chr16, gtf_chr17, gtf_chr18, gtf_chr19, gtf_chr20, gtf_chr21, gtf_chr22,
+                 gtf_chrM, gtf_chrX, gtf_chrY)
+
+dim(gtf_new)    # [1] 3 968 352       2
+
+write.csv(x=gtf_new, file=paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/", "table_TranscriptsByChromosome_modified.csv"))
+
+# difference in length when only main chromosomes kept
+dim(gtf)[1] - dim(gtf_new)[1]   # [1] 163 095
+
+# percentage:
+((dim(gtf)[1] - dim(gtf_new)[1])/dim(gtf)[1]) * 100   # [1] 3.95% of lines excluded
 
 # sort within chr only
-tab_1_chr1_sorted_pos <- tab_1_chr1[order(tab_1_chr1$positions),]
-tab_1_chr2_sorted_pos <- tab_1_chr2[order(tab_1_chr2$positions),]
-tab_1_chr3_sorted_pos <- tab_1_chr3[order(tab_1_chr3$positions),]
-tab_1_chr4_sorted_pos <- tab_1_chr4[order(tab_1_chr4$positions),]
-tab_1_chr5_sorted_pos <- tab_1_chr5[order(tab_1_chr5$positions),]
-tab_1_chr6_sorted_pos <- tab_1_chr6[order(tab_1_chr6$positions),]
-tab_1_chr7_sorted_pos <- tab_1_chr7[order(tab_1_chr7$positions),]
-tab_1_chr8_sorted_pos <- tab_1_chr8[order(tab_1_chr8$positions),]
-tab_1_chr9_sorted_pos <- tab_1_chr9[order(tab_1_chr9$positions),]
-tab_1_chr10_sorted_pos <- tab_1_chr10[order(tab_1_chr10$positions),]
-tab_1_chr11_sorted_pos <- tab_1_chr11[order(tab_1_chr11$positions),]
-tab_1_chr12_sorted_pos <- tab_1_chr12[order(tab_1_chr12$positions),]
-tab_1_chr13_sorted_pos <- tab_1_chr13[order(tab_1_chr13$positions),]
-tab_1_chr14_sorted_pos <- tab_1_chr14[order(tab_1_chr14$positions),]
-tab_1_chr15_sorted_pos <- tab_1_chr15[order(tab_1_chr15$positions),]
-tab_1_chr16_sorted_pos <- tab_1_chr16[order(tab_1_chr16$positions),]
-tab_1_chr17_sorted_pos <- tab_1_chr17[order(tab_1_chr17$positions),]
-tab_1_chr18_sorted_pos <- tab_1_chr18[order(tab_1_chr18$positions),]
-tab_1_chr19_sorted_pos <- tab_1_chr19[order(tab_1_chr19$positions),]
-tab_1_chr20_sorted_pos <- tab_1_chr20[order(tab_1_chr20$positions),]
-tab_1_chr21_sorted_pos <- tab_1_chr21[order(tab_1_chr21$positions),]
-tab_1_chr22_sorted_pos <- tab_1_chr22[order(tab_1_chr22$positions),]
-tab_1_chrM_sorted_pos <- tab_1_chrM[order(tab_1_chrM$positions),]
-tab_1_chrX_sorted_pos <- tab_1_chrX[order(tab_1_chrX$positions),]
-tab_1_chrY_sorted_pos <- tab_1_chrY[order(tab_1_chrY$positions),]
+#tab_1_chr1_sorted_pos <- tab_1_chr1[order(tab_1_chr1$positions),]
+#tab_1_chr2_sorted_pos <- tab_1_chr2[order(tab_1_chr2$positions),]
+#tab_1_chr3_sorted_pos <- tab_1_chr3[order(tab_1_chr3$positions),]
+#tab_1_chr4_sorted_pos <- tab_1_chr4[order(tab_1_chr4$positions),]
+#tab_1_chr5_sorted_pos <- tab_1_chr5[order(tab_1_chr5$positions),]
+#tab_1_chr6_sorted_pos <- tab_1_chr6[order(tab_1_chr6$positions),]
+#tab_1_chr7_sorted_pos <- tab_1_chr7[order(tab_1_chr7$positions),]
+#tab_1_chr8_sorted_pos <- tab_1_chr8[order(tab_1_chr8$positions),]
+#tab_1_chr9_sorted_pos <- tab_1_chr9[order(tab_1_chr9$positions),]
+#tab_1_chr10_sorted_pos <- tab_1_chr10[order(tab_1_chr10$positions),]
+#tab_1_chr11_sorted_pos <- tab_1_chr11[order(tab_1_chr11$positions),]
+#tab_1_chr12_sorted_pos <- tab_1_chr12[order(tab_1_chr12$positions),]
+#tab_1_chr13_sorted_pos <- tab_1_chr13[order(tab_1_chr13$positions),]
+#tab_1_chr14_sorted_pos <- tab_1_chr14[order(tab_1_chr14$positions),]
+#tab_1_chr15_sorted_pos <- tab_1_chr15[order(tab_1_chr15$positions),]
+#tab_1_chr16_sorted_pos <- tab_1_chr16[order(tab_1_chr16$positions),]
+#tab_1_chr17_sorted_pos <- tab_1_chr17[order(tab_1_chr17$positions),]
+#tab_1_chr18_sorted_pos <- tab_1_chr18[order(tab_1_chr18$positions),]
+#tab_1_chr19_sorted_pos <- tab_1_chr19[order(tab_1_chr19$positions),]
+#tab_1_chr20_sorted_pos <- tab_1_chr20[order(tab_1_chr20$positions),]
+#tab_1_chr21_sorted_pos <- tab_1_chr21[order(tab_1_chr21$positions),]
+#tab_1_chr22_sorted_pos <- tab_1_chr22[order(tab_1_chr22$positions),]
+#tab_1_chrM_sorted_pos <- tab_1_chrM[order(tab_1_chrM$positions),]
+#tab_1_chrX_sorted_pos <- tab_1_chrX[order(tab_1_chrX$positions),]
+#tab_1_chrY_sorted_pos <- tab_1_chrY[order(tab_1_chrY$positions),]
 
 # get uniq IDs
 chr1_positions <- unique(tab_1_chr1_sorted_pos$IDs)

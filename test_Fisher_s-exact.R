@@ -1,26 +1,23 @@
-# script to perform Mann-Whitney U test (also known as Wilcoxon rank sum test or Mann-Whitney test)
-# 2 methods: wilcox.test() [built-in R function] and wilcoxTest() [GSALightning package]
+# script to perform Fisher's exact test (could probably use chi-squared test as well)
 
-# very clear source: http://courses.atlas.illinois.edu/spring2016/STAT/STAT200/RProgramming/NonParametricStats.html
+# very clear source: https://towardsdatascience.com/fishers-exact-test-in-r-independence-test-for-a-small-sample-56965db48e87
 
-# The unpaired two-samples Wilcoxon test (also known as Wilcoxon rank sum test or Mann-Whitney test) 
-# => is a non-parametric alternative to the unpaired two-samples t-test, 
-# => can be used to compare two independent groups of samples. 
-# => is used when your data are not normally distributed.
+# from Wikipedia: 
+# Fisher's exact test is a statistical significance test used in the analysis of contingency tables
+# TBC
+# TBC
 
-# NOTE: if there are confounders, then you would need to rather use something like logistic regression, not Mann-Whitney test
+# WHAT TO TEST: TBC
 
-# WHAT TO TEST: statistical test between 2 groups: visual loss vs no visual loss,
-# to see if patients with visual loss are more likely to have GCA or not (if not, then there's no association)
-
+# TO BE MODIFIED
 # To perform two-samples Wilcoxon test comparing the means of two independent samples (x & y), 
 # we perform a t-test on each gene (i.e. each row) by running the function wilcox.test() for each row, in a two-sample setting between group_1 and group_2.
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-#if (!requireNamespace("GSALightning", quietly = TRUE)) BiocManager::install("GSALightning"); library(GSALightning)
 if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt"); library(biomaRt)
 suppressMessages(library(DESeq2))
+
 # get working directory to recognise the machine
 w_dir <- getwd()
 
@@ -37,7 +34,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=4) {
   stop("4 arguments must be supplied: 
-       \n(1 - input) path to _x.csv file with count data (or just the directory), 
+       \n(1 - input) path to _x.csv file with slide score data (or just the directory), 
        \n(2 - annotation) path to _x.csv annotation file,
        \n(3 - feature) name of the feature for running and
        \n(4 - output) path where output files should be stored", call.=FALSE)
