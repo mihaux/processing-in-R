@@ -367,10 +367,17 @@ length(unique(gtf_new$IDs))
 
 # TODO: match rownames(loadings_dds) [l=26 486] with unique(gtf_new$IDs) [l=38 214]
 
+
+kot <- c()
 for (i in 1:length(rownames(loadings_dds))) {
-  which(rownames(loadings_dds)[i] == unique(gtf_new$IDs))
-  
+  print(which(rownames(loadings_dds)[i] == unique(gtf_new$IDs)))
+  kot[[i]] <- which(rownames(loadings_dds)[i] == unique(gtf_new$IDs))
 }
+
+# sort obtained vector and check if it has the same order as unsorted
+kot_sorted <- sort(kot)
+
+any(kot_sorted == kot)
 
 
 my_chr_fin_1 <- gsub("chr", "", my_chr)

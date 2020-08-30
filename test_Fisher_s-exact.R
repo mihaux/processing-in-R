@@ -336,22 +336,3 @@ sink()
 
 #write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_visual-loss_VST.csv")
 #write.csv(sum_table, file="summary_table_Mann-Whitney_visual-loss_VST.csv")
-
-if(FALSE){
-#---------------------------- use another method GSALightning package ----------------------------#
-
-# source: https://www.bioconductor.org/packages/release/bioc/vignettes/GSALightning/inst/doc/vignette.html
-
-# the GSALightning package offers the Mann-Whitney U test for single-gene testing. 
-# Mann-Whitney U test is the non-parametric version of the independent t-test for two-sample problem. 
-# To perform the Mann-Whitney U test, call the wilcoxTest() function:
-  
-#singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$gender..1.male..2.female.), tests = "unpaired")
-singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$visual.loss.at.BL..0.no..1.yes.), tests = "unpaired")
-
-
-# save results
-#write.csv(singleWilcox, file="results_table_Mann-Whitney_gender_GSALightning_norm.csv")
-write.csv(singleWilcox, file="results_table_Mann-Whitney_visual-loss_GSALightning_norm.csv")
-}
-
