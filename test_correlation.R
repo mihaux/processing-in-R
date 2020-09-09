@@ -1,13 +1,27 @@
-# script to perform Fisher's exact test (could probably use chi-squared test as well)
+# script to perform the analysis on slide scores 
 
-# very clear source: https://towardsdatascience.com/fishers-exact-test-in-r-independence-test-for-a-small-sample-56965db48e87
+# => use Mann-Whitney test for for continuous variables (e.g. number of days on steroids or age) 
+# => use Chi-squared or Fisher's exact test for categorical variables (Chi-squared if they fulfill the condition of size [i.e. at least 5 instances in the expected category], otherwise Fisher's exact)
+
+# sources about Fisher's exact test: 
+# => https://towardsdatascience.com/fishers-exact-test-in-r-independence-test-for-a-small-sample-56965db48e87
+
+# sources about Chi-squared test: 
+# => TBC
+
+# sources about Mann-Whitney test: 
+# => see another script (test_Mann_Whitney.R)
 
 # from Wikipedia: 
 # Fisher's exact test is a statistical significance test used in the analysis of contingency tables
 # TBC
 # TBC
 
-# WHAT TO TEST: TBC
+# WHAT TO TEST: 
+# => we want to check if there's correlation between the features (from slide score table) and the outcome (mostly visual loss, but could check others as well)
+# => comparison groups labaling visual_loss vs. no visual_loss
+# => data to be used: binary values from slide score tables
+
 
 # TO BE MODIFIED
 # To perform two-samples Wilcoxon test comparing the means of two independent samples (x & y), 
@@ -53,9 +67,6 @@ args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analys
           "GCA_present",
           paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
 }
-
-# Example of usage: 
-# Rscript test_Mann_Whitney.R 
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[4], sep="\n")

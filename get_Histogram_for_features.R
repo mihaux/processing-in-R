@@ -1,4 +1,4 @@
-# this script creates histograms for continous features to see their distribution
+# this script creates histograms for continuous features to see their distribution
 
 # get working directory to recognise the machine
 w_dir <- getwd()
@@ -16,7 +16,7 @@ if(startsWith(w_dir, "/Users/michal")){
 
 if (length(args)!=2) {
   stop("2 arguments must be supplied: 
-       \n(1 - input) path to .csv with clinicla features and, 
+       \n(1 - input) path to .csv with clinical features and, 
        \n(2 - output) path where output files should be stored", call.=FALSE)
 }
 
@@ -53,5 +53,23 @@ hist(df_meta$age.at.BL,
      xlim = c(50,100), 
      ylim = c(0,13),
      main = "Histogram of 'Age'")
+dev.off()
+
+png(file = "histogram_year_TAB_sample_was_collected.png")
+hist(df_meta$year.TAB.sample.was.collected,
+     xlab = "year.TAB.sample.was.collected",
+     col = "red",
+     xlim = c(2004,2016), 
+     ylim = c(0,20),
+     main = "Histogram of 'year.TAB.sample.was.collected'")
+dev.off()
+
+png(file = "histogram_number_of_days_between_TAB._and_BL_blood_sample.png")
+hist(as.numeric(df_meta$number.of.days.between.TAB.and.BL.blood.sample),
+     xlab = "number.of.days.between.TAB.and.BL.blood.sample",
+     col = "green",
+     xlim = c(0,14), 
+     ylim = c(0,10),
+     main = "Histogram of 'number.of.days.between.TAB.and.BL.blood.sample'")
 dev.off()
 
