@@ -1,4 +1,4 @@
-# this script creates histograms for continuous features to see their distribution
+# this script creates histograms and barplots for continuous features to see their distribution
 
 # get working directory to recognise the machine
 w_dir <- getwd()

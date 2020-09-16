@@ -7,7 +7,35 @@
 # => https://towardsdatascience.com/fishers-exact-test-in-r-independence-test-for-a-small-sample-56965db48e87
 
 # sources about Chi-squared test: 
-# => TBC
+# => https://www.statsandr.com/blog/chi-square-test-of-independence-by-hand/
+
+# Chi-square tests of independence test whether two qualitative variables are independent, 
+# that is, whether there exists a relationship between two categorical variables. 
+# In other words, this test is used to determine whether the values of one of the 2 qualitative variables depend on the values of the other qualitative variable.
+
+# HYPOTHESES: null AND alternative
+# (H0): the variables are independent, there is no relationship between the two categorical variables. Knowing the value of one variable does not help to predict the value of the other variable
+# (H1): the variables are dependent, there is a relationship between the two categorical variables. Knowing the value of one variable helps to predict the value of the other variable
+
+# How the test works?
+# it works by comparing the observed frequencies (so the frequencies observed in your sample) 
+# to the expected frequencies if there was no relationship between the two categorical variables 
+# (so the expected frequencies if the null hypothesis was true).
+
+# if the difference between the observed frequencies and the expected frequencies is small, 
+# we cannot reject the null hypothesis of independence and thus we cannot reject the fact that the two variables are not related. 
+
+# if the difference between the observed frequencies and the expected frequencies is large, 
+# we can reject the null hypothesis of independence and thus we can conclude that the two variables are related.
+
+# The threshold comes from the Chi-square distribution. This value, referred as the critical value, depends on the significance level 
+
+# RESULTS of chi-square testing:
+# If the test shows no association between the two variables (i.e., the variables are independent), 
+# it means that knowing the value of one variable gives no information about the value of the other variable. 
+
+# If the test shows a relationship between the variables (i.e., the variables are dependent), 
+# it means that knowing the value of one variable provides information about the value of the other variable.
 
 # sources about Mann-Whitney test: 
 # => see another script (test_Mann_Whitney.R)
@@ -19,13 +47,39 @@
 
 # WHAT TO TEST: 
 # => we want to check if there's correlation between the features (from slide score table) and the outcome (mostly visual loss, but could check others as well)
+# outcome: visual_loss (the main one), jaw_claudication, ischaemic_features, can also test for gender
+
 # => comparison groups labaling visual_loss vs. no visual_loss
 # => data to be used: binary values from slide score tables
 
+# EXAMPLE:
+# => var_1: visual_loss         -> (outcome)
+# => var_2: Media_destruction   -> (feature)
+# goal: we want to see if there's correlation between Media_destruction and visual_loss
 
-# TO BE MODIFIED
-# To perform two-samples Wilcoxon test comparing the means of two independent samples (x & y), 
-# we perform a t-test on each gene (i.e. each row) by running the function wilcox.test() for each row, in a two-sample setting between group_1 and group_2.
+# create contingency table
+#                             visual_loss
+#                         |   0   |   1   |   TOTAL   |
+# Media_destruction   0   |   11  |   8   |     19    |
+#                     1   |   12  |   9   |     21    |
+#                   TOTAL |   23  |   17  |     40    |
+
+# compute the expected counts in the case the variables were independent.	
+# the expected frequencies are computed for each subgroup one by one with the following formula:
+
+# total of the row * total of the column / total number of observations
+
+# expected counts table
+#                             visual_loss
+#                         |   0       |   1       |   TOTAL   |
+# Media_destruction   0   |   10.925  |   8.075   |     19    |
+#                     1   |   12.075  |   8.925   |     21    |
+#                   TOTAL |   23      |   17      |     40    |
+
+# NOTE: the Chi-square test of independence should only be done when 
+# the expected frequencies in all groups are equal to or greater than 5. 
+
+# If the condition is not met, the Fisher’s exact test is preferred.
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
@@ -46,304 +100,473 @@ if(startsWith(w_dir, "/Users/michal")){
 
 args <- commandArgs(trailingOnly = TRUE)
 
+# let's run for visual_loss only
+
 if (length(args)!=4) {
   stop("4 arguments must be supplied: 
-       \n(1 - input) path to _x.csv file with slide score data (or just the directory), 
-       \n(2 - annotation) path to _x.csv annotation file,
-       \n(3 - feature) name of the feature for running and
+       \n(1 - clinical data) path to .csv file with clinical data, 
+       \n(2 - histological data) path to .csv file with slide score data,
+       \n(3 - outcome) name of the clinical feature (outcome) for running and
        \n(4 - output) path where output files should be stored", call.=FALSE)
-}
+} # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 4
 
-# NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 4
-
-# Raw_DESeq_dataset_all.Rda             | Raw_DESeq_dataset_chr1_22.Rda               | Raw_DESeq_dataset_chrXY.Rda
-# Normalised_DESeq_rlog_dataset_all.Rda | Normalised_DESeq_rlog_dataset_chr1_22.Rda   | Normalised_DESeq_rlog_dataset_chrXY.Rda
-# Normalised_DESeq_vst_dataset_all.Rda  | Normalised_DESeq_vst_dataset_chr1_22.Rda    | Normalised_DESeq_vst_dataset_chrXY.Rda
-
-if(FALSE){
-args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts/"),
-          #paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+args <- c(paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
           paste0(main_dir, "/data/metadata/slide_scores/slide_scores_v6.csv"),
-          "GCA_present",
-          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
-}
+          "gender", #"visual_loss", # "jaw_claudication", "ischaemic_features", "gender"
+          paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/correlation_tests"))
 
 cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[4], sep="\n")
 setwd(args[4])
 
-# load normalised counts from DESeq
-input_list <- list.files(args[1], pattern = "\\.Rda$")
-
-load(paste0(args[1], input_list[3]))              # dds_all
-load(paste0(args[1], input_list[2]))              # vst_all
-load(paste0(args[1], input_list[1]))              # rlog_all
-
-# change data format to matrix and integer
-dat_raw <- as.matrix(assay(dds_all))
-storage.mode(dat_raw) <- "integer"          # class: matrix | type: integer
-
-dat_vst <- as.matrix(assay(vst_all))
-storage.mode(dat_vst) <- "integer"          # class: matrix | type: integer
-
-dat_rlog <- as.matrix(assay(rlog_all))
-storage.mode(dat_rlog) <- "integer"         # class: matrix | type: integer
-
-# load annotation (clinical) data which will be used for coldata
-anno <- read.csv(args[2], row.names = 1)
+# load clinical and histological data
+df_clinical <- read.csv(args[1], row.names = 1)
+df_histological <- read.csv(args[2], row.names = 1)
 
 # add "ID_" to all rownames for clinical data
-rownames(anno) <- paste0("ID_", rownames(anno))
+rownames(df_clinical) <- paste0("ID_", rownames(df_clinical))
+rownames(df_histological) <- paste0("ID_", rownames(df_histological))
 
-# NOTE: sample "ID_14058" is missing in 'slide_sc', needs to be removed from 
+# NOTE: sample "ID_14058" is missing in df_histological, so it needs to be removed from df_clinical to make it equl length
 
-# if running for slide scores => remove sample "ID_14058" from all three datasets
+# subset the column with outcome from clinical data
+df_clinical_mod <- as.data.frame(df_clinical[,args[3]][-which(rownames(df_clinical) == "ID_14058")])
+rownames(df_clinical_mod) <- rownames(df_clinical)[-which(rownames(df_clinical) == "ID_14058")]
+colnames(df_clinical_mod) <- args[3]
 
-if(nrow(anno) == ncol(dat_raw)){
-  
-  print("Running for clinical features")
-  
-  # modify 'gender' column to replace 1 -> 0 and 2 -> 1 (to make it match the format of all other features)
-  gender_new <- c(1:41)
-  gender_new[which(anno$gender == 1)] <- 0      # 1 (male)    => replace with 0
-  gender_new[which(anno$gender == 2)] <- 1      # 2 (female)  => replace with 1
-  anno$gender <- gender_new
-  
-} else {
-  
-  print("Running for histological features")
-  dat_raw <- dat_raw[,-which(colnames(dat_raw) == "ID_14058")]
-  dat_vst <- dat_vst[,-which(colnames(dat_vst) == "ID_14058")]
-  dat_rlog <- dat_rlog[,-which(colnames(dat_rlog) == "ID_14058")]
+# create contingency tables for each histological feature and visual_loss
+# to make sure that there are at least 5 instances in each expected group
 
-  # modify Occlusion.grade. and Intima.pattern. to make it 2 comparison groups
-  Occlusion_grade_new <- c(1:40)
-  Occlusion_grade_new[which(anno$Occlusion_grade < 3)] <- 0      # less than 3           => replace with 0
-  Occlusion_grade_new[which(anno$Occlusion_grade >= 3)] <- 1     # equal or more than 3  => replace with 1
-  anno$Occlusion_grade <- Occlusion_grade_new
+# features selected for statistical testing
+tb_GCA_present <- table(cbind(df_clinical_mod, df_histological$GCA_present))
+tb_Giant_cells <- table(cbind(df_clinical_mod, df_histological$Giant_cells))
+tb_Infiltrate_around_vasa_vasorum <- table(cbind(df_clinical_mod, df_histological$Infiltrate_around_vasa_vasorum))
+tb_Media_destruction <- table(cbind(df_clinical_mod, df_histological$Media_destruction))
 
-  Intima_pattern_new <- c(1:40)
-  Intima_pattern_new[which(anno$Intima_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
-  Intima_pattern_new[which(anno$Intima_pattern > 1)] <- 1        # 2 and 3                => replace with 1
-  anno$Intima_pattern <- Intima_pattern_new
+cat("Running for: ", args[3])
 
-}
+chi_GCA_present                     <- chisq.test(tb_GCA_present)
+chi_Giant_cells                     <- chisq.test(tb_Giant_cells)
+chi_Infiltrate_around_vasa_vasorum  <- chisq.test(tb_Infiltrate_around_vasa_vasorum)
+chi_Media_destruction               <- chisq.test(tb_Media_destruction)
 
-# get index of the feature for running
-running <- args[3]
-run_ind <- which(colnames(anno) == running)
+# other features
+tb_Any.granulomatous.infiltrate           <- table(cbind(df_clinical_mod, df_histological$Any.granulomatous.infiltrate))
+tb_Granulomatous.infiltrate.in.adventitia <- table(cbind(df_clinical_mod, df_histological$Granulomatous.infiltrate.in.adventitia))
+tb_Granulomatous.infiltrate.in.media      <- table(cbind(df_clinical_mod, df_histological$Granulomatous.infiltrate.in.media))
+tb_Granulomatous.infiltrate.in.intima     <- table(cbind(df_clinical_mod, df_histological$Granulomatous.infiltrate.in.intima))
+tb_Any.lymphocytic.infiltrate             <- table(cbind(df_clinical_mod, df_histological$Any.lymphocytic.infiltrate))
+tb_Lymphocytic.infiltrate.in.adventitia   <- table(cbind(df_clinical_mod, df_histological$Lymphocytic.infiltrate.in.adventitia))
+tb_Lymphocytic.infiltrate.in.media        <- table(cbind(df_clinical_mod, df_histological$Lymphocytic.infiltrate.in.media))
+tb_Lymphocytic.infiltrate.in.intima       <- table(cbind(df_clinical_mod, df_histological$Lymphocytic.infiltrate.in.intima))
+tb_Aggregates                             <- table(cbind(df_clinical_mod, df_histological$Aggregates))
+tb_PALI                                   <- table(cbind(df_clinical_mod, df_histological$PALI))
+tb_Neoangiogenesis                        <- table(cbind(df_clinical_mod, df_histological$Neoangiogenesis))
+tb_Hyperplasia                            <- table(cbind(df_clinical_mod, df_histological$Hyperplasia))
+tb_Fibrosis                               <- table(cbind(df_clinical_mod, df_histological$Fibrosis))
+tb_Oedema                                 <- table(cbind(df_clinical_mod, df_histological$Oedema))
 
-# define groups for comparison
-group = as.vector(unlist(anno[run_ind]))
+chi_Any.granulomatous.infiltrate            <- chisq.test(tb_Any.granulomatous.infiltrate)     
+chi_Granulomatous.infiltrate.in.adventitia  <- chisq.test(tb_Granulomatous.infiltrate.in.adventitia)
+chi_Granulomatous.infiltrate.in.media       <- chisq.test(tb_Granulomatous.infiltrate.in.media)     
+chi_Granulomatous.infiltrate.in.intima      <- chisq.test(tb_Granulomatous.infiltrate.in.intima)
+chi_Any.lymphocytic.infiltrate              <- chisq.test(tb_Any.lymphocytic.infiltrate)  
+chi_Lymphocytic.infiltrate.in.adventitia    <- chisq.test(tb_Lymphocytic.infiltrate.in.adventitia)
+chi_Lymphocytic.infiltrate.in.media         <- chisq.test(tb_Lymphocytic.infiltrate.in.media)
+chi_Lymphocytic.infiltrate.in.intima        <- chisq.test(tb_Lymphocytic.infiltrate.in.intima) 
+chi_Aggregates                              <- chisq.test(tb_Aggregates)                            
+chi_PALI                                    <- chisq.test(tb_PALI)                            
+chi_Neoangiogenesis                         <- chisq.test(tb_Neoangiogenesis)                 
+chi_Hyperplasia                             <- chisq.test(tb_Hyperplasia)                 
+chi_Fibrosis                                <- chisq.test(tb_Fibrosis)                          
+chi_Oedema                                  <- chisq.test(tb_Oedema)
 
-if(FALSE){
-# => in clinical features
-#group = anno$gender                  # (1 vs. 2)
-#group = anno$visual_loss             # (0 vs. 1)
-#group = anno$jaw_claudication        # (0 vs. 1)
-#group = anno$ischaemic_features      # (0 vs. 1)
+# create a list with all tests
+chi_all <- list(chi_GCA_present, 
+                chi_Giant_cells, 
+                chi_Infiltrate_around_vasa_vasorum, 
+                chi_Media_destruction, 
+                chi_Any.granulomatous.infiltrate, 
+                chi_Granulomatous.infiltrate.in.adventitia, 
+                chi_Granulomatous.infiltrate.in.media, 
+                chi_Granulomatous.infiltrate.in.intima, 
+                chi_Any.lymphocytic.infiltrate, 
+                chi_Lymphocytic.infiltrate.in.adventitia, 
+                chi_Lymphocytic.infiltrate.in.media, 
+                chi_Lymphocytic.infiltrate.in.intima, 
+                chi_Aggregates, 
+                chi_PALI, 
+                chi_Neoangiogenesis, 
+                chi_Hyperplasia, 
+                chi_Fibrosis, 
+                chi_Oedema)
 
-# => in histological features
-#group = annoGCA_present                              # (0 vs. 1)
-#group = anno$Giant_cells                             # (0 vs. 1)
-#group = anno$Media_destruction                       # (0 vs. 1)
-#group = Occlusion_grade_new                          # (0 vs. 1)
-#group = anno$Neoangiogenesis                         # (0 vs. 1)
-#group = Intima_pattern_new                           # (0 vs. 1)
-#group = anno$Infiltrate_around_vasa_vasorum          # (0 vs. 1)
-}
+# extract data.names
+unlist(lapply(chi_all, function(x) x$data.name))
 
-# HYPOTHISES: we want to know if the mean of group 1 differs from the mean of group 2.
+# extract p-values
+unlist(lapply(chi_all, function(x) x$p.value))
 
-# NOTE: no metter the comparison group_1 vs group_2 or group_2 vs group_1, 
-# the results are the same, just the 'statistic' component differs (but all is proportional)
+# check if the expected frequencies in all groups are equal to or greater than 5
+all(as.vector(chi_Oedema$expected) >= 5)
 
-# 'alternative' argument => "two,sided" (default)
-# if you want to test whether the mean of group_1 is less than the mean of group_2        => alternative = "less"
-# if you want to test whether the mean of group_1 is greater than the mean of group_2     => alternative = "greater"
+chi_results <- as.data.frame(cbind(unlist(lapply(chi_all, function(x) x$data.name)), 
+                                   unlist(lapply(chi_all, function(x) x$p.value)),
+                                   unlist(lapply(chi_all, function(x) all(as.vector(x$expected) >= 5)))))
 
-# INTERPRETATION:
-# if the p-value of the test is less than the significance level alpha = 0.05. 
-# we can conclude that the mean of group 1 is significantly different from the mean of group 2 with a p-value of [p-value =].
+colnames(chi_results) <- c("features", "p.value", "group_frequencies>=5")
 
-# initiate list for results
-res_raw <- list()
-res_vst <- list()
-res_rlog <- list()
+# save chi_squared results
+#write.csv(chi_results, file=paste0("results_Chi_squared_", args[3], ".csv"))
 
-# iteration over all genes (as we perform statistical testing for each gene)
+### Fisher's Exact Test
 
-for(j in 1:nrow(dat_raw)){
-  
-  # get data frame for one gene at a time
-  temp_raw = dat_raw[j, ]
-  temp_vst = dat_vst[j, ]
-  temp_rlog = dat_rlog[j, ]
-  
-  # perform statistical testing
-  res_raw[[j]] = wilcox.test(temp_raw[group==0], 
-                         temp_raw[group==1], 
-                         alternative = "two.sided",
-                         exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
-                                                      # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
-  
-  res_vst[[j]] = wilcox.test(temp_vst[group==0], temp_vst[group==1], alternative = "two.sided", exact = FALSE)              
-  res_rlog[[j]] = wilcox.test(temp_rlog[group==0], temp_rlog[group==1], alternative = "two.sided", exact = FALSE)              
-  
-}
-# might need to add as.numeric() if does not work
+fish_GCA_present                      <- fisher.test(tb_GCA_present)
+fish_Giant_cells                      <- fisher.test(tb_Giant_cells)
+fish_Infiltrate_around_vasa_vasorum   <- fisher.test(tb_Infiltrate_around_vasa_vasorum)
+fish_Media_destruction                <- fisher.test(tb_Media_destruction)
 
-# the object 'res' contains the result of the test | length = 52239
-# res[[1]]
-# Wilcoxon rank sum test with continuity correction
-# data:  temp[group == 2] and temp[group == 1]
-# W = 254.5, p-value = 0.07999
-# alternative hypothesis: true location shift is not equal to 0
+fish_Any.granulomatous.infiltrate             <- fisher.test(tb_Any.granulomatous.infiltrate)		
+fish_Granulomatous.infiltrate.in.adventitia   <- fisher.test(tb_Granulomatous.infiltrate.in.adventitia)
+#fish_Granulomatous.infiltrate.in.media        <- fisher.test(tb_Granulomatous.infiltrate.in.media)
+fish_Granulomatous.infiltrate.in.intima       <- fisher.test(tb_Granulomatous.infiltrate.in.intima)	
+fish_Any.lymphocytic.infiltrate               <- fisher.test(tb_Any.lymphocytic.infiltrate)				
+fish_Lymphocytic.infiltrate.in.adventitia     <- fisher.test(tb_Lymphocytic.infiltrate.in.adventitia)
+fish_Lymphocytic.infiltrate.in.media          <- fisher.test(tb_Lymphocytic.infiltrate.in.media)
+fish_Lymphocytic.infiltrate.in.intima         <- fisher.test(tb_Lymphocytic.infiltrate.in.intima)		
+fish_Aggregates                               <- fisher.test(tb_Aggregates)								
+fish_PALI                                     <- fisher.test(tb_PALI)										
+fish_Neoangiogenesis                          <- fisher.test(tb_Neoangiogenesis)							
+fish_Hyperplasia                              <- fisher.test(tb_Hyperplasia)								
+fish_Fibrosis                                 <- fisher.test(tb_Fibrosis)									
+fish_Oedema                                   <- fisher.test(tb_Oedema)
 
-# in the OUTPUT: (assume there are 2 groups: A and B)
-# => W is a rank sum subtracted by a constant. 
-# => if group A is the reference level in the factor variable group, the rank sum is computed for the data in group A
-# => the value of W is the rank sum for group A subtracted by nA(nA+1)/2. 
-# => the value of W is not important, as we perform the Wilcoxon Mann-Whitney test to determine if there is significant difference between the two groups. 
-# => we are primarily interested in the p-value
-# => by default wilcox.test() calculates an exact p-value if the samples contain less than 50 finite values and there are no ties. 
-# => Otherwise, a normal approximation is used. R uses normal approximation to calculate the p-value.
-  
-# retrieve t-statistic for each gene,
-all_stat_raw = unlist(lapply(res_raw, function(x) x$statistic))
-all_stat_vst = unlist(lapply(res_vst, function(x) x$statistic))
-all_stat_rlog = unlist(lapply(res_rlog, function(x) x$statistic))
+fish_all <- list(fish_GCA_present, 
+                 fish_Giant_cells, 
+                 fish_Infiltrate_around_vasa_vasorum, 
+                 fish_Media_destruction, 
+                 fish_Any.granulomatous.infiltrate, 
+                 fish_Granulomatous.infiltrate.in.adventitia, 
+                 #fish_Granulomatous.infiltrate.in.media, 
+                 fish_Granulomatous.infiltrate.in.intima, 
+                 fish_Any.lymphocytic.infiltrate, 
+                 fish_Lymphocytic.infiltrate.in.adventitia, 
+                 fish_Lymphocytic.infiltrate.in.media, 
+                 fish_Lymphocytic.infiltrate.in.intima, 
+                 fish_Aggregates, 
+                 fish_PALI, 
+                 fish_Neoangiogenesis, 
+                 fish_Hyperplasia, 
+                 fish_Fibrosis, 
+                 fish_Oedema)
 
-# retrieve its corresponding p-value
-all_pval_raw = unlist(lapply(res_raw, function(x) x$p.value))
-all_pval_vst = unlist(lapply(res_vst, function(x) x$p.value))
-all_pval_rlog = unlist(lapply(res_rlog, function(x) x$p.value))
+# extract data.names
+unlist(lapply(fish_all, function(x) x$data.name))
 
-# Multiplicity adjustment
-# After obtaining the p-values, you can make multiplicity correction to the pvalue. 
-all_adj.pval_raw <- p.adjust(all_pval_raw, "fdr")    # Benjamini & Hochberg (1995) ("BH" or its alias "fdr")
-all_adj.pval_vst <- p.adjust(all_pval_vst, "fdr") 
-all_adj.pval_rlog <- p.adjust(all_pval_rlog, "fdr") 
+# extract p-values
+unlist(lapply(fish_all, function(x) x$p.value))
 
-# result table
-# create a table as R data frame
-result.table2_raw = data.frame(ID=rownames(dat_raw), statistic=all_stat_raw, pvalue=all_pval_raw, fdr.pvalue=all_adj.pval_raw)
-result.table2_vst = data.frame(ID=rownames(dat_vst), statistic=all_stat_vst, pvalue=all_pval_vst, fdr.pvalue=all_adj.pval_vst)
-result.table2_rlog = data.frame(ID=rownames(dat_rlog), statistic=all_stat_rlog, pvalue=all_pval_rlog, fdr.pvalue=all_adj.pval_rlog)
+# extract odds ratios
+unlist(lapply(fish_all, function(x) x$estimate))
 
-# sort the table based on the order of the (adjusted) p-values
-result.table2.sorted_raw = result.table2_raw[order(all_adj.pval_raw),]
-result.table2.sorted_vst = result.table2_vst[order(all_adj.pval_vst),]
-result.table2.sorted_rlog = result.table2_rlog[order(all_adj.pval_rlog),]
+# ectract 95% confidence interval [CI] 
+unlist(lapply(fish_all, function(x) x$conf.int[1]))
+unlist(lapply(fish_all, function(x) x$conf.int[2]))
 
-# the 'statistic' column is not necessary
-result.table2.sorted_final_raw <- result.table2.sorted_raw[,-2]
-result.table2.sorted_final_vst <- result.table2.sorted_vst[,-2]
-result.table2.sorted_final_rlog <- result.table2.sorted_rlog[,-2]
+fish_results <- as.data.frame(cbind(unlist(lapply(fish_all, function(x) x$data.name)), 
+                                    unlist(lapply(fish_all, function(x) x$p.value)),
+                                    as.vector(unlist(lapply(fish_all, function(x) x$estimate))),
+                                    unlist(lapply(fish_all, function(x) x$conf.int[1])),
+                                    unlist(lapply(fish_all, function(x) x$conf.int[2]))))
 
-# and then show the top 10 (most) significant genes.
-#result.table2.sorted[1:10,]       # listing the top 10 genes
+colnames(fish_results) <- c("features", "p.value", "odds.ratio", "conf.int_1", "conf.int_2")
 
-# select only significant genes
-significant.cutoff_raw <- length(which(result.table2.sorted_raw$fdr.pvalue < 0.05))
-significant.cutoff_vst <- length(which(result.table2.sorted_vst$fdr.pvalue < 0.05))
-significant.cutoff_rlog <- length(which(result.table2.sorted_rlog$fdr.pvalue < 0.05))
+# save chi_squared results
+#write.csv(fish_results, file=paste0("results_Fishers_exact_", args[3], ".csv"))
 
-result.table2.significant_raw <- result.table2.sorted_raw[1:significant.cutoff_raw,]
-result.table2.significant_vst <- result.table2.sorted_vst[1:significant.cutoff_vst,]
-result.table2.significant_rlog <- result.table2.sorted_rlog[1:significant.cutoff_rlog,]
+################################################################################################
+### run for histological features with multiple categories
+################################################################################################
 
-# get the number of genes with pval < 5 % and padj < 5 %
-#length(which(result.table2_raw$pvalue < 0.05))
-#length(which(result.table2_vst$pvalue < 0.05))
-#length(which(result.table2_rlog$pvalue < 0.05))
+tb_Barcelona.score    <- table(cbind(df_clinical_mod, df_histological$Barcelona.score))
+tb_Adventitia.pattern <- table(cbind(df_clinical_mod, df_histological$Adventitia.pattern))
+tb_Media_pattern      <- table(cbind(df_clinical_mod, df_histological$Media_pattern))
+tb_Intima_pattern     <- table(cbind(df_clinical_mod, df_histological$Intima_pattern))
+tb_Occlusion_grade    <- table(cbind(df_clinical_mod, df_histological$Occlusion_grade))
 
-#length(which(result.table2_raw$fdr.pvalue < 0.05))
-#length(which(result.table2_vst$fdr.pvalue < 0.05))
-#length(which(result.table2_rlog$fdr.pvalue < 0.05))
+chi_Barcelona.score     <- chisq.test(tb_Barcelona.score)
+chi_Adventitia.pattern  <- chisq.test(tb_Adventitia.pattern)
+chi_Media_pattern       <- chisq.test(tb_Media_pattern)
+chi_Intima_pattern      <- chisq.test(tb_Intima_pattern)
+chi_Occlusion_grade     <- chisq.test(tb_Occlusion_grade)
 
-# create a data frame with summary of genes with pval < 5 % and padj < 5 %
-sum_table_all <- matrix(c("number of genes with pval < 0.05", 
-                          length(which(result.table2_raw$pvalue < 0.05)), length(which(result.table2_vst$pvalue < 0.05)), length(which(result.table2_rlog$pvalue < 0.05)),
-                          "number of genes with padj (FDR) < 0.05 ", 
-                          length(which(result.table2_raw$fdr.pvalue < 0.05)), length(which(result.table2_vst$fdr.pvalue < 0.05)), length(which(result.table2_rlog$fdr.pvalue < 0.05))), 
-                          nrow = 2, ncol = 4, byrow = TRUE)
+# create a list with all tests
+chi_all_multiple <- list(chi_Barcelona.score,
+                        chi_Adventitia.pattern,
+                        chi_Media_pattern, 
+                        chi_Intima_pattern,
+                        chi_Occlusion_grade)
 
-colnames(sum_table_all) <- c("metrics", "raw", "vst", "rlog")
+# extract data.names
+unlist(lapply(chi_all_multiple, function(x) x$data.name))
 
-# create output directory
-dir.create(paste0(args[4], running))
-setwd(paste0(args[4], running))
+# extract p-values
+unlist(lapply(chi_all_multiple, function(x) x$p.value))
 
-# save result tables
-write.csv(sum_table_all, file = paste0("results_", running, "_summary.csv"))
+# check if the expected frequencies in all groups are equal to or greater than 5
+#all(as.vector(chi_Oedema$expected) >= 5)
 
-# save list with pval and padj
-write.csv(result.table2.significant_raw, file = paste0("results_raw_", running, "_list.csv"))
-write.csv(result.table2.significant_vst, file = paste0("results_vst_", running, "_list.csv"))
-write.csv(result.table2.significant_rlog, file = paste0("results_rlog_", running, "_list.csv"))
+chi_results_multiple <- as.data.frame(cbind(unlist(lapply(chi_all_multiple, function(x) x$data.name)), 
+                                            unlist(lapply(chi_all_multiple, function(x) x$p.value)),
+                                            unlist(lapply(chi_all_multiple, function(x) all(as.vector(x$expected) >= 5)))))
 
-cat("Finished for", running, "\n")
-cat("OUTPUT dir:", paste0(args[4], running), "\n")
-cat("Created in ", "\n",
-    paste0("results_", running, "_summary.csv"), "\n",
-    paste0("results_raw_", running, "_list.csv"), "\n",
-    paste0("results_vst_", running, "_list.csv"), "\n",
-    paste0("results_rlog_", running, "_list.csv"))
+colnames(chi_results_multiple) <- c("features", "p.value", "group_frequencies>=5")
 
-# MERGE ALL OUTPUT SUMMARY FILES AND MODIFY THIER FORMAT MANUALLY IN EXCEL 
-# (clinical and histological separately: Mann-Whitney_PE_summary_clinical.xlsx and Mann-Whitney_PE_summary_histological.xlsx
-# THEN IMPORT TO POWERPOINT
-
-if(FALSE){
-# switch to gene names and check chromosome location for obtained genes
-mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
-#refseq <- c()
-
-g_names_raw <- getBM(filters="refseq_mrna", attributes=c("hgnc_symbol", "chromosome_name"), values=result.table2.significant_raw$ID, mart=mart)
-g_names_vst <- getBM(filters="refseq_mrna", attributes=c("hgnc_symbol", "chromosome_name"), values=result.table2.significant_vst$ID, mart=mart)
-g_names_rlog <- getBM(filters="refseq_mrna", attributes=c("hgnc_symbol", "chromosome_name"), values=result.table2.significant_rlog$ID, mart=mart)
-
-# save results
-write.csv(g_names_raw, file = paste0("gene_table_", running, "_raw.csv"))
-write.csv(g_names_vst, file = paste0("gene_table_", running, "_vst.csv"))
-write.csv(g_names_rlog, file = paste0("gene_table_", running, "_rlog.csv"))
+# save chi_squared results
+write.csv(chi_results_multiple, file=paste0("results_Chi_squared_multiple_", args[3], ".csv"))
 
 
-sink(paste0("gene_list_", running, "_raw.txt"))
-g_names_raw$hgnc_symbol
-sink()
 
-sink(paste0("gene_list_", running, "_vst.txt"))
-for (i in 1:length(g_names_vst$hgnc_symbol)) {
-  print(g_names_vst$hgnc_symbol[i])
-}
-sink()
+fish_Barcelona.score     <- fisher.test(tb_Barcelona.score)
+fish_Adventitia.pattern  <- fisher.test(tb_Adventitia.pattern)
+fish_Media_pattern       <- fisher.test(tb_Media_pattern)
+fish_Intima_pattern      <- fisher.test(tb_Intima_pattern)
+fish_Occlusion_grade     <- fisher.test(tb_Occlusion_grade)
 
-sink(paste0("gene_list_", running, "_rlog.txt"))
-for (i in 1:length(g_names_rlog$hgnc_symbol)) {
-  print(g_names_rlog$hgnc_symbol[i])
-}
-sink()
-}
+# transform to binary and run the same analysis, to make it 2 comparison groups
+Occlusion_grade_new <- c(1:40)
+Occlusion_grade_new[which(df_histological$Occlusion_grade < 3)] <- 0      # less than 3           => replace with 0
+Occlusion_grade_new[which(df_histological$Occlusion_grade >= 3)] <- 1     # equal or more than 3  => replace with 1
 
-# use gene_list to create venn diagram:
-# http://bioinformatics.psb.ugent.be/cgi-bin/liste/Venn/calculate_venn.htpl
+Intima_pattern_new <- c(1:40)
+Intima_pattern_new[which(df_histological$Intima_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
+Intima_pattern_new[which(df_histological$Intima_pattern > 1)] <- 1        # 2 and 3                => replace with 1
 
-# create venn diagram to see how many genes are in common between these 3 methods
-#library(VennDiagram)
-#venn.diagram(list(g_names_raw$hgnc_symbol, g_names_raw$hgnc_symbol, g_names_raw$hgnc_symbol),
-#             category.names = c("Raw", "VST", "rlog"),
-#             filename = 'venn_diagramm.png')
+Adventitia_pattern_new <- c(1:40)
+Adventitia_pattern_new[which(df_histological$Adventitia.pattern <= 1)] <- 0       # 0 and 1                => replace with 0
+Adventitia_pattern_new[which(df_histological$Adventitia.pattern > 1)] <- 1        # 2 and 3                => replace with 1
 
-# save results
-#write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_gender_norm.csv")
-#write.csv(sum_table, file="summary_table_Mann-Whitney_gender_norm.csv")
-#write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_gender_VST.csv")
-#write.csv(sum_table, file="summary_table_Mann-Whitney_gender_VST.csv")
+Media_pattern_new <- c(1:40)
+Media_pattern_new[which(df_histological$Media_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
+Media_pattern_new[which(df_histological$Media_pattern > 1)] <- 1        # 2 and 3                => replace with 1
 
-#write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_visual-loss_norm.csv")
-#write.csv(sum_table, file="summary_table_Mann-Whitney_visual-loss_norm.csv")
+tb_Adventitia.pattern_trans <- table(cbind(df_clinical_mod, Adventitia_pattern_new))
+tb_Media_pattern_trans      <- table(cbind(df_clinical_mod, Media_pattern_new))
+tb_Intima_pattern_trans     <- table(cbind(df_clinical_mod, Intima_pattern_new))
+tb_Occlusion_grade_trans    <- table(cbind(df_clinical_mod, Occlusion_grade_new))
 
-#write.csv(result.table2.sorted_final, file="results_table_Mann-Whitney_visual-loss_VST.csv")
-#write.csv(sum_table, file="summary_table_Mann-Whitney_visual-loss_VST.csv")
+chi_Adventitia.pattern_trans  <- chisq.test(tb_Adventitia.pattern_trans)
+chi_Media_pattern_trans       <- chisq.test(tb_Media_pattern_trans)
+chi_Intima_pattern_trans      <- chisq.test(tb_Intima_pattern_trans)
+chi_Occlusion_grade_trans     <- chisq.test(tb_Occlusion_grade_trans)
+
+# create a list with all tests
+chi_all_multiple_trans <- list(chi_Adventitia.pattern_trans,
+                                chi_Media_pattern_trans, 
+                                chi_Intima_pattern_trans,
+                                chi_Occlusion_grade_trans)
+
+# extract data.names
+unlist(lapply(chi_all_multiple_trans, function(x) x$data.name))
+
+# extract p-values
+unlist(lapply(chi_all_multiple_trans, function(x) x$p.value))
+
+# check if the expected frequencies in all groups are equal to or greater than 5
+#all(as.vector(chi_Oedema$expected) >= 5)
+
+chi_results_multiple_trans <- as.data.frame(cbind(unlist(lapply(chi_all_multiple_trans, function(x) x$data.name)), 
+                                            unlist(lapply(chi_all_multiple_trans, function(x) x$p.value)),
+                                            unlist(lapply(chi_all_multiple_trans, function(x) all(as.vector(x$expected) >= 5)))))
+
+colnames(chi_results_multiple_trans) <- c("features", "p.value", "group_frequencies>=5")
+
+# save chi_squared results
+write.csv(chi_results_multiple_trans, file=paste0("results_Chi_squared_multiple_trans_", args[3], ".csv"))
+
+
+fish_Adventitia.pattern_trans  <- fisher.test(tb_Adventitia.pattern_trans)
+fish_Media_pattern_trans       <- fisher.test(tb_Media_pattern_trans)
+fish_Intima_pattern_trans      <- fisher.test(tb_Intima_pattern_trans)
+fish_Occlusion_grade_trans     <- fisher.test(tb_Occlusion_grade_trans)
+
+################################################################################################
+### run Mann-Whitney for continous features 
+################################################################################################
+# => "year.TAB.sample.was.collected"                    
+# => "number.of.days.on.steroids.at.TAB"                
+# => "number.of.days.between.TAB.and.BL.blood.sample"   
+# => "age.at.BL"
+
+# visual loss vs. no visual loss 
+
+# create a subset with these 4 features of interest
+df_visual_loss <- as.data.frame(cbind(df_clinical$visual_loss, 
+                                      df_clinical$year.TAB.sample.was.collected,
+                                      df_clinical$number.of.days.on.steroids.at.TAB,
+                                      df_clinical$number.of.days.between.TAB.and.BL.blood.sample,
+                                      df_clinical$age.at.BL))
+
+colnames(df_visual_loss) <- c("visual_loss", "year_TAB", "nb_days_steroids", "nb_days_TAB_blood", "age")
+
+# get vectors with age for patients with visual_loos and no_visual_loss
+cond_1 <- which(df_visual_loss$visual_loss == 0)
+cond_2 <- which(df_visual_loss$visual_loss == 1)
+
+
+mann_whitney_year_TAB_visual_loss <- wilcox.test(as.numeric(df_visual_loss$year_TAB[cond_1]), 
+                                     as.numeric(df_visual_loss$year_TAB[cond_2]), 
+                                     alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_steroids_visual_loss <- wilcox.test(as.numeric(df_visual_loss$nb_days_steroids[cond_1]), 
+                                             as.numeric(df_visual_loss$nb_days_steroids[cond_2]), 
+                                             alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_TAB_blood_visual_loss <- wilcox.test(as.numeric(df_visual_loss$nb_days_TAB_blood[cond_1]), 
+                                             as.numeric(df_visual_loss$nb_days_TAB_blood[cond_2]), 
+                                             alternative = "two.sided",exact = FALSE) 
+# NOTE there's one missing values in nb_days_TAB_blood
+
+mann_whitney_age_visual_loss <- wilcox.test(as.numeric(df_visual_loss$age[cond_1]), 
+                                as.numeric(df_visual_loss$age[cond_2]), 
+                                alternative = "two.sided",exact = FALSE) 
+
+# jaw_claudication vs. no_jaw_claudication
+
+# create a subset with these 4 features of interest
+df_jaw_claudication <- as.data.frame(cbind(df_clinical$jaw_claudication, 
+                                           df_clinical$year.TAB.sample.was.collected,
+                                           df_clinical$number.of.days.on.steroids.at.TAB,
+                                           df_clinical$number.of.days.between.TAB.and.BL.blood.sample,
+                                           df_clinical$age.at.BL))
+
+colnames(df_jaw_claudication) <- c("jaw_claudication", "year_TAB", "nb_days_steroids", "nb_days_TAB_blood", "age")
+
+# get vectors with age for patients with visual_loos and no_jaw_claudication
+cond_1 <- which(df_jaw_claudication$jaw_claudication == 0)
+cond_2 <- which(df_jaw_claudication$jaw_claudication == 1)
+
+
+mann_whitney_year_TAB_jaw_claudication <- wilcox.test(as.numeric(df_jaw_claudication$year_TAB[cond_1]), 
+                                                      as.numeric(df_jaw_claudication$year_TAB[cond_2]), 
+                                                      alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_steroids_jaw_claudication <- wilcox.test(as.numeric(df_jaw_claudication$nb_days_steroids[cond_1]), 
+                                                              as.numeric(df_jaw_claudication$nb_days_steroids[cond_2]), 
+                                                              alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_TAB_blood_jaw_claudication <- wilcox.test(as.numeric(df_jaw_claudication$nb_days_TAB_blood[cond_1]), 
+                                                               as.numeric(df_jaw_claudication$nb_days_TAB_blood[cond_2]), 
+                                                               alternative = "two.sided",exact = FALSE) 
+# NOTE there's one missing values in nb_days_TAB_blood
+
+mann_whitney_age_jaw_claudication <- wilcox.test(as.numeric(df_jaw_claudication$age[cond_1]), 
+                                                 as.numeric(df_jaw_claudication$age[cond_2]), 
+                                                 alternative = "two.sided",exact = FALSE) 
+
+# ischaemic_features vs. no_ischaemic_features
+
+# create a subset with these 4 features of interest
+df_ischaemic_features <- as.data.frame(cbind(df_clinical$ischaemic_features, 
+                                             df_clinical$year.TAB.sample.was.collected,
+                                             df_clinical$number.of.days.on.steroids.at.TAB,
+                                             df_clinical$number.of.days.between.TAB.and.BL.blood.sample,
+                                             df_clinical$age.at.BL))
+
+colnames(df_ischaemic_features) <- c("ischaemic_features", "year_TAB", "nb_days_steroids", "nb_days_TAB_blood", "age")
+
+# get vectors with age for patients with visual_loos and no_ischaemic_features
+cond_1 <- which(df_ischaemic_features$ischaemic_features == 0)
+cond_2 <- which(df_ischaemic_features$ischaemic_features == 1)
+
+
+mann_whitney_year_TAB_ischaemic_features <- wilcox.test(as.numeric(df_ischaemic_features$year_TAB[cond_1]), 
+                                                        as.numeric(df_ischaemic_features$year_TAB[cond_2]), 
+                                                        alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_steroids_ischaemic_features <- wilcox.test(as.numeric(df_ischaemic_features$nb_days_steroids[cond_1]), 
+                                                                as.numeric(df_ischaemic_features$nb_days_steroids[cond_2]), 
+                                                                alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_TAB_blood_ischaemic_features <- wilcox.test(as.numeric(df_ischaemic_features$nb_days_TAB_blood[cond_1]), 
+                                                                 as.numeric(df_ischaemic_features$nb_days_TAB_blood[cond_2]), 
+                                                                 alternative = "two.sided",exact = FALSE) 
+# NOTE there's one missing values in nb_days_TAB_blood
+
+mann_whitney_age_ischaemic_features <- wilcox.test(as.numeric(df_ischaemic_features$age[cond_1]), 
+                                                   as.numeric(df_ischaemic_features$age[cond_2]), 
+                                                   alternative = "two.sided",exact = FALSE) 
+
+# gender: male vs. female
+
+
+# create a subset with these 4 features of interest
+df_gender <- as.data.frame(cbind(df_clinical$gender, 
+                                 df_clinical$year.TAB.sample.was.collected,
+                                 df_clinical$number.of.days.on.steroids.at.TAB,
+                                 df_clinical$number.of.days.between.TAB.and.BL.blood.sample,
+                                 df_clinical$age.at.BL))
+
+colnames(df_gender) <- c("gender", "year_TAB", "nb_days_steroids", "nb_days_TAB_blood", "age")
+
+# get vectors with age for patients with visual_loos and no_gender
+cond_1 <- which(df_gender$gender == 1)
+cond_2 <- which(df_gender$gender == 2)
+
+
+mann_whitney_year_TAB_gender <- wilcox.test(as.numeric(df_gender$year_TAB[cond_1]), 
+                                            as.numeric(df_gender$year_TAB[cond_2]), 
+                                            alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_steroids_gender <- wilcox.test(as.numeric(df_gender$nb_days_steroids[cond_1]), 
+                                                    as.numeric(df_gender$nb_days_steroids[cond_2]), 
+                                                    alternative = "two.sided",exact = FALSE) 
+
+mann_whitney_nb_days_TAB_blood_gender <- wilcox.test(as.numeric(df_gender$nb_days_TAB_blood[cond_1]), 
+                                                     as.numeric(df_gender$nb_days_TAB_blood[cond_2]), 
+                                                     alternative = "two.sided",exact = FALSE) 
+# NOTE there's one missing values in nb_days_TAB_blood
+
+mann_whitney_age_gender <- wilcox.test(as.numeric(df_gender$age[cond_1]), 
+                                       as.numeric(df_gender$age[cond_2]), 
+                                       alternative = "two.sided",exact = FALSE) 
+
+# create table with results:
+mann_whitney_year_TAB_visual_loss 
+mann_whitney_nb_days_steroids_visual_loss 
+mann_whitney_nb_days_TAB_blood_visual_loss 
+mann_whitney_age_visual_loss
+
+mann_whitney_visual_loss_all <- c(mann_whitney_year_TAB_visual_loss$p.value,
+                                  mann_whitney_nb_days_steroids_visual_loss$p.value, 
+                                  mann_whitney_nb_days_TAB_blood_visual_loss$p.value, 
+                                  mann_whitney_age_visual_loss$p.value)
+
+mann_whitney_jaw_claudication_all <- c(mann_whitney_year_TAB_jaw_claudication$p.value,
+                                        mann_whitney_nb_days_steroids_jaw_claudication$p.value, 
+                                        mann_whitney_nb_days_TAB_blood_jaw_claudication$p.value, 
+                                        mann_whitney_age_jaw_claudication$p.value)
+
+mann_whitney_ischaemic_features_all <- c(mann_whitney_year_TAB_ischaemic_features$p.value,
+                                          mann_whitney_nb_days_steroids_ischaemic_features$p.value, 
+                                          mann_whitney_nb_days_TAB_blood_ischaemic_features$p.value, 
+                                          mann_whitney_age_ischaemic_features$p.value)
+
+mann_whitney_gender_all <- c(mann_whitney_year_TAB_gender$p.value,
+                              mann_whitney_nb_days_steroids_gender$p.value, 
+                              mann_whitney_nb_days_TAB_blood_gender$p.value, 
+                              mann_whitney_age_gender$p.value)
+
+results_mann_whitney <- cbind(mann_whitney_visual_loss_all, 
+                            mann_whitney_jaw_claudication_all,
+                            mann_whitney_ischaemic_features_all,
+                            mann_whitney_gender_all)
+
+rownames(results_mann_whitney) <- c("year.TAB.sample.was.collected", 
+                                  "number.of.days.on.steroids.at.TAB", 
+                                  "number.of.days.between.TAB.and.BL.blood.sample", 
+                                  "age.at.BL")
+
+# save Mann-Whitney results
+write.csv(results_mann_whitney, file=paste0("results_Mann_Whitney.csv"))
+
