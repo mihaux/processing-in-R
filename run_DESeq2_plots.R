@@ -20,12 +20,12 @@ if(startsWith(w_dir, "/Users/michal")){
 }
 
 # define directory with data
+#data_dir <- paste0(main_dir,"/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/FINAL")
 data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts")
 #data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/all_chr/INPUT_counts")
 
 #data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/no_chrXY/INPUT_counts")
 #data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/all_chrXY/INPUT_counts")
-
 
 # load data RAW | VST | rlog
 load(paste0(data_dir, "/Raw_DESeq_dataset_all.Rda"))
@@ -38,7 +38,7 @@ vst_all_trans       <- DESeqTransform(vst_all)
 rlog_all_trans      <- DESeqTransform(rlog_all)
 
 #colnames(dds_all@colData) => labels for PCA plots:
-
+if(FALSE){
 #--- "visual_loss"
 p1_visual_loss <- plotPCA(dds_all_trans, intgroup=c("visual_loss")) + ggtitle("raw: all chr") + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1) + scale_color_brewer(type = 'qual', palette = 2)
 p1_visual_loss$labels$colour <- "visual_loss"
@@ -68,6 +68,7 @@ p2_ischaemic_features$labels$colour <- "ischaemic_features"
 
 p3_ischaemic_features <- plotPCA(rlog_all_trans, intgroup=c("ischaemic_features")) + ggtitle("rlog: all chr") + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1) + scale_color_brewer(type = 'qual', palette = 7) 
 p3_ischaemic_features$labels$colour <- "ischaemic_features"
+}
 
 #--- "gender"
 p1_gender <- plotPCA(dds_all_trans, intgroup=c("gender")) + ggtitle("raw: all chr") + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
@@ -79,6 +80,7 @@ p2_gender$labels$colour <- "gender"
 p3_gender <- plotPCA(rlog_all_trans, intgroup=c("gender")) + ggtitle("rlog: all chr") + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1) 
 p3_gender$labels$colour <- "gender"
 
+if(FALSE){
 #--- "year_TAB_collected"
 p1_year_TAB_collected <- plotPCA(dds_all_trans, intgroup=c("year_TAB_collected")) + ggtitle("raw: all chr") + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1) #+ scale_color_brewer(type = 'qual', palette = 1)
 p1_year_TAB_collected$labels$colour <- "year_TAB_collected"
@@ -108,10 +110,13 @@ p2_age$labels$colour <- "age"
 
 p3_age <- plotPCA(rlog_all_trans, intgroup=c("age")) + ggtitle("rlog: all chr") + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
 p3_age$labels$colour <- "age"
+}
 
 ####### SAVE PLOTS ####### 
-dir_out <- "/Users/ummz/Documents/OneDrive - University of Leeds/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr"
+#dir_out <- "/Users/ummz/Documents/OneDrive - University of Leeds/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr"
+dir_out <- "/Users/ummz/Documents/OneDrive - University of Leeds/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/FINAL/NEW"
 
+if(FALSE){
 #--- "visual_loss"
 # create diectory for output plots
 dir.create(paste0(dir_out,"/PCA_plots/", p1_visual_loss$labels$colour))
@@ -174,11 +179,14 @@ png(file=paste0(p3_ischaemic_features$labels$colour, "_rlog_all_chr.png")); p3_i
 png(file=paste0(p3_ischaemic_features$labels$colour, "_rlog_all_chr_label.png"))
 p3_ischaemic_features + geom_point(size = 3) + geom_text(label=p3_ischaemic_features$data$name, check_overlap=F, nudge_x=5, nudge_y=0, size=3)
 dev.off()
+}
 
 #--- "gender"
 # create diectory for output plots
-dir.create(paste0(dir_out,"/PCA_plots/", p1_gender$labels$colour))
-setwd(paste0(dir_out,"/PCA_plots/", p1_gender$labels$colour))
+#dir.create(paste0(dir_out,"/PCA_plots/", p1_gender$labels$colour))
+#setwd(paste0(dir_out,"/PCA_plots/", p1_gender$labels$colour))
+
+setwd(dir_out)
 
 # save plots
 png(file=paste0(p1_gender$labels$colour, "_raw_all_chr.png")); p1_gender; dev.off()
@@ -196,6 +204,7 @@ png(file=paste0(p3_gender$labels$colour, "_rlog_all_chr_label.png"))
 p3_gender + geom_point(size = 3) + geom_text(label=p3_gender$data$name, check_overlap=F, nudge_x=5, nudge_y=0, size=3)
 dev.off()
 
+if(FALSE){
 #--- "year_TAB_collected"
 # create diectory for output plots
 dir.create(paste0(dir_out,"/PCA_plots/", p1_year_TAB_collected$labels$colour))
@@ -268,7 +277,7 @@ dev.off()
 #dev.off()
 
 # there's more code for adding sample names as labels on the plots, etc
-
+}
 
 ####################################################################
 ####################################################################
@@ -331,17 +340,52 @@ png(file=paste0(p2_gender_all$labels$colour, "_VST_all_chr_26486.png")); p2_gend
 
 
 
-#plotPCA.DESeqTransform = function(object, intgroup="condition", ntop=500, returnData=FALSE)
 
-# calculate the variance for each gene
-#  rv <- rowVars(assay(object))
+
+plotPCA.DESeqTransform = function(object, intgroup="condition", ntop=500, returnData=FALSE)
+{
+  # calculate the variance for each gene
+  rv <- rowVars(assay(object))
   
-# select the ntop genes by variance
-#  select <- order(rv, decreasing=TRUE)[seq_len(min(ntop, length(rv)))]
+  # select the ntop genes by variance
+  select <- order(rv, decreasing=TRUE)[seq_len(min(ntop, length(rv)))]
   
-# perform a PCA on the data in assay(x) for the selected genes
-#  pca <- prcomp(t(assay(object)[select,]))
-  
+  # perform a PCA on the data in assay(x) for the selected genes
+  pca <- prcomp(t(assay(object)[select,]))
+
+}
+
+# plotPCA(vst_all_trans, intgroup=c("gender"))    => object: vst_all_trans
+
+rv <- rowVars(assay(vst_all_trans))
+
+# create a dataframe with rownames and rv values
+df_rv_new <- as.data.frame(cbind(rownames(vst_all_trans), rv))
+
+newdata <- df_rv_new[order(-rv),] 
+newdata_bis <- newdata[1:500,]
+
+tbch <- read.csv2(paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/table_TranscriptsByChromosome_modified.csv"), sep = ",", row.names = 1)
+
+mis <- list()
+for (i in 1:500){
+  mis[[i]] <- unique(tbch[which(tbch$IDs == as.vector(newdata_bis$V1[i])),])[1,1]
+}
+
+kot <- as.vector(unlist(mis))
+kot_tris <- kot[1:50]
+
+newdata_tris <- newdata_bis[1:50,]
+
+barplot(as.numeric(as.vector(newdata_tris$rv)), main = "50 top most variable genes", names.arg=kot_tris, las=2, xlab="Chromomsome where the gene is located")
+
+
+# unlist and get how man per each chromosomes
+
+
+
+
+
 # source: 
 # => https://www.biostars.org/p/237730/
 # => https://support.bioconductor.org/p/51270/ 
