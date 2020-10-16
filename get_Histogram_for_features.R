@@ -1,4 +1,4 @@
-# this script creates histograms for continuous features to see their distribution
+# this script creates histograms and barplots for continuous features to see their distribution
 
 ### plots included: ### 
 # number.of.days.on.steroids.at.TAB (all / male only / female only)

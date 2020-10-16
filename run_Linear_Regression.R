@@ -1,20 +1,6 @@
-# script to perform Mann-Whitney U test (also known as Wilcoxon rank sum test or Mann-Whitney test)
-# 2 methods: wilcox.test() [built-in R function] and wilcoxTest() [GSALightning package]
+# script to perform Linear Regression
 
-# very clear source: http://courses.atlas.illinois.edu/spring2016/STAT/STAT200/RProgramming/NonParametricStats.html
-
-# The unpaired two-samples Wilcoxon test (also known as Wilcoxon rank sum test or Mann-Whitney test) 
-# => is a non-parametric alternative to the unpaired two-samples t-test, 
-# => can be used to compare two independent groups of samples. 
-# => is used when your data are not normally distributed.
-
-# NOTE: if there are confounders, then you would need to rather use something like logistic regression, not Mann-Whitney test
-
-# WHAT TO TEST: statistical test between 2 groups: visual loss vs no visual loss,
-# to see if patients with visual loss are more likely to have GCA or not (if not, then there's no association)
-
-# To perform two-samples Wilcoxon test comparing the means of two independent samples (x & y), 
-# we perform a t-test on each gene (i.e. each row) by running the function wilcox.test() for each row, in a two-sample setting between group_1 and group_2.
+# very clear source: http://r-statistics.co/Linear-Regression.html
 
 # install (if necessary) and load package
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")

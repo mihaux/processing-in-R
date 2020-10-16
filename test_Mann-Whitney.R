@@ -118,7 +118,12 @@ if(nrow(anno) == ncol(dat_raw)){
   Intima_pattern_new[which(anno$Intima_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
   Intima_pattern_new[which(anno$Intima_pattern > 1)] <- 1        # 2 and 3                => replace with 1
   anno$Intima_pattern <- Intima_pattern_new
-
+  
+  Media_pattern_new <- c(1:40)
+  Media_pattern_new[which(anno$Media_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
+  Media_pattern_new[which(anno$Media_pattern > 1)] <- 1        # 2 and 3                => replace with 1
+  anno$Media_pattern <- Media_pattern_new
+  
 }
 
 # get index of the feature for running
