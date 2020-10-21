@@ -47,6 +47,9 @@ setwd(args[3])
 #load(paste0(args[1], "/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
 load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
 
+# define running ID (either "raw", "vst" pr "rlog")
+run_id <- "rlog"
+
 # load clinical data 
 df_meta <- read.csv(args[2], row.names = 1, header = TRUE)
 
@@ -77,9 +80,6 @@ steroids[which(df_meta$number.of.days.on.steroids.at.TAB < 6)] <- 1
 steroids[which(df_meta$number.of.days.on.steroids.at.TAB >= 6)] <- 2
 
 df_meta$number.of.days.on.steroids.at.TAB <- steroids
-
-# define running ID
-run_id <- "rlog"
 
 # define groups for comparison
 group = df_meta$number.of.days.on.steroids.at.TAB
@@ -164,91 +164,92 @@ ggplot(res_table_sorted[1:752,], aes(x=fdr.pvalue)) +
 if(output_save==TRUE){ dev.off() }
 
 # check correlation between p-val and p-adjusted
+if(output_save==TRUE){ png(file = paste0("correlation_pval-padj_", run_id, ".png")) }
 
+ggplot(res_table, aes(pvalue, fdr.pvalue)) + geom_point()
 
+if(output_save==TRUE){ dev.off() }
 
+# NOTES:
+# total length => 26 486
+# nb of NA values => 5 121 (same genes in p-value and p-adj)
 
+########################################################
+### same run, but with 2 samples of 16 days excluded ###
+########################################################
 
+# need to reload meta data
+df_meta <- read.csv(args[2], row.names = 1, header = TRUE)
+rownames(df_meta) <- paste0("ID_", rownames(df_meta))
 
-
-
-
-
-
-################################################################################################
-### with 2 samples of 16 days excluded
-
-# exclude from count datasets and clinical
-dat_raw_bis <- dat_raw[,-which(gr_2$number.of.days.on.steroids.at.TAB == 16)]
-dat_vst_bis <- dat_vst[,-which(gr_2$number.of.days.on.steroids.at.TAB == 16)]
-dat_rlog_bis <- dat_rlog[,-which(gr_2$number.of.days.on.steroids.at.TAB == 16)]
-
-df_meta_bis <- df_meta[-which(gr_2$number.of.days.on.steroids.at.TAB == 16),]
+# exclude these 2 samples from count datasets and clinical spreadsheet
+dat_excluded <- dat[,-which(gr_2$number.of.days.on.steroids.at.TAB == 16)]
+df_meta_excluded <- df_meta[-which(gr_2$number.of.days.on.steroids.at.TAB == 16),]
 
 # add new column to define comparison groups 1 and 2
-steroids_bis <- c(1:39)
-steroids_bis[which(df_meta_bis$number.of.days.on.steroids.at.TAB < 6)] <- 1
-steroids_bis[which(df_meta_bis$number.of.days.on.steroids.at.TAB >= 6)] <- 2
+steroids_excluded <- c(1:39)
+steroids_excluded[which(df_meta_excluded$number.of.days.on.steroids.at.TAB < 6)] <- 1
+steroids_excluded[which(df_meta_excluded$number.of.days.on.steroids.at.TAB >= 6)] <- 2
 
-df_meta_bis$number.of.days.on.steroids.at.TAB <- steroids_bis
+df_meta_excluded$number.of.days.on.steroids.at.TAB <- steroids_excluded
 
 # define groups for comparison
-group_bis = df_meta_bis$number.of.days.on.steroids.at.TAB
+group_excluded = df_meta_excluded$number.of.days.on.steroids.at.TAB
 
 # initiate list for results
-res_raw_bis <- list()
-res_vst_bis <- list()
-res_rlog_bis <- list()
-
-for(j in 1:nrow(dat_raw_bis)){
+res_excluded <- list()
+for(j in 1:nrow(dat_excluded)){
   
   # get data frame for one gene at a time
-  temp_raw = dat_raw_bis[j, ]
-  temp_vst = dat_vst_bis[j, ]
-  temp_rlog = dat_rlog_bis[j, ]
+  temp_excluded = dat_excluded[j, ]
   
   # perform statistical testing
-  res_raw_bis[[j]] = wilcox.test(temp_raw[group_bis==1], 
-                             temp_raw[group_bis==2], 
-                             alternative = "two.sided",
-                             exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
-  # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
+  res_excluded[[j]] = wilcox.test(temp_excluded[group_excluded==1], temp_excluded[group_excluded==2], 
+                             alternative = "two.sided", exact = FALSE)               
   
-  res_vst_bis[[j]] = wilcox.test(temp_vst[group_bis==1], temp_vst[group_bis==2], alternative = "two.sided", exact = FALSE)              
-  res_rlog_bis[[j]] = wilcox.test(temp_rlog[group_bis==1], temp_rlog[group_bis==2], alternative = "two.sided", exact = FALSE)              
-  
+  # exact = FALSE => to suppress the warning of “cannot compute exact p-value with tie”
+  # which is caused by the assumption of a Wilcoxon test that the responses are continuous. 
 }
 
-# retrieve its corresponding p-value
-all_pval_raw_bis = unlist(lapply(res_raw_bis, function(x) x$p.value))
-all_pval_vst_bis = unlist(lapply(res_vst_bis, function(x) x$p.value))
-all_pval_rlog_bis = unlist(lapply(res_rlog_bis, function(x) x$p.value))
+# retrieve p-value for each gene (transcript)
+all_pval_excluded = unlist(lapply(res_excluded, function(x) x$p.value))
 
-# Multiplicity adjustment
-# After obtaining the p-values, you can make multiplicity correction to the pvalue. 
-all_adj.pval_raw_bis <- p.adjust(all_pval_raw_bis, "fdr")    # Benjamini & Hochberg (1995) ("BH" or its alias "fdr")
-all_adj.pval_vst_bis <- p.adjust(all_pval_vst_bis, "fdr") 
-all_adj.pval_rlog_bis <- p.adjust(all_pval_rlog_bis, "fdr") 
+# get corrected p-values
+all_adjusted_excluded <- p.adjust(all_pval_excluded, "fdr")    # Benjamini & Hochberg ("BH" or its alias "fdr")
 
-# result table
+
+
+### histogram of p-values ###
+# create a df with IDs and p-values
+df_pval_excluded <- data.frame(ID=rownames(dat_excluded), pval=all_pval_excluded)
+
+# make a histogram of pvalues
+if(output_save==TRUE){ png(file = paste0("histogram_pvalues_excluded_", run_id, ".png")) }
+
+ggplot(df_pval_excluded, aes(x=pval)) + 
+  geom_histogram(binwidth=0.01) + 
+  labs(title=paste0("Histogram of p-values: ", run_id), x="p-values")
+
+if(output_save==TRUE){ dev.off() }
+
+# NOTE: all the p-adjusted values equal 1
+
 # create a table as R data frame
-result.table2_raw_bis = data.frame(ID=rownames(dat_raw_bis), pvalue=all_pval_raw_bis, fdr.pvalue=all_adj.pval_raw_bis)
-result.table2_vst_bis = data.frame(ID=rownames(dat_vst_bis), pvalue=all_pval_vst_bis, fdr.pvalue=all_adj.pval_vst_bis)
-result.table2_rlog_bis = data.frame(ID=rownames(dat_rlog_bis), pvalue=all_pval_rlog_bis, fdr.pvalue=all_adj.pval_rlog_bis)
+res_table_excluded = data.frame(ID=rownames(dat_excluded), 
+                                pvalue=all_pval_excluded, 
+                                fdr.pvalue=all_adjusted_excluded)
 
-# sort the table based on the order of the (adjusted) p-values
-result.table2.sorted_raw_bis = result.table2_raw_bis[order(all_adj.pval_raw_bis),]
-result.table2.sorted_vst_bis = result.table2_vst_bis[order(all_adj.pval_vst_bis),]
-result.table2.sorted_rlog_bis = result.table2_rlog_bis[order(all_adj.pval_rlog_bis),]
+# sort the table by p-values
+res_table_sorted_excluded <- res_table[order(all_pval_excluded),]
 
+# sort the table by p-adjusted
+#res_table_sorted_bis <- res_table[order(all_adjusted),]
 
-result.table2.sorted_raw_bis_pval = result.table2_raw_bis[order(all_pval_raw_bis),]
-result.table2.sorted_vst_bis_pval = result.table2_vst_bis[order(all_pval_vst_bis),]
-result.table2.sorted_rlog_bis_pval = result.table2_rlog_bis[order(all_pval_rlog_bis),]
+# save tables
+write.csv2(res_table_sorted_excluded, file=paste0("table_sorted_pvalues_excluded_", run_id, ".csv"))
 
-
-significant.cutoff_pval_raw_bis <- length(which(result.table2.sorted_raw_bis$pvalue < 0.05))
-significant.cutoff_pval_vst_bis <- length(which(result.table2.sorted_vst_bis$pvalue < 0.05))
-significant.cutoff_pval_rlog_bis <- length(which(result.table2.sorted_rlog_bis$pvalue < 0.05))
+# filter out statistically insignificant results (on p-value and p-adjusted)
+significant_pval_excluded <- length(which(res_table_sorted_excluded$pvalue < 0.05))
+significant_padjusted_excluded <- length(which(res_table_sorted_excluded$fdr.pvalue < 0.05))
 
 
