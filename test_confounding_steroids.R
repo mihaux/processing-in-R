@@ -1,6 +1,10 @@
 # this script checks the confounding influence of 'number_of_days_on_steroids'
-# => using Mann-Whitney test (split the data in 2 approximately equal groups in terms of the number of patients to get comparison groups for Mann-Whitney test using gene expression data as input)
-# => using spearman correlation coefficients between the gene expressions and the values of the number of days on steroids; use the cor.test() function in R to obtain p-values as well; can also try using Pearson (second method)
+# => (1) using Mann-Whitney test (split the data in 2 approximately equal groups in terms of the number of patients to get comparison groups for Mann-Whitney test using gene expression data as input)
+# => (2) using spearman correlation coefficients between the gene expressions and the values of the number of days on steroids; use the cor.test() function in R to obtain p-values as well; can also try using Pearson (second method)
+
+# GENERAL NOTE ABOUT CONFOUNDING:
+# Confounding assessment was performed for the following features: age, gender and duration of steroid treatment to make sure that they do not cause any distortion in the association between the exposure and the outcome (e.g. visual loss). 
+# To do so, a paired samples t-test was run for each of these features to see if they were associated with visual loss, which could suggest possible confounding.
 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
@@ -33,7 +37,8 @@ if (length(args)!=3) {
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 args <- c(paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/oct20_confounding"))
+          paste0(main_dir, "/ANALYSES/oct20_confounding/method_2_spearman/raw/"))
+          # paste0(main_dir, "/ANALYSES/oct20_confounding/method_1_mann-whitney/")
 
 # Example of usage: 
 # Rscript test_confounding_steroids.R 
@@ -43,18 +48,26 @@ cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 setwd(args[3])
 
 # load data RAW | VST | rlog (run one at the time)
-#load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"), verbose = TRUE); dds <- dds_all
+load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"), verbose = TRUE); dds <- dds_all
 #load(paste0(args[1], "/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
-load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
+#load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
 
 # define running ID (either "raw", "vst" pr "rlog")
-run_id <- "rlog"
+run_id <- "raw"
 
 # load clinical data 
 df_meta <- read.csv(args[2], row.names = 1, header = TRUE)
 
 # add "ID_" to all rownames
 rownames(df_meta) <- paste0("ID_", rownames(df_meta))
+  
+# change data format to matrix and integer
+dat <- as.matrix(assay(dds))
+storage.mode(dat) <- "integer"          # class: matrix | type: integer
+
+###########################################################################################
+# => (1) using Mann-Whitney test (split the data in 2 approximately equal groups in terms of the number of patients to get comparison groups for Mann-Whitney test using gene expression data as input)
+###########################################################################################
 
 # df_meta$number.of.days.on.steroids.at.TAB
 
@@ -69,10 +82,6 @@ gr_1 <- df_meta[which(df_meta$number.of.days.on.steroids.at.TAB < 6),]
 gr_2 <- df_meta[which(df_meta$number.of.days.on.steroids.at.TAB >= 6),]
 
 gr_2_bis <- gr_2[-which(gr_2$number.of.days.on.steroids.at.TAB == 16),]
-  
-# change data format to matrix and integer
-dat <- as.matrix(assay(dds))
-storage.mode(dat) <- "integer"          # class: matrix | type: integer
 
 # add new column to define comparison groups 1 and 2
 steroids <- c(1:41)
@@ -121,11 +130,8 @@ df_pval <- data.frame(ID=rownames(dat), pval=all_pval)
 
 # make a histogram of pvalues
 if(output_save==TRUE){ png(file = paste0("histogram_pvalues_", run_id, ".png")) }
-
-ggplot(df_pval, aes(x=pval)) + 
-  geom_histogram(binwidth=0.01) + 
+ggplot(df_pval, aes(x=pval)) + geom_histogram(binwidth=0.01) + 
   labs(title=paste0("Histogram of p-values: ", run_id), x="p-values")
-
 if(output_save==TRUE){ dev.off() }
 
 # NOTE: all the p-adjusted values equal 1
@@ -158,16 +164,13 @@ if(output_save==TRUE){ dev.off() }
 
 # p-adjusted
 if(output_save==TRUE){ png(file = paste0("histogram_p-adjusted_significant_only_", run_id, ".png")) }
-ggplot(res_table_sorted[1:752,], aes(x=fdr.pvalue)) + 
-  geom_histogram(binwidth=0.01) + 
+ggplot(res_table_sorted[1:752,], aes(x=fdr.pvalue)) + geom_histogram(binwidth=0.01) + 
   labs(title=paste0("Histogram of significant p-adjusted (fdr): ", run_id), x="p-ajdusted")
 if(output_save==TRUE){ dev.off() }
 
 # check correlation between p-val and p-adjusted
 if(output_save==TRUE){ png(file = paste0("correlation_pval-padj_", run_id, ".png")) }
-
 ggplot(res_table, aes(pvalue, fdr.pvalue)) + geom_point()
-
 if(output_save==TRUE){ dev.off() }
 
 # NOTES:
@@ -217,19 +220,14 @@ all_pval_excluded = unlist(lapply(res_excluded, function(x) x$p.value))
 # get corrected p-values
 all_adjusted_excluded <- p.adjust(all_pval_excluded, "fdr")    # Benjamini & Hochberg ("BH" or its alias "fdr")
 
-
-
 ### histogram of p-values ###
 # create a df with IDs and p-values
 df_pval_excluded <- data.frame(ID=rownames(dat_excluded), pval=all_pval_excluded)
 
 # make a histogram of pvalues
 if(output_save==TRUE){ png(file = paste0("histogram_pvalues_excluded_", run_id, ".png")) }
-
-ggplot(df_pval_excluded, aes(x=pval)) + 
-  geom_histogram(binwidth=0.01) + 
+ggplot(df_pval_excluded, aes(x=pval)) + geom_histogram(binwidth=0.01) + 
   labs(title=paste0("Histogram of p-values: ", run_id), x="p-values")
-
 if(output_save==TRUE){ dev.off() }
 
 # NOTE: all the p-adjusted values equal 1
@@ -246,10 +244,72 @@ res_table_sorted_excluded <- res_table[order(all_pval_excluded),]
 #res_table_sorted_bis <- res_table[order(all_adjusted),]
 
 # save tables
+if(output_save==TRUE){  
 write.csv2(res_table_sorted_excluded, file=paste0("table_sorted_pvalues_excluded_", run_id, ".csv"))
+}
 
 # filter out statistically insignificant results (on p-value and p-adjusted)
 significant_pval_excluded <- length(which(res_table_sorted_excluded$pvalue < 0.05))
 significant_padjusted_excluded <- length(which(res_table_sorted_excluded$fdr.pvalue < 0.05))
 
+###########################################################################################
+# => (2) using spearman correlation coefficients between the gene expressions and the values of the number of days on steroids; use the cor.test() function in R to obtain p-values as well; can also try using Pearson (second method)
+###########################################################################################
+
+# initiate list for results
+res_pearson <- list()
+res_spearman <- list()
+
+# iterate over genes 
+for(j in 1:nrow(dat)){
+  
+  # get data frame for one gene at a time
+  temp = dat[j, ]                                           # x => 41 values for gene n
+  nb_steroids <- df_meta$number.of.days.on.steroids.at.TAB   # y => 41 values of the number of days on steroids
+  
+  # compute correlation coefficients 
+  res_pearson[[j]] <- cor.test(temp, nb_steroids, alternative = c("two.sided"), method = c("pearson"), conf.level = 0.95, exact=FALSE)
+  res_spearman[[j]] <- cor.test(temp, nb_steroids, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+}
+  
+# create table with results
+res_table_pearson <- data.frame(ID=rownames(dat),
+                                pvalue=unlist(lapply(res_pearson, function(x) x$p.value)),
+                                pearson_coef=unlist(lapply(res_pearson, function(x) x$estimate)),
+                                CI_1=unlist(lapply(res_pearson, function(x) x$conf.int[1])),
+                                CI_2=unlist(lapply(res_pearson, function(x) x$conf.int[2])))
+
+res_table_spearman <- data.frame(ID=rownames(dat),
+                                 pvalue=unlist(lapply(res_spearman, function(x) x$p.value)),
+                                 spearman_coef=unlist(lapply(res_spearman, function(x) x$estimate)))
+
+if(output_save==TRUE){  
+write.csv2(res_table_pearson, file=paste0("table_pearson_", run_id, ".csv"))
+write.csv2(res_table_spearman, file=paste0("table_spearman_", run_id, ".csv"))
+}
+
+# make a histogram of p-values and coefficients
+if(output_save==TRUE){ png(file = paste0("histogram_pvalues_pearson_", run_id, ".png")) }
+ggplot(res_table_pearson, aes(x=pvalue)) + 
+  geom_histogram(binwidth=0.01) + 
+  labs(title=paste0("Histogram of p-values pearson: ", run_id), x="p-values")
+if(output_save==TRUE){ dev.off() }
+
+if(output_save==TRUE){ png(file = paste0("histogram_pearson_coefficients_", run_id, ".png")) }
+ggplot(res_table_pearson, aes(x=pearson_coef)) + 
+  geom_histogram(binwidth=0.01) + 
+  labs(title=paste0("Histogram of pearson coefficients: ", run_id), x="pearson coefficients")
+if(output_save==TRUE){ dev.off() }
+
+if(output_save==TRUE){ png(file = paste0("histogram_pvalues_spearman_", run_id, ".png")) }
+ggplot(res_table_spearman, aes(x=pvalue)) + 
+  geom_histogram(binwidth=0.01) + 
+  labs(title=paste0("Histogram of p-values spearman: ", run_id), x="p-values")
+if(output_save==TRUE){ dev.off() }
+
+if(output_save==TRUE){ png(file = paste0("histogram_spearman_coefficients_", run_id, ".png")) }
+ggplot(res_table_spearman, aes(x=spearman_coef)) + 
+  geom_histogram(binwidth=0.01) + 
+  labs(title=paste0("Histogram of spearman coefficients: ", run_id), x="spearman coefficients")
+if(output_save==TRUE){ dev.off() }
 
