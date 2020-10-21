@@ -228,15 +228,21 @@ result.table2_raw = data.frame(ID=rownames(dat_raw), statistic=all_stat_raw, pva
 result.table2_vst = data.frame(ID=rownames(dat_vst), statistic=all_stat_vst, pvalue=all_pval_vst, fdr.pvalue=all_adj.pval_vst)
 result.table2_rlog = data.frame(ID=rownames(dat_rlog), statistic=all_stat_rlog, pvalue=all_pval_rlog, fdr.pvalue=all_adj.pval_rlog)
 
-# sort the table based on the order of the (adjusted) p-values
+# sort the table based on the order of the adjusted p-values
 result.table2.sorted_raw = result.table2_raw[order(all_adj.pval_raw),]
 result.table2.sorted_vst = result.table2_vst[order(all_adj.pval_vst),]
 result.table2.sorted_rlog = result.table2_rlog[order(all_adj.pval_rlog),]
+
+# sort the table based on the order of the (adjusted) p-values
+result.table2.sorted_raw_pval = result.table2_raw[order(all_pval_raw),]
+result.table2.sorted_vst_pval = result.table2_vst[order(all_pval_vst),]
+result.table2.sorted_rlog_pval = result.table2_rlog[order(all_pval_rlog),]
 
 # the 'statistic' column is not necessary
 result.table2.sorted_final_raw <- result.table2.sorted_raw[,-2]
 result.table2.sorted_final_vst <- result.table2.sorted_vst[,-2]
 result.table2.sorted_final_rlog <- result.table2.sorted_rlog[,-2]
+
 
 # and then show the top 10 (most) significant genes.
 #result.table2.sorted[1:10,]       # listing the top 10 genes
