@@ -1,6 +1,5 @@
 # this script checks the confounding influence of 'number_of_days_on_steroids'
-# => (1) using Mann-Whitney test (split the data in 2 approximately equal groups in terms of the number of patients to get comparison groups for Mann-Whitney test using gene expression data as input)
-# => (2) using spearman correlation coefficients between the gene expressions and the values of the number of days on steroids; use the cor.test() function in R to obtain p-values as well; can also try using Pearson (second method)
+# => using Mann-Whitney test (split the data in 2 approximately equal groups in terms of the number of patients to get comparison groups for Mann-Whitney test using gene expression data as input)
 
 # GENERAL NOTE ABOUT CONFOUNDING:
 # Confounding assessment was performed for the following features: age, gender and duration of steroid treatment to make sure that they do not cause any distortion in the association between the exposure and the outcome (e.g. visual loss). 
@@ -251,65 +250,3 @@ write.csv2(res_table_sorted_excluded, file=paste0("table_sorted_pvalues_excluded
 # filter out statistically insignificant results (on p-value and p-adjusted)
 significant_pval_excluded <- length(which(res_table_sorted_excluded$pvalue < 0.05))
 significant_padjusted_excluded <- length(which(res_table_sorted_excluded$fdr.pvalue < 0.05))
-
-###########################################################################################
-# => (2) using spearman correlation coefficients between the gene expressions and the values of the number of days on steroids; use the cor.test() function in R to obtain p-values as well; can also try using Pearson (second method)
-###########################################################################################
-
-# initiate list for results
-res_pearson <- list()
-res_spearman <- list()
-
-# iterate over genes 
-for(j in 1:nrow(dat)){
-  
-  # get data frame for one gene at a time
-  temp = dat[j, ]                                           # x => 41 values for gene n
-  nb_steroids <- df_meta$number.of.days.on.steroids.at.TAB   # y => 41 values of the number of days on steroids
-  
-  # compute correlation coefficients 
-  res_pearson[[j]] <- cor.test(temp, nb_steroids, alternative = c("two.sided"), method = c("pearson"), conf.level = 0.95, exact=FALSE)
-  res_spearman[[j]] <- cor.test(temp, nb_steroids, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
-}
-  
-# create table with results
-res_table_pearson <- data.frame(ID=rownames(dat),
-                                pvalue=unlist(lapply(res_pearson, function(x) x$p.value)),
-                                pearson_coef=unlist(lapply(res_pearson, function(x) x$estimate)),
-                                CI_1=unlist(lapply(res_pearson, function(x) x$conf.int[1])),
-                                CI_2=unlist(lapply(res_pearson, function(x) x$conf.int[2])))
-
-res_table_spearman <- data.frame(ID=rownames(dat),
-                                 pvalue=unlist(lapply(res_spearman, function(x) x$p.value)),
-                                 spearman_coef=unlist(lapply(res_spearman, function(x) x$estimate)))
-
-if(output_save==TRUE){  
-write.csv2(res_table_pearson, file=paste0("table_pearson_", run_id, ".csv"))
-write.csv2(res_table_spearman, file=paste0("table_spearman_", run_id, ".csv"))
-}
-
-# make a histogram of p-values and coefficients
-if(output_save==TRUE){ png(file = paste0("histogram_pvalues_pearson_", run_id, ".png")) }
-ggplot(res_table_pearson, aes(x=pvalue)) + 
-  geom_histogram(binwidth=0.01) + 
-  labs(title=paste0("Histogram of p-values pearson: ", run_id), x="p-values")
-if(output_save==TRUE){ dev.off() }
-
-if(output_save==TRUE){ png(file = paste0("histogram_pearson_coefficients_", run_id, ".png")) }
-ggplot(res_table_pearson, aes(x=pearson_coef)) + 
-  geom_histogram(binwidth=0.01) + 
-  labs(title=paste0("Histogram of pearson coefficients: ", run_id), x="pearson coefficients")
-if(output_save==TRUE){ dev.off() }
-
-if(output_save==TRUE){ png(file = paste0("histogram_pvalues_spearman_", run_id, ".png")) }
-ggplot(res_table_spearman, aes(x=pvalue)) + 
-  geom_histogram(binwidth=0.01) + 
-  labs(title=paste0("Histogram of p-values spearman: ", run_id), x="p-values")
-if(output_save==TRUE){ dev.off() }
-
-if(output_save==TRUE){ png(file = paste0("histogram_spearman_coefficients_", run_id, ".png")) }
-ggplot(res_table_spearman, aes(x=spearman_coef)) + 
-  geom_histogram(binwidth=0.01) + 
-  labs(title=paste0("Histogram of spearman coefficients: ", run_id), x="spearman coefficients")
-if(output_save==TRUE){ dev.off() }
-
