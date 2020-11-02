@@ -50,6 +50,15 @@ rownames(df_meta) <- paste0("ID_", rownames(df_meta))
 df_male <- df_meta[which(df_meta$gender == 1),]
 df_female <- df_meta[which(df_meta$gender == 2),]
 
+################################################
+### print how many patients in each variable ###
+#for (i in sort(unique(df_meta$age.at.BL))) {
+#  cat("Age",i)
+#  cat(" Male:", length(which(df_male$age.at.BL == i)))
+#  cat(" Female:", length(which(df_female$age.at.BL == i)),"\n")
+#}
+################################################
+
 ### number.of.days.on.steroids.at.TAB ###
 if(output_save==TRUE){ png(file = "histogram_nb_days_on_steroids_all.png") }
 hist(df_meta$number.of.days.on.steroids.at.TAB,

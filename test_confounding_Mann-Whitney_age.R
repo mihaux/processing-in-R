@@ -36,8 +36,7 @@ if (length(args)!=3) {
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 args <- c(paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/oct20_confounding/method_2_spearman/raw/"))
-          # paste0(main_dir, "/ANALYSES/oct20_confounding/method_1_mann-whitney/")
+          paste0(main_dir, "/ANALYSES/oct20_confounding/age/method_1_mann-whitney/"))
 
 # Example of usage: 
 # Rscript test_confounding_steroids.R 
@@ -69,9 +68,7 @@ storage.mode(dat) <- "integer"          # class: matrix | type: integer
 ###########################################################################################
 
 # df_meta$number.of.days.on.steroids.at.TAB
-
 # NOTE: there are 2 samples with 16 days, can consider them as too extreme and exclude
-
 # split as:
 # group_1 => 0 - 5 days
 # group_2 => 6 - 16 days
