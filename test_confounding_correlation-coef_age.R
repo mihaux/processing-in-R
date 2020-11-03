@@ -46,7 +46,7 @@ if (length(args)!=3) {
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 args <- c(paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/oct20_confounding/steroids/method_2_correlation_coef/rlog/"))
+          paste0(main_dir, "/ANALYSES/oct20_confounding/age/method_2_correlation_coef/vst/"))
 
 # Example of usage: 
 # Rscript test_confounding_steroids.R 
@@ -57,11 +57,11 @@ setwd(args[3])
 
 # load data RAW | VST | rlog (run one at the time)
 #load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"), verbose = TRUE); dds <- dds_all
-#load(paste0(args[1], "/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
-load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
+load(paste0(args[1], "/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
+#load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
 
 # define running ID (either "raw", "vst" pr "rlog")
-run_id <- "rlog"
+run_id <- "vst"
 
 # load clinical data 
 df_meta <- read.csv(args[2], row.names = 1, header = TRUE)
@@ -86,11 +86,11 @@ for(j in 1:nrow(dat)){
   
   # get data frame for one gene at a time
   temp = dat[j, ]                                           # x => 41 values for gene n
-  nb_steroids <- df_meta$number.of.days.on.steroids.at.TAB   # y => 41 values of the number of days on steroids
+  age_vector <- df_meta$age.at.BL   # y => 41 values of the number of days on steroids
   
   # compute correlation coefficients 
-  res_pearson[[j]] <- cor.test(temp, nb_steroids, alternative = c("two.sided"), method = c("pearson"), conf.level = 0.95, exact=FALSE)
-  res_spearman[[j]] <- cor.test(temp, nb_steroids, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+  res_pearson[[j]] <- cor.test(temp, age_vector, alternative = c("two.sided"), method = c("pearson"), conf.level = 0.95, exact=FALSE)
+  res_spearman[[j]] <- cor.test(temp, age_vector, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
 }
   
 # Multiple testing correction
@@ -181,13 +181,13 @@ if(output_save==TRUE){ dev.off() }
 ### make a histogram of coefficients ###
 if(output_save==TRUE){ png(file = paste0("histogram_pearson_coefficients_50bins_", run_id, ".png")) }
 ggplot(res_table_pearson, aes(x=pearson_coef)) + 
-  geom_histogram(binwidth=50) + 
+  geom_histogram(bins=50) + 
   labs(title=paste0("Histogram of pearson coefficients: ", run_id), x="pearson coefficients")
 if(output_save==TRUE){ dev.off() }
 
 if(output_save==TRUE){ png(file = paste0("histogram_pearson_coefficients_20bins_", run_id, ".png")) }
 ggplot(res_table_pearson, aes(x=pearson_coef)) + 
-  geom_histogram(binwidth=20) + 
+  geom_histogram(bins=20) + 
   labs(title=paste0("Histogram of pearson coefficients: ", run_id), x="pearson coefficients")
 if(output_save==TRUE){ dev.off() }
 

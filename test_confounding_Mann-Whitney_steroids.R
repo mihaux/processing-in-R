@@ -36,7 +36,7 @@ if (length(args)!=3) {
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
 args <- c(paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts"),
           paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/oct20_confounding/steroids/method_1_mann-whitney/"))
+          paste0(main_dir, "/ANALYSES/oct20_confounding/steroids/method_1_mann-whitney/rlog/"))
 
 # Example of usage: 
 # Rscript test_confounding_Mann-Whitney_steroids.R 
@@ -46,12 +46,12 @@ cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 setwd(args[3])
 
 # load data RAW | VST | rlog (run one at the time)
-load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"), verbose = TRUE); dds <- dds_all
+#load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"), verbose = TRUE); dds <- dds_all
 #load(paste0(args[1], "/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
-#load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
+load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
 
 # define running ID (either "raw", "vst" pr "rlog")
-run_id <- "raw"
+run_id <- "rlog"
 
 # load clinical data 
 df_meta <- read.csv(args[2], row.names = 1, header = TRUE)
@@ -111,6 +111,11 @@ all_pval = unlist(lapply(res, function(x) x$p.value))
 # After obtaining the p-values, you can make multiplicity correction to the pvalue. 
 all_adjusted <- p.adjust(all_pval, "fdr")    # Benjamini & Hochberg ("BH" or its alias "fdr")
 
+# create a table as R data frame
+res_table = data.frame(ID=rownames(dat), 
+                       p.value=all_pval, 
+                       fdr.pvalue=all_adjusted)
+
 if(FALSE){
 # check other methods
 all_adjusted_holm       <- p.adjust(all_pval, "holm")       # "holm"
@@ -127,6 +132,16 @@ df_pval <- data.frame(ID=rownames(dat), pval=all_pval)
 # make a histogram of pvalues
 if(output_save==TRUE){ png(file = paste0("histogram_pvalues_", run_id, ".png")) }
 ggplot(df_pval, aes(x=pval)) + geom_histogram(binwidth=0.01) + 
+  labs(title=paste0("Histogram of p-values: ", run_id), x="p-values")
+if(output_save==TRUE){ dev.off() }
+
+if(output_save==TRUE){ png(file = paste0("histogram_p-values_20bins_", run_id, ".png")) }
+ggplot(res_table, aes(x=p.value)) + geom_histogram(bins=20) + 
+  labs(title=paste0("Histogram of p-values: ", run_id), x="p-values")
+if(output_save==TRUE){ dev.off() }
+
+if(output_save==TRUE){ png(file = paste0("histogram_p-values_50bins_", run_id, ".png")) }
+ggplot(res_table, aes(x=p.value)) + geom_histogram(bins=50) + 
   labs(title=paste0("Histogram of p-values: ", run_id), x="p-values")
 if(output_save==TRUE){ dev.off() }
 
