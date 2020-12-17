@@ -2,6 +2,7 @@
 # it can be used for p-values but also for PCA loadings
 
 # https://www.r-graph-gallery.com/101_Manhattan_plot.html
+# https://genome.sph.umich.edu/wiki/Code_Sample:_Generating_Manhattan_Plots_in_R
 
 # another method to create Manhattan plot on PCA loadings (TO BE MODIFIED)
 

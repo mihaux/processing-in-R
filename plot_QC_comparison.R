@@ -147,7 +147,7 @@ df_fcounts_all_percentages <- data.frame(se_unassigned_assigned=(df_fcounts_all$
                                          se_assigned_total=(df_fcounts_all$se_assigned/(df_fcounts_all$se_assigned+df_fcounts_all$se_unassigned))*100,
                                          pe_assigned_total=(df_fcounts_all$pe_assigned/(df_fcounts_all$pe_assigned+df_fcounts_all$pe_unassigned))*100,
                                          se_unassigned_total=(df_fcounts_all$se_unassigned/(df_fcounts_all$se_assigned+df_fcounts_all$se_unassigned))*100,
-                                         pe_unassigned_total=(df_fcounts_all$se_unassigned/(df_fcounts_all$pe_assigned+df_fcounts_all$pe_unassigned))*100)
+                                         pe_unassigned_total=(df_fcounts_all$pe_unassigned/(df_fcounts_all$pe_assigned+df_fcounts_all$pe_unassigned))*100)
                                            
 png("featureCounts_SE-vs-PE_percentage_unassigned_assigned.png")
 ggplot(df_fcounts_all_percentages, aes(se_unassigned_assigned, pe_unassigned_assigned)) + geom_point() + geom_abline(colour = "brown") + 

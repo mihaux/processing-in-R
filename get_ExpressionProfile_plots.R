@@ -18,7 +18,7 @@ if(startsWith(w_dir, "/Users/michal")){
 }
 
 # define wheather output files should be saved or not [TRUE / FALSE]
-output_save <- TRUE
+output_save <- FALSE
 
 # define directory with data (INPUT)
 data_dir_1 <- paste0(main_dir,"/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/FINAL")
@@ -39,14 +39,14 @@ setwd(dir_out)
 #load(paste0(data_dir_1, "/Raw_DESeq_dataset_all.Rda")); dds_1 <- dds_all # 52 239 rows, RefSeq annotation
 #load(paste0(data_dir_2, "/Raw_DESeq_dataset_all.Rda")); dds_2 <- dds_all # 26 486 rows, GeneSymbol annotation
 
-load(paste0(data_dir_1,"/Normalised_DESeq_vst_dataset_all.Rda")); dds_1 <- vst_all
-load(paste0(data_dir_2,"/Normalised_DESeq_vst_dataset_all.Rda")); dds_2 <- vst_all
+#load(paste0(data_dir_1,"/Normalised_DESeq_vst_dataset_all.Rda")); dds_1 <- vst_all
+#load(paste0(data_dir_2,"/Normalised_DESeq_vst_dataset_all.Rda")); dds_2 <- vst_all
 
-#load(paste0(data_dir_1,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds_1 <- rlog_all
-#load(paste0(data_dir_2,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds_2 <- rlog_all
+load(paste0(data_dir_1,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds_1 <- rlog_all
+load(paste0(data_dir_2,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds_2 <- rlog_all
 
 # define running ID (either "raw", "vst" pr "rlog")
-run_id <- "vst"
+run_id <- "rlog"
 
 #############################################################################
 # => in dds_1, look for NM_001049, NM_001050, NM_001051, NM_001052, NM_001053
