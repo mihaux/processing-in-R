@@ -23,21 +23,21 @@ if(startsWith(w_dir, "/Users/michal")){
 }
 
 # define wheather output files should be saved or not [TRUE / FALSE]
-output_save <- FALSE
+output_save <- TRUE
 
 # args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args)!=3) {
   stop("3 arguments must be supplied: 
-       \n(1 - input) path to the directory with counts data
+       \n(1 - input) path to the file with counts matrix
        \n(2 - metadata) path to .csv with clinical features and, 
        \n(3 - output) path where output files should be stored", call.=FALSE)
 }
 
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
-args <- c(paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts"),
-          paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/ANALYSES/Dec20_rerun/steroids/rlog/"))
+args <- c(paste0(main_dir,"/data/count_matrices/outliers_excluded/counts_rlog_no_outliers.csv"),
+          paste0(main_dir, "/data/metadata/outliers_excluded/cic_clinical_data_v2_summary_ORDERED_outliers_excluded.csv"),
+          paste0(main_dir, "/ANALYSES/Dec20_steroids_age_rerun/steroids/rlog/"))
 
 # Example of usage: 
 # Rscript test_confounding_Mann-Whitney_steroids.R 
@@ -46,22 +46,28 @@ cat("Directories with data (IN): "); cat(args[1], sep="\n")
 cat("Directory for results (OUT): "); cat(args[3], sep="\n")
 setwd(args[3])
 
-# load data RAW | VST | rlog (run one at the time)
-#load(paste0(args[1], "/Raw_DESeq_dataset_all.Rda"), verbose = TRUE); dds <- dds_all
-#load(paste0(args[1], "/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
-load(paste0(args[1], "/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
+# load counts matrix
+dds <- read.csv(args[1], row.names = 1, header = TRUE)
 
-# define running ID (either "raw", "vst" pr "rlog")
-run_id <- "rlog"
+# define running ID (either "raw" / "vst" / "rlog")
+run_id <- "vst"
 
 # load clinical data 
 df_meta <- read.csv(args[2], row.names = 1, header = TRUE)
 
 # add "ID_" to all rownames
-rownames(df_meta) <- paste0("ID_", rownames(df_meta))
+#rownames(df_meta) <- paste0("ID_", rownames(df_meta))
   
-# change data format to matrix and integer
-dat <- as.matrix(assay(dds))
+# change data format to matrix and integer (PROBABLY NOT NEEDED)
+dat <- as.matrix(dds)
+
+# add 0.0001 - 0.0041 to columns (not sure this works as expected)
+#to_be_added <- seq(0.0001,0.0041, 0.0001)
+#for(i in 1:40) {
+#    dat[,i] <- dat[,i]+to_be_added[i]
+#}
+
+#dat <- as.matrix(assay(dds))
 # storage.mode(dat) <- "integer"          # class: matrix | type: integer
 
 ###########################################################################################
@@ -80,7 +86,7 @@ gr_2 <- df_meta[which(df_meta$number.of.days.on.steroids.at.TAB >= 6),]
 gr_2_bis <- gr_2[-which(gr_2$number.of.days.on.steroids.at.TAB == 16),]
 
 # add new column to define comparison groups 1 and 2
-steroids <- c(1:41)
+steroids <- c(1:40)
 steroids[which(df_meta$number.of.days.on.steroids.at.TAB < 6)] <- 1
 steroids[which(df_meta$number.of.days.on.steroids.at.TAB >= 6)] <- 2
 
@@ -263,7 +269,7 @@ write.csv2(res_table_sorted_excluded, file=paste0("table_sorted_pvalues_excluded
 significant_pval_excluded <- length(which(res_table_sorted_excluded$pvalue < 0.05))
 significant_padjusted_excluded <- length(which(res_table_sorted_excluded$fdr.pvalue < 0.05))
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   
 ########################################################
 ### (3) same run, but with ID_8546 sample excluded ###
@@ -341,7 +347,7 @@ if(output_save==TRUE){
 significant_pval_no_outliers <- length(which(res_table_sorted_no_outliers$pvalue < 0.05))
 significant_padjusted_no_outliers <- length(which(res_table_sorted_no_outliers$fdr.pvalue < 0.05))
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 
 ###########################################################################################
 # => (4) using Mann-Whitney test (Q1 vs Q3)
@@ -355,7 +361,7 @@ quantile(df_meta$number.of.days.on.steroids.at.TAB)
 length(which(df_meta$number.of.days.on.steroids.at.TAB <= 3)) # 12 samples
 
 # group_2 => 7 - 16 days
-length(which(df_meta$number.of.days.on.steroids.at.TAB >= 7)) # 15 samples
+length(which(df_meta$number.of.days.on.steroids.at.TAB >= 7)) # 14 samples
 
 # create a subset of df_meta that will include only samples of interest (12 + 15)
 dat_new <- dat[,c(which(df_meta$number.of.days.on.steroids.at.TAB <= 3), which(df_meta$number.of.days.on.steroids.at.TAB >= 7))]
@@ -367,7 +373,7 @@ gr_1 <- df_meta_new[which(df_meta_new$number.of.days.on.steroids.at.TAB <= 3),]
 gr_2 <- df_meta_new[which(df_meta_new$number.of.days.on.steroids.at.TAB >= 7),]
 
 # add new column to define comparison groups 1 and 2
-steroids <- c(1:27)
+steroids <- c(1:26)
 steroids[which(df_meta_new$number.of.days.on.steroids.at.TAB <= 3)] <- 1
 steroids[which(df_meta_new$number.of.days.on.steroids.at.TAB >= 7)] <- 2
 

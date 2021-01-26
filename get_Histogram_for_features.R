@@ -30,8 +30,11 @@ if (length(args)!=2) {
 }
 
 # NOTE !!! : THERE MUST BE A "/" AT THE END OF ARGUMENT 3
-args <- c(paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
-          paste0(main_dir, "/data/histograms/"))
+#args <- c(paste0(main_dir, "/data/metadata/clinical_data/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED.csv"),
+#          paste0(main_dir, "/data/histograms/"))
+
+args <- c(paste0(main_dir, "/data/metadata/outliers_excluded/cic_clinical_data_v2_summary_ORDERED_outliers_excluded.csv"),
+          paste0(main_dir, "/ANALYSES/Dec20_steroids_age_rerun/"))
 
 # Example of usage: 
 # Rscript run_DESeq2.R /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/rerun_FINAL_July20/run_1/featCounts_SE/all_counts_dups_run1_SE_x.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/data/metadata/cic_clinical_data_v2_split/cic_clinical_data_v2_summary_ORDERED_x.csv /Users/ummz/OneDrive - University of Leeds/ANALYSES/rerun_FINAL_July20/ANALYSES/downstream/rerun_FINAL_July20/run_1/DESeq2/            
@@ -44,7 +47,7 @@ setwd(args[2])
 df_meta <- read.csv(args[1], row.names = 1, header = TRUE)
 
 # add "ID_" to all rownames
-rownames(df_meta) <- paste0("ID_", rownames(df_meta))
+#rownames(df_meta) <- paste0("ID_", rownames(df_meta))
 
 # split dataset by gender
 df_male <- df_meta[which(df_meta$gender == 1),]
@@ -84,9 +87,10 @@ hist(df_female$number.of.days.on.steroids.at.TAB,
 if(output_save==TRUE){ dev.off() }
 
 ### age ###
+
 if(output_save==TRUE){ png(file = "histogram_age_all.png") }
 hist(df_meta$age.at.BL,
-     col = "gray", xlim = c(50,100), ylim = c(0,13), 
+     col = "gray", xlim = c(50,100), ylim = c(0,13),
      xlab = "Age",
      main = "Histogram of 'Age' - all data")
 if(output_save==TRUE){ dev.off() }

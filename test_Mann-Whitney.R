@@ -57,6 +57,13 @@ args <- c(paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analys
           paste0(main_dir, "/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/mann_whitney/"))
 }
 
+if(FALSE){
+args <- c(paste0(main_dir, "/data/count_matrices/outliers_excluded/counts_rlog_no_outliers.csv"),
+          paste0(main_dir, "/data/metadata/outliers_excluded/cic_clinical_data_v2_summary_ORDERED_outliers_excluded.csv"), 
+          "gender", 
+          paste0(main_dir, "/ANALYSES/Dec20_rerun/gender/rlog/"))
+}
+
 # Example of usage: 
 # Rscript test_Mann_Whitney.R 
 
@@ -65,38 +72,44 @@ cat("Directory for results (OUT): "); cat(args[4], sep="\n")
 setwd(args[4])
 
 # load normalised counts from DESeq
-input_list <- list.files(args[1], pattern = "\\.Rda$")
+#input_list <- list.files(args[1], pattern = "\\.Rda$")
 
-load(paste0(args[1], input_list[3]))              # dds_all
-load(paste0(args[1], input_list[2]))              # vst_all
-load(paste0(args[1], input_list[1]))              # rlog_all
+#load(paste0(args[1], input_list[3]))              # dds_all
+#load(paste0(args[1], input_list[2]))              # vst_all
+#load(paste0(args[1], input_list[1]))              # rlog_all
+
+# load counts matrix
+dds <- read.csv(args[1], row.names = 1, header = TRUE)
+
+# change data format to matrix and integer (PROBABLY NOT NEEDED)
+dat <- as.matrix(dds)
+
+# define running ID (either "raw" / "vst" / "rlog")
+run_id <- "rlog"
 
 # change data format to matrix and integer
-dat_raw <- as.matrix(assay(dds_all))
-storage.mode(dat_raw) <- "integer"          # class: matrix | type: integer
+#dat_raw <- as.matrix(assay(dds_all))
+#storage.mode(dat_raw) <- "integer"          # class: matrix | type: integer
 
-dat_vst <- as.matrix(assay(vst_all))
-storage.mode(dat_vst) <- "integer"          # class: matrix | type: integer
+#dat_vst <- as.matrix(assay(vst_all))
+#storage.mode(dat_vst) <- "integer"          # class: matrix | type: integer
 
-dat_rlog <- as.matrix(assay(rlog_all))
-storage.mode(dat_rlog) <- "integer"         # class: matrix | type: integer
+#dat_rlog <- as.matrix(assay(rlog_all))
+#storage.mode(dat_rlog) <- "integer"         # class: matrix | type: integer
 
 # load annotation (clinical) data which will be used for coldata
 anno <- read.csv(args[2], row.names = 1)
-
-# add "ID_" to all rownames for clinical data
-rownames(anno) <- paste0("ID_", rownames(anno))
 
 # NOTE: sample "ID_14058" is missing in 'slide_sc', needs to be removed from 
 
 # if running for slide scores => remove sample "ID_14058" from all three datasets
 
-if(nrow(anno) == ncol(dat_raw)){
+if(nrow(anno) == ncol(dat)){
   
   print("Running for clinical features")
   
   # modify 'gender' column to replace 1 -> 0 and 2 -> 1 (to make it match the format of all other features)
-  gender_new <- c(1:41)
+  gender_new <- c(1:40)
   gender_new[which(anno$gender == 1)] <- 0      # 1 (male)    => replace with 0
   gender_new[which(anno$gender == 2)] <- 1      # 2 (female)  => replace with 1
   anno$gender <- gender_new
@@ -104,22 +117,23 @@ if(nrow(anno) == ncol(dat_raw)){
 } else {
   
   print("Running for histological features")
-  dat_raw <- dat_raw[,-which(colnames(dat_raw) == "ID_14058")]
-  dat_vst <- dat_vst[,-which(colnames(dat_vst) == "ID_14058")]
-  dat_rlog <- dat_rlog[,-which(colnames(dat_rlog) == "ID_14058")]
+  #dat_raw <- dat_raw[,-which(colnames(dat_raw) == "ID_14058")]
+  #dat_vst <- dat_vst[,-which(colnames(dat_vst) == "ID_14058")]
+  #dat_rlog <- dat_rlog[,-which(colnames(dat_rlog) == "ID_14058")]
+  dat <- dat[,-which(colnames(dat) == "ID.14058")]
 
   # modify Occlusion.grade. and Intima.pattern. to make it 2 comparison groups
-  Occlusion_grade_new <- c(1:40)
+  Occlusion_grade_new <- c(1:39)
   Occlusion_grade_new[which(anno$Occlusion_grade < 3)] <- 0      # less than 3           => replace with 0
   Occlusion_grade_new[which(anno$Occlusion_grade >= 3)] <- 1     # equal or more than 3  => replace with 1
   anno$Occlusion_grade <- Occlusion_grade_new
 
-  Intima_pattern_new <- c(1:40)
+  Intima_pattern_new <- c(1:39)
   Intima_pattern_new[which(anno$Intima_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
   Intima_pattern_new[which(anno$Intima_pattern > 1)] <- 1        # 2 and 3                => replace with 1
   anno$Intima_pattern <- Intima_pattern_new
   
-  Media_pattern_new <- c(1:40)
+  Media_pattern_new <- c(1:39)
   Media_pattern_new[which(anno$Media_pattern <= 1)] <- 0       # 0 and 1                => replace with 0
   Media_pattern_new[which(anno$Media_pattern > 1)] <- 1        # 2 and 3                => replace with 1
   anno$Media_pattern <- Media_pattern_new
@@ -164,28 +178,29 @@ if(FALSE){
 # we can conclude that the mean of group 1 is significantly different from the mean of group 2 with a p-value of [p-value =].
 
 # initiate list for results
-res_raw <- list()
-res_vst <- list()
-res_rlog <- list()
+#res_raw <- list()
+#res_vst <- list()
+#res_rlog <- list()
+res <- list()
 
 # iteration over all genes (as we perform statistical testing for each gene)
 
-for(j in 1:nrow(dat_raw)){
+for(j in 1:nrow(dat)){
   
   # get data frame for one gene at a time
-  temp_raw = dat_raw[j, ]
-  temp_vst = dat_vst[j, ]
-  temp_rlog = dat_rlog[j, ]
+  #temp_raw = dat_raw[j, ]
+  #temp_vst = dat_vst[j, ]
+  #temp_rlog = dat_rlog[j, ]
+  temp = dat[j, ]
   
   # perform statistical testing
-  res_raw[[j]] = wilcox.test(temp_raw[group==0], 
-                         temp_raw[group==1], 
-                         alternative = "two.sided",
-                         exact = FALSE)               # to suppress the warning message saying that “cannot compute exact p-value with tie”
-                                                      # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
+  res[[j]] = wilcox.test(temp[group==0], temp[group==1], alternative = "two.sided", exact = FALSE)               
+            # to suppress the warning message saying that “cannot compute exact p-value with tie”
+            # it comes from the assumption of a Wilcoxon test that the responses are continuous. 
   
-  res_vst[[j]] = wilcox.test(temp_vst[group==0], temp_vst[group==1], alternative = "two.sided", exact = FALSE)              
-  res_rlog[[j]] = wilcox.test(temp_rlog[group==0], temp_rlog[group==1], alternative = "two.sided", exact = FALSE)              
+  #res_raw[[j]] = wilcox.test(temp_raw[group==0], temp_raw[group==1], alternative = "two.sided", exact = FALSE)              
+  #res_vst[[j]] = wilcox.test(temp_vst[group==0], temp_vst[group==1], alternative = "two.sided", exact = FALSE)              
+  #res_rlog[[j]] = wilcox.test(temp_rlog[group==0], temp_rlog[group==1], alternative = "two.sided", exact = FALSE)              
   
 }
 # might need to add as.numeric() if does not work
@@ -207,42 +222,55 @@ for(j in 1:nrow(dat_raw)){
 # => Otherwise, a normal approximation is used. R uses normal approximation to calculate the p-value.
   
 # retrieve t-statistic for each gene,
-all_stat_raw = unlist(lapply(res_raw, function(x) x$statistic))
-all_stat_vst = unlist(lapply(res_vst, function(x) x$statistic))
-all_stat_rlog = unlist(lapply(res_rlog, function(x) x$statistic))
+#all_stat_raw = unlist(lapply(res_raw, function(x) x$statistic))
+#all_stat_vst = unlist(lapply(res_vst, function(x) x$statistic))
+#all_stat_rlog = unlist(lapply(res_rlog, function(x) x$statistic))
+all_stat = unlist(lapply(res, function(x) x$statistic))
 
 # retrieve its corresponding p-value
-all_pval_raw = unlist(lapply(res_raw, function(x) x$p.value))
-all_pval_vst = unlist(lapply(res_vst, function(x) x$p.value))
-all_pval_rlog = unlist(lapply(res_rlog, function(x) x$p.value))
+#all_pval_raw = unlist(lapply(res_raw, function(x) x$p.value))
+#all_pval_vst = unlist(lapply(res_vst, function(x) x$p.value))
+#all_pval_rlog = unlist(lapply(res_rlog, function(x) x$p.value))
+all_pval = unlist(lapply(res, function(x) x$p.value))
 
 # Multiplicity adjustment
 # After obtaining the p-values, you can make multiplicity correction to the pvalue. 
-all_adj.pval_raw <- p.adjust(all_pval_raw, "fdr")    # Benjamini & Hochberg (1995) ("BH" or its alias "fdr")
-all_adj.pval_vst <- p.adjust(all_pval_vst, "fdr") 
-all_adj.pval_rlog <- p.adjust(all_pval_rlog, "fdr") 
+#all_adj.pval_raw <- p.adjust(all_pval_raw, "fdr")    # Benjamini & Hochberg (1995) ("BH" or its alias "fdr")
+#all_adj.pval_vst <- p.adjust(all_pval_vst, "fdr") 
+#all_adj.pval_rlog <- p.adjust(all_pval_rlog, "fdr") 
+all_adj.pval <- p.adjust(all_pval, "fdr") 
 
 # result table
 # create a table as R data frame
-result.table2_raw = data.frame(ID=rownames(dat_raw), statistic=all_stat_raw, pvalue=all_pval_raw, fdr.pvalue=all_adj.pval_raw)
-result.table2_vst = data.frame(ID=rownames(dat_vst), statistic=all_stat_vst, pvalue=all_pval_vst, fdr.pvalue=all_adj.pval_vst)
-result.table2_rlog = data.frame(ID=rownames(dat_rlog), statistic=all_stat_rlog, pvalue=all_pval_rlog, fdr.pvalue=all_adj.pval_rlog)
+#result.table2_raw = data.frame(ID=rownames(dat_raw), statistic=all_stat_raw, pvalue=all_pval_raw, fdr.pvalue=all_adj.pval_raw)
+#result.table2_vst = data.frame(ID=rownames(dat_vst), statistic=all_stat_vst, pvalue=all_pval_vst, fdr.pvalue=all_adj.pval_vst)
+#result.table2_rlog = data.frame(ID=rownames(dat_rlog), statistic=all_stat_rlog, pvalue=all_pval_rlog, fdr.pvalue=all_adj.pval_rlog)
+result.table2 = data.frame(ID=rownames(dat), statistic=all_stat, pvalue=all_pval, fdr.pvalue=all_adj.pval)
+
 
 # sort the table based on the order of the adjusted p-values
-result.table2.sorted_raw = result.table2_raw[order(all_adj.pval_raw),]
-result.table2.sorted_vst = result.table2_vst[order(all_adj.pval_vst),]
-result.table2.sorted_rlog = result.table2_rlog[order(all_adj.pval_rlog),]
+#result.table2.sorted_raw = result.table2_raw[order(all_adj.pval_raw),]
+#result.table2.sorted_vst = result.table2_vst[order(all_adj.pval_vst),]
+#result.table2.sorted_rlog = result.table2_rlog[order(all_adj.pval_rlog),]
+result.table2.sorted = result.table2[order(all_adj.pval),]
 
 # sort the table based on the order of the (adjusted) p-values
-result.table2.sorted_raw_pval = result.table2_raw[order(all_pval_raw),]
-result.table2.sorted_vst_pval = result.table2_vst[order(all_pval_vst),]
-result.table2.sorted_rlog_pval = result.table2_rlog[order(all_pval_rlog),]
+#result.table2.sorted_raw_pval = result.table2_raw[order(all_pval_raw),]
+#result.table2.sorted_vst_pval = result.table2_vst[order(all_pval_vst),]
+#result.table2.sorted_rlog_pval = result.table2_rlog[order(all_pval_rlog),]
+result.table2.sorted = result.table2[order(all_pval),]
 
 # the 'statistic' column is not necessary
-result.table2.sorted_final_raw <- result.table2.sorted_raw[,-2]
-result.table2.sorted_final_vst <- result.table2.sorted_vst[,-2]
-result.table2.sorted_final_rlog <- result.table2.sorted_rlog[,-2]
+#result.table2.sorted_final_raw <- result.table2.sorted_raw[,-2]
+#result.table2.sorted_final_vst <- result.table2.sorted_vst[,-2]
+#result.table2.sorted_final_rlog <- result.table2.sorted_rlog[,-2]
+result.table2.sorted_final <- result.table2.sorted[,-2]
 
+# save table
+write.csv2(result.table2.sorted_final, file=paste0("table_sorted_by_pvalues_", running, "_", run_id, ".csv"))
+
+##########################################################################################
+if(FALSE){
 
 # and then show the top 10 (most) significant genes.
 #result.table2.sorted[1:10,]       # listing the top 10 genes
@@ -368,4 +396,4 @@ singleWilcox <- wilcoxTest(eset = dat, fac = factor(anno$visual.loss.at.BL..0.no
 #write.csv(singleWilcox, file="results_table_Mann-Whitney_gender_GSALightning_norm.csv")
 write.csv(singleWilcox, file="results_table_Mann-Whitney_visual-loss_GSALightning_norm.csv")
 }
-
+}

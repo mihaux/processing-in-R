@@ -1,5 +1,4 @@
-# investigate 'gender issue' in PCA plots 
-# data types: Raw | Normalised_rlog | Normalised_vst
+# make PCA plots with and without chrX and chrY
 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
@@ -18,164 +17,135 @@ if(startsWith(w_dir, "/Users/michal")){
 }
 
 # define wheather output files should be saved or not [TRUE / FALSE]
-output_save <- FALSE
+output_save <- TRUE
 
 # define directory with data (INPUT)
-data_dir <- paste0(main_dir,"/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/FINAL")
+args <- c(paste0(main_dir,"/data/count_matrices/outliers_excluded/counts_rlog_no_outliers.csv"))
 
-# single-end:
-#data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/all_chr/INPUT_counts")
-
-# paired-end:
-#data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts")
+run_id <- "rlog"
 
 # define directory for results (OUTPUT)
-dir_out <- paste0(main_dir, "/ANALYSES/nov20_Manhattan_plot/")
+dir_out <- paste0(main_dir, "/ANALYSES/Dec20_pca/")
 setwd(dir_out)
 
-# load data RAW | VST | rlog (run for one data type at a time)
-load(paste0(data_dir, "/Raw_DESeq_dataset_all.Rda")); dds <- dds_all
-#load(paste0(data_dir,"/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
-#load(paste0(data_dir,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
+# define directory with metadata
+dir_metadata <- paste0(main_dir, "/data/metadata/outliers_excluded/cic_clinical_data_v2_summary_ORDERED_outliers_excluded.csv")
 
-
-# NOTE: all the objects need to be passed through DESeqTransform() function before PCAplot()
-dds_tr <- DESeqTransform(dds)
-
-# define running ID (either "raw", "vst" pr "rlog")
-run_id <- "raw"
-
-#colnames(dds@colData) => labels for PCA plots:
-
-# not sure if this is needed
-# pl_gender_ex_1$labels$colour <- "gender"
-
-# create PCA plots
-# => without labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_", run_id, ".png")) }
-pl_gender <- plotPCA(dds_tr, intgroup=c("gender")) + ggtitle(paste0(run_id, ": all chr")) + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
-pl_gender + geom_point(size = 3)
-if(output_save==TRUE){ dev.off() }
-
-# => with labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_", run_id, "_labelled.png")) }
-pl_gender + geom_point(size = 3) + geom_text(label=pl_gender$data$name, check_overlap=F, nudge_x=12, nudge_y=0, size=3)
-if(output_save==TRUE){ dev.off() }
-
-# exclude the outliers and recreate the plots
-
-### male: ###
-# both are equally extreme => ID_16137 & ID_16142
-
-### female: ###
-# the most extreme (both) => ID_12330 & ID_14930
-# second most extreme => ID_16153
-# not that extreme => ID_16187 & ID_12331
-
-# ADDITIONAL OUTLIERS:
-# => ID_8546 & ID_16098
-
-# remove the outliers from the original dataset, before the transformation
-
-# (1) the most extreme: ID_16137 & ID_16142 and ID_12330 & ID_14930
-to_be_remove_ex_1 <- c(which(dds$sample == "ID_16137"), which(dds$sample == "ID_16142"), 
-                       which(dds$sample == "ID_12330"), which(dds$sample == "ID_14930"))
-
-dds_ex_1 <- DESeqTransform(dds[,-to_be_remove_ex_1])
-
-# => (1) without labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_4_excluded_", run_id, ".png")) }
-pl_gender_ex_1 <- plotPCA(dds_ex_1, intgroup=c("gender")) + ggtitle(paste0(run_id, ": all chr")) + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
-pl_gender_ex_1 + geom_point(size = 5)
-if(output_save==TRUE){ dev.off() }
-
-# => (1) with labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_4_excluded_", run_id, "_labelled.png")) }
-pl_gender_ex_1 + geom_point(size = 5) + geom_text(label=pl_gender_ex_1$data$name, check_overlap=F, nudge_x=5, nudge_y=0, size=3)
-if(output_save==TRUE){ dev.off() }
-
-# (2) the most extreme: ID_16137 & ID_16142 and ID_12330 & ID_14930 and second most: ID_16153
-to_be_remove_ex_2 <- c(which(dds$sample == "ID_16137"), which(dds$sample == "ID_16142"), 
-                       which(dds$sample == "ID_12330"), which(dds$sample == "ID_14930"),
-                       which(dds$sample == "ID_16153"))
-
-dds_ex_2 <- DESeqTransform(dds[,-to_be_remove_ex_2])
-
-# => (2) without labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_5_excluded_", run_id, ".png")) }
-pl_gender_ex_2 <- plotPCA(dds_ex_2, intgroup=c("gender")) + ggtitle(paste0(run_id, ": all chr")) + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
-pl_gender_ex_2 + geom_point(size = 5)
-if(output_save==TRUE){ dev.off() }
-
-# => (2) with labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_5_excluded_", run_id, "_labelled.png")) }
-pl_gender_ex_2 + geom_point(size = 5) + geom_text(label=pl_gender_ex_2$data$name, check_overlap=F, nudge_x=5, nudge_y=0, size=3)
-if(output_save==TRUE){ dev.off() }
-
-# (3) all the outliers: ID_16137 & ID_16142 and ID_12330 & ID_14930 and ID_16153 and ID_16187 & ID_12331
-to_be_remove_ex_3 <- c(which(dds$sample == "ID_16137"), which(dds$sample == "ID_16142"), 
-                       which(dds$sample == "ID_12330"), which(dds$sample == "ID_14930"),
-                       which(dds$sample == "ID_16153"), which(dds$sample == "ID_16187"),
-                       which(dds$sample == "ID_12331"))
-
-dds_ex_3 <- DESeqTransform(dds[,-to_be_remove_ex_3])
-
-# => (3) without labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_7_excluded_", run_id, ".png")) }
-pl_gender_ex_3 <- plotPCA(dds_ex_3, intgroup=c("gender")) + ggtitle(paste0(run_id, ": all chr")) + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
-pl_gender_ex_3 + geom_point(size = 5)
-if(output_save==TRUE){ dev.off() }
-
-# => (3) with labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_7_excluded_", run_id, "_labelled.png")) }
-pl_gender_ex_3 + geom_point(size = 5) + geom_text(label=pl_gender_ex_3$data$name, check_overlap=F, nudge_x=5, nudge_y=0, size=3)
-if(output_save==TRUE){ dev.off() }
-
-# (4) all the 7 previous outliers + ID_8546 & ID_16098
-to_be_remove_ex_4 <- c(which(dds$sample == "ID_16137"), which(dds$sample == "ID_16142"), 
-                       which(dds$sample == "ID_12330"), which(dds$sample == "ID_14930"),
-                       which(dds$sample == "ID_16153"), which(dds$sample == "ID_16187"),
-                       which(dds$sample == "ID_12331"), which(dds$sample == "ID_8546"),
-                       which(dds$sample == "ID_16098"))
-
-dds_ex_4 <- DESeqTransform(dds[,-to_be_remove_ex_4])
-
-# => (4) without labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_9_excluded_", run_id, ".png")) }
-pl_gender_ex_4 <- plotPCA(dds_ex_4, intgroup=c("gender")) + ggtitle(paste0(run_id, ": all chr")) + theme(plot.title = element_text(hjust = 0.5), aspect.ratio=1)
-pl_gender_ex_4 + geom_point(size = 5)
-if(output_save==TRUE){ dev.off() }
-
-# => (4) with labels
-if(output_save==TRUE){ png(file = paste0("PCA_plot_9_excluded_", run_id, "_labelled.png")) }
-pl_gender_ex_4 + geom_point(size = 5) + geom_text(label=pl_gender_ex_4$data$name, check_overlap=F, nudge_x=5, nudge_y=0, size=3)
-if(output_save==TRUE){ dev.off() }
-
-###########################################################################################
-# => investigate the loadings (run PCA again using the built-in method)
-###########################################################################################
-
-# load the other data:
-
-# define directory with data (INPUT)
-#data_dir_loadings <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts")
-args <- c(paste0(main_dir,"/data/count_matrices/outliers_excluded/counts_vst_no_outliers.csv"))
-
-# define directory for results (OUTPUT)
-dir_out <- paste0(main_dir, "/ANALYSES_archived/oct_nov/oct20_gender_PCA/loadings/")
-dir_out_2 <- paste0(main_dir, "/ANALYSES/Dec20_pca/")
-setwd(dir_out)
+# define directory for chromosome info
+dir_chromosome <- paste0(main_dir, "/ANALYSES/Dec20_pca/chr_info/")
 
 # load data RAW | VST | rlog (run for one data type at a time)
-#load(paste0(data_dir, "/Raw_DESeq_dataset_all.Rda")); dds <- dds_all
-#load(paste0(data_dir_loadings,"/Normalised_DESeq_vst_dataset_all.Rda")); dds <- vst_all
-#load(paste0(data_dir,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds <- rlog_all
 dds <- read.csv(args[1], row.names = 1, header = TRUE)
 dat <- as.matrix(dds)
 
-# sources: 
-# => https://www.biostars.org/p/237730/
-# => https://support.bioconductor.org/p/51270/ 
+# load clinical data 
+df_meta <- read.csv(dir_metadata, row.names = 1, header = TRUE)
+
+# load chromosome info
+# source: https://biomart.genenames.org/martform/#!/default/HGNC?datasets=hgnc_gene_mart&attributes=hgnc_gene__hgnc_gene_id_1010%2Chgnc_gene__approved_symbol_1010%2Chgnc_gene__chromosome_1010%2Chgnc_gene__chromosome_location_1010&hgnc_gene__chromosome_1010=mitochondria%2Cc10_B%2Creserved%2CNA
+#chrX <- read.csv(paste0(dir_chromosome, "results_X.csv"), header = TRUE, sep = "\t")
+#chrY <- read.csv(paste0(dir_chromosome, "results_Y.csv"), header = TRUE, sep = "\t")
+#chr_XY <- read.csv(paste0(dir_chromosome, "results_X_and_Y.csv"), header = TRUE, sep = "\t")
+#chr_all <- read.csv(paste0(dir_chromosome, "results_all.csv"), header = TRUE, sep = "\t")
+#chr_1_22 <- read.csv(paste0(dir_chromosome, "results_1-22.csv"), header = TRUE, sep = "\t")
+#chr_other <- read.csv(paste0(dir_chromosome, "results_other.csv"), header = TRUE, sep = "\t")
+
+# find intersections
+#length(intersect(rownames(dat), chrX$Approved.symbol))          # => 913, out of 2016
+#length(intersect(rownames(dat), chrY$Approved.symbol))          # => 70, out of 502
+#length(intersect(rownames(dat), chr_1_22$Approved.symbol))      # => 21 740, out of 41 054
+#length(intersect(rownames(dat), chr_all$Approved.symbol))       # => 22 747, out of 43 612
+#length(intersect(rownames(dat), chr_XY$Approved.symbol))        # => 24, out of 40
+
+if(FALSE){
+chr_anno <- read.csv(paste0(main_dir, "/ANALYSES/run_12_Aug20/5_counting/PE_all/all_annotations_dups_PE_all.csv"), sep=",")
+
+dim(dat) # => 26 486
+
+chr_info_all <- str_split_fixed(chr_anno$Chr, ";", n=2)
+chr_info_first_col <- chr_info_all[,1]
+
+gene_names <- chr_anno$GeneID
+
+# create a dataframe with gene_names and chr_info
+df_chr <- data.frame(genes=gene_names,
+                     chr=chr_info_first_col)
+
+df_chr_final <- df_chr[which(gene_names %in% rownames(dat)),]
+
+write.csv(df_chr_final, "chromosome_info.csv")
+}
+
+df_chr_final <- read.csv(paste0(dir_out, "chromosome_info.csv"))
+# length(intersect(rownames(dat), gene_names))  # => all of them are included
+
+# extract gene names for chrX and chrY
+idx_chrX <- which(df_chr_final$chr == "chrX")
+idx_chrY <- which(df_chr_final$chr == "chrY")
+
+# chr 1 - 22
+dat_chr1_22 <- dat[-c(idx_chrX, idx_chrY),]
+  
+# chr 1 - 22 + chrX
+dat_chr1_22_X <- dat[-idx_chrY,]
+  
+# chr 1 - 22 + chrY
+dat_chr1_22_Y <- dat[-idx_chrX,]
+
+# create DESeqDataSetFromMatrix (in order to use plotPCA() function)
+gender <- c(rep("female", 40))
+gender[which(df_meta$gender == 1)] <- "male"
+
+extra <- c(rep("example_1", 20), rep("example_1", 20))
+coldata_1 <- cbind(gender, extra)
+                   
+dds_all_chr <- DESeqDataSetFromMatrix(countData = round(dat), colData = coldata_1, design = ~ gender)
+tr_all_chr <- DESeqTransform(dds_all_chr)
+
+dds_chr1_22 <- DESeqDataSetFromMatrix(countData = round(dat_chr1_22), colData = coldata_1, design = ~ gender)
+tr_chr1_22 <- DESeqTransform(dds_chr1_22)
+
+dds_chr1_22_X <- DESeqDataSetFromMatrix(countData = round(dat_chr1_22_X), colData = coldata_1, design = ~ gender)
+tr_chr1_22_X <- DESeqTransform(dds_chr1_22_X)
+
+dds_chr1_22_Y <- DESeqDataSetFromMatrix(countData = round(dat_chr1_22_Y), colData = coldata_1, design = ~ gender)
+tr_chr1_22_Y <- DESeqTransform(dds_chr1_22_Y)
+
+# make pca plots using DESeq2 package command
+
+# all chromosomes
+if(output_save==TRUE){ png(file = paste0("PCA_plot_all_chr_", run_id, ".png")) }
+plotPCA(tr_all_chr, intgroup=c("gender")) + geom_point(size = 3)
+if(output_save==TRUE){ dev.off() }
+# plotPCA(tr_all_chr, intgroup=c("gender")) + geom_text(aes(label=colnames(dds_all_chr)))
+
+# chr 1 - 22
+if(output_save==TRUE){ png(file = paste0("PCA_plot_chr_1-22_", run_id, ".png")) }
+plotPCA(tr_chr1_22, intgroup=c("gender")) + geom_point(size = 3)
+if(output_save==TRUE){ dev.off() }
+#plotPCA(tr_chr1_22, intgroup=c("gender")) + geom_text(aes(label=colnames(dds_chr1_22)))
+
+# chr 1 - 22 + chrX
+if(output_save==TRUE){ png(file = paste0("PCA_plot_chr_1-22-X_", run_id, ".png")) }
+plotPCA(tr_chr1_22_X, intgroup=c("gender")) + geom_point(size = 3)
+if(output_save==TRUE){ dev.off() }
+#plotPCA(tr_chr1_22_X, intgroup=c("gender")) + geom_text(aes(label=colnames(dds_chr1_22_X)))
+
+# chr 1 - 22 + chrY
+if(output_save==TRUE){ png(file = paste0("PCA_plot_chr_1-22-Y_", run_id, ".png")) }
+plotPCA(tr_chr1_22_Y, intgroup=c("gender")) + geom_point(size = 3)
+if(output_save==TRUE){ dev.off() }
+#plotPCA(tr_chr1_22_Y, intgroup=c("gender")) + geom_text(aes(label=colnames(dds_chr1_22_Y)))
+
+
+
+
+
+
+
+
+
+
 
 # run PCA using the built-in function
 #pca_dds <- prcomp(t(assay(dds)))
