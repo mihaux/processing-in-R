@@ -17,12 +17,12 @@ if(startsWith(w_dir, "/Users/michal")){
 }
 
 # define wheather output files should be saved or not [TRUE / FALSE]
-output_save <- TRUE
+output_save <- FALSE
 
 # define directory with data (INPUT)
-args <- c(paste0(main_dir,"/data/count_matrices/outliers_excluded/counts_rlog_no_outliers.csv"))
+args <- c(paste0(main_dir,"/data/count_matrices/outliers_excluded/counts_vst_no_outliers.csv"))
 
-run_id <- "rlog"
+run_id <- "vst"
 
 # define directory for results (OUTPUT)
 dir_out <- paste0(main_dir, "/ANALYSES/Dec20_pca/")
@@ -138,10 +138,59 @@ if(output_save==TRUE){ dev.off() }
 #plotPCA(tr_chr1_22_Y, intgroup=c("gender")) + geom_text(aes(label=colnames(dds_chr1_22_Y)))
 
 
+##########################################################################################
+# use spearman coefficient to compute correlation between
+########################################################################################## 
+
+# create vectors with PC1 for all three sets
+chr_all <- plotPCA(tr_all_chr, intgroup=c("gender"))
+chr_1_22 <- plotPCA(tr_chr1_22, intgroup=c("gender"))
+chr_1_22_X <- plotPCA(tr_chr1_22_X, intgroup=c("gender"))
+chr_1_22_Y <- plotPCA(tr_chr1_22_Y, intgroup=c("gender"))
+
+# => PC1 for all_chromosomes vs. PC1 for chr1-22
+res_spearman_all_1_22 <- cor.test(chr_all$data$PC1, chr_1_22$data$PC1, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+
+# => PC1 for all_chromosomes vs. PC1 for chr1-22+chrX
+res_spearman_all_1_22_X <- cor.test(chr_all$data$PC1, chr_1_22_X$data$PC1, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+
+# => PC1 for all_chromosomes vs. PC1 for chr1-22+chrY
+res_spearman_all_1_22_Y <- cor.test(chr_all$data$PC1, chr_1_22_Y$data$PC1, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
 
 
+# Multiple testing correction
+p_adj_pearson <- p.adjust(unlist(lapply(res_pearson, function(x) x$p.value)), "fdr")    # Benjamini & Hochberg ("BH" or its alias "fdr")
+p_adj_spearman <- p.adjust(unlist(lapply(res_spearman, function(x) x$p.value)), "fdr")    # Benjamini & Hochberg ("BH" or its alias "fdr")
+
+# create table with results
+res_table_pearson <- data.frame(ID=rownames(dat),
+                                p.value=unlist(lapply(res_pearson, function(x) x$p.value)),
+                                p.adj=p_adj_pearson,
+                                pearson_coef=unlist(lapply(res_pearson, function(x) x$estimate)),
+                                CI_1=unlist(lapply(res_pearson, function(x) x$conf.int[1])),
+                                CI_2=unlist(lapply(res_pearson, function(x) x$conf.int[2])))
 
 
+res_table_spearman <- data.frame(ID=rownames(dat),
+                                 p.value=unlist(lapply(res_spearman, function(x) x$p.value)),
+                                 p.adj=p_adj_spearman,
+                                 spearman_coef=unlist(lapply(res_spearman, function(x) x$estimate)))
+
+# write a summary table with numbers of significant results
+summary_significant = data.frame(V1=run_id, 
+                                 V2=length(which(res_table_pearson$p.value < 0.05)),
+                                 V3=length(which(res_table_pearson$p.adj < 0.05)),
+                                 V4=length(which(res_table_spearman$p.value < 0.05)),
+                                 V5=length(which(res_table_spearman$p.adj < 0.05)))
+
+colnames(summary_significant) <- c("", "p-value < 0.05 (Pearson)", "p-adjusted < 0.05 (Pearson)",
+                                   "p-value < 0.05 (Spearman)", "p-adjusted < 0.05 (Spearman)")
+
+if(output_save==TRUE){  
+  write.csv2(summary_significant, file=paste0("table_summary_significant_", run_id, ".csv"))
+  write.csv2(res_table_pearson, file=paste0("table_pearson_", run_id, ".csv"))
+  write.csv2(res_table_spearman, file=paste0("table_spearman_", run_id, ".csv"))
+}
 
 
 
