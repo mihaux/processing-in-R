@@ -47,24 +47,14 @@ names(files)[41] <- "ID_8546"
 all(file.exists(files))
 
 ########## transcript-level ##########
-
-
 # get a list of matrices with original transcript-level estimates
 txi.tx <- tximport(files, type = "salmon", txOut = TRUE)
 
-txi.inf.rep <- tximport(files, type = "salmon", txOut = TRUE)
-names(txi.inf.rep)
-head(txi.inf.rep$counts)
-
-txi <- tximport(files, type = "none", txOut = TRUE, txIdCol = "Name", abundanceCol = "TPM", 
-                countsCol = "NumReads", lengthCol = "Length", importer = function(x) read_tsv(x, skip = 8))
-
 # generate counts from abundances, scaled to library size, "scaledTPM"
-txi.tx_scaledTPM <- tximport(files, type = "salmon", txOut = TRUE, countsFromAbundance = c("scaledTPM"), dropInfReps = FALSE)
+txi.tx_scaledTPM <- tximport(files, type = "salmon", txOut = TRUE, countsFromAbundance = c("scaledTPM"))
 
 # generate counts from abundances, scaled using the average transcript length, averaged over samples and to library size, "lengthScaledTPM"
 txi.tx_lengthScaledTPM <- tximport(files, type = "salmon", txOut = TRUE, countsFromAbundance = c("lengthScaledTPM"))
-
 
 # save transcript-level counts matrix (175775 x 41)
 if(output_save==TRUE){
@@ -148,24 +138,3 @@ if(output_save==TRUE){
   write.csv(txi.sum_scaledTPM$counts[,-outliers_gene], "counts_gene-level_scaledTPM_no_outliers.csv")
   write.csv(txi.sum_lengthScaledTPM$counts[,-outliers_gene], "counts_gene-level_lengthScaledTPM_no_outliers.csv")
 }
-
-
-
-
-library(tximportData)
-dir <- system.file("extdata", package = "tximportData")
-list.files(dir)
-
-samples <- read.table(file.path(dir, "samples.txt"), header = TRUE)
-
-files <- file.path(dir, "salmon_gibbs", samples$run, "quant.sf.gz")
-names(files) <- paste0("sample", 1:6)
-txi.inf.rep <- tximport(files, type = "salmon", txOut = TRUE)
-names(txi.inf.rep)
-
-
-
-
-
-
-
