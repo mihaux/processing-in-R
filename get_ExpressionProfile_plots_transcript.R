@@ -1,5 +1,5 @@
-# make plots of expression profile of a selected gene / transcript
-# data types: Raw | Normalised_rlog | Normalised_vst
+# make plots of expression profile of a selected transcript (using results from Salmon)
+# data types: Raw 
 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
@@ -21,230 +21,71 @@ if(startsWith(w_dir, "/Users/michal")){
 output_save <- FALSE
 
 # define directory with data (INPUT)
-data_dir_1 <- paste0(main_dir,"/ANALYSES/downstream/rerun_FINAL_July20/rerun_5/FINAL")
-
-# single-end:
-#data_dir <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/SE/DESeq2_analysis/all_chr/INPUT_counts")
-
-# paired-end:
-data_dir_2 <- paste0(main_dir,"/ANALYSES/run_12_Aug20/6_downstream/PE/DESeq2_analysis/all_chr/INPUT_counts")
+data_dir <- paste0(main_dir,"/ANALYSES_archived/run_13_Jan21/processed/")
 
 # define directory for results (OUTPUT)
-dir_out <- paste0(main_dir, "/ANALYSES/nov20_SSTR2-expr-profile/vst/")
+dir_out <- paste0(main_dir, "/ANALYSES_archived/run_13_Jan21/expression_profiles")
 setwd(dir_out)
 
-# load data RAW | VST | rlog (run for one data type at a time)
-
-# NOTE: the use of raw data does not make much sense here
-#load(paste0(data_dir_1, "/Raw_DESeq_dataset_all.Rda")); dds_1 <- dds_all # 52 239 rows, RefSeq annotation
-#load(paste0(data_dir_2, "/Raw_DESeq_dataset_all.Rda")); dds_2 <- dds_all # 26 486 rows, GeneSymbol annotation
-
-#load(paste0(data_dir_1,"/Normalised_DESeq_vst_dataset_all.Rda")); dds_1 <- vst_all
-#load(paste0(data_dir_2,"/Normalised_DESeq_vst_dataset_all.Rda")); dds_2 <- vst_all
-
-load(paste0(data_dir_1,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds_1 <- rlog_all
-load(paste0(data_dir_2,"/Normalised_DESeq_rlog_dataset_all.Rda")); dds_2 <- rlog_all
+# load data 
+df <- read.csv(paste0(data_dir, "counts_transcript_level.csv"), row.names = 1)
 
 # define running ID (either "raw", "vst" pr "rlog")
-run_id <- "rlog"
+run_id <- "raw"
 
 #############################################################################
-# => in dds_1, look for NM_001049, NM_001050, NM_001051, NM_001052, NM_001053
-#############################################################################
+# => in df, look for:
+# SSTR1-201   |  ENST00000267377.3
+df_1 <- which(startsWith(rownames(df), "ENST00000267377"))    # 86319
+rownames(df)[df_1] # "ENST00000267377.2"
+
+# SSTR2-201   |  ENST00000357585.4
+# SSTR2-202   |  ENST00000579323.5
+df_2.1 <- which(startsWith(rownames(df), "ENST00000357585"))  # 135293
+df_2.2 <- which(startsWith(rownames(df), "ENST00000579323"))  # 135292
+rownames(df)[df_2.1]  # "ENST00000357585.3"
+rownames(df)[df_2.2]  # "ENST00000579323.5"
+
+# SSTR3-201   |  ENST00000610913.2
+# SSTR3-202   |  ENST00000617123.1
+df_3.1 <- which(startsWith(rownames(df), "ENST00000610913"))  # 127236
+df_3.2 <- which(startsWith(rownames(df), "ENST00000617123"))  # 127237
+rownames(df)[df_3.1]  # "ENST00000610913.1"
+rownames(df)[df_3.2]  # "ENST00000617123.1"
+
+# SSTR4-201   |  ENST00000255008.5
+df_4 <- which(startsWith(rownames(df), "ENST00000255008"))    # 144722
+rownames(df)[df_4] # "ENST00000255008.4"
+
+# SSTR5-201   |  ENST00000293897.5
+df_5 <- which(startsWith(rownames(df), "ENST00000293897"))    # 106422
+rownames(df)[df_5] # "ENST00000293897.5"
 
 # get min, max, mean and median for each sample
-dds_1_min <- apply(assay(dds_1), 2, min)
-dds_1_max <- apply(assay(dds_1), 2, max)
-dds_1_mean <- apply(assay(dds_1), 2, mean)
-dds_1_median <- apply(assay(dds_1), 2, median)
+df_min <- apply(df, 2, min)
+df_max <- apply(df, 2, max)
+df_mean <- apply(df, 2, mean)
+df_median <- apply(df, 2, median)
 
 # save results table
-res_tab_1 <- data.frame(min=dds_1_min, max=dds_1_max, mean=dds_1_mean, median=dds_1_median)
+res_tab_1 <- data.frame(min=df_min, max=df_max, mean=df_mean, median=df_median)
 if(output_save==TRUE){ write.csv(res_tab_1, file = paste0("table_transcripts_", run_id,".csv")) }
 
-dds_1_1 <- which(startsWith(rownames(dds_1), "NM_001049")) # 37043
-dds_1_2 <- which(startsWith(rownames(dds_1), "NM_001050")) # 44359
-dds_1_3 <- which(startsWith(rownames(dds_1), "NM_001051")) # 51880
-dds_1_4 <- which(startsWith(rownames(dds_1), "NM_001052")) # 49679
-dds_1_5 <- which(startsWith(rownames(dds_1), "NM_001053")) # 40277
+# create a matrix with all transcripts of interest
+mat_1 <- rbind(df[df_1,], 
+               df[df_2.1,], df[df_2.2,], 
+               df[df_3.1,], df[df_3.2,], 
+               df[df_4,],  
+               df[df_5,], 
+               df_max,
+               df_mean)
 
-# create a matrix with all genes of interest
-mat_1 <- cbind(assay(dds_1)[dds_1_1,], 
-               assay(dds_1)[dds_1_2,], 
-               assay(dds_1)[dds_1_3,], 
-               assay(dds_1)[dds_1_4,], 
-               assay(dds_1)[dds_1_5,])
-
-colnames(mat_1) <- c("NM_001049", "NM_001050", "NM_001051", "NM_001052", "NM_001053")
+rownames(mat_1) <- c("SSTR1-201", "SSTR2-201", "SSTR2-202", "SSTR3-201", "SSTR3-202", "SSTR4-201", "SSTR5-201", "max", "mean")
   
-# create a heatmap with all 5 genes of interest and min, max, mean and median
-if(output_save==TRUE){ png(file = paste0("heatmap_SSTR1-5_transcripts_", run_id, "_all.png")) }
-heatmap(cbind(mat_1, dds_1_min, dds_1_max, dds_1_mean, dds_1_median), Rowv = NA, Colv = NA, cexRow=0.8, cexCol=0.8)
-if(output_save==TRUE){ dev.off() }
+# write a table 
+write.csv(mat_1, "transcripts_of_interest-counts.csv")
 
-# same as above, but without max.expr as it's too extreme
-if(output_save==TRUE){ png(file = paste0("heatmap_SSTR1-5_transcripts_", run_id, "_noMAX.png")) }
-heatmap(cbind(mat_1, dds_1_min, dds_1_mean, dds_1_median), Rowv = NA, Colv = NA, cexRow=0.8, cexCol=0.8)
-if(output_save==TRUE){ dev.off() }
 
-# same as above, but without max.expr and min.expr as it's too extreme
-if(output_save==TRUE){ png(file = paste0("heatmap_SSTR1-5_transcripts_", run_id, "_noMAXnoMIN.png")) }
-heatmap(cbind(mat_1, dds_1_mean, dds_1_median), Rowv = NA, Colv = NA, cexRow=0.8, cexCol=0.8)
-if(output_save==TRUE){ dev.off() }
-
-# make histograms of gene expression values per sample
-png(paste0("histograms_transcripts_per_sample_", run_id, "_part-I.png"))
-hist(assay(dds_1)[,1], xlab = colnames(assay(dds_1))[1], main = "Distribution of gene expression per sample")
-dev.off()
-
-png(paste0("histograms_transcripts_per_sample_", run_id, "_part-II.png"))
-par(mfrow=c(4,5))
-hist(assay(dds_1)[,2], xlab = colnames(assay(dds_1))[2], main = NULL)
-hist(assay(dds_1)[,3], xlab = colnames(assay(dds_1))[3], main = NULL)
-hist(assay(dds_1)[,4], xlab = colnames(assay(dds_1))[4], main = NULL)
-hist(assay(dds_1)[,5], xlab = colnames(assay(dds_1))[5], main = NULL)
-hist(assay(dds_1)[,6], xlab = colnames(assay(dds_1))[6], main = NULL)
-hist(assay(dds_1)[,7], xlab = colnames(assay(dds_1))[7], main = NULL)
-hist(assay(dds_1)[,8], xlab = colnames(assay(dds_1))[8], main = NULL)
-hist(assay(dds_1)[,9], xlab = colnames(assay(dds_1))[9], main = NULL)
-hist(assay(dds_1)[,10], xlab = colnames(assay(dds_1))[10], main = NULL)
-hist(assay(dds_1)[,11], xlab = colnames(assay(dds_1))[11], main = NULL)
-hist(assay(dds_1)[,12], xlab = colnames(assay(dds_1))[12], main = NULL)
-hist(assay(dds_1)[,13], xlab = colnames(assay(dds_1))[13], main = NULL)
-hist(assay(dds_1)[,14], xlab = colnames(assay(dds_1))[14], main = NULL)
-hist(assay(dds_1)[,15], xlab = colnames(assay(dds_1))[15], main = NULL)
-hist(assay(dds_1)[,16], xlab = colnames(assay(dds_1))[16], main = NULL)
-hist(assay(dds_1)[,17], xlab = colnames(assay(dds_1))[17], main = NULL)
-hist(assay(dds_1)[,18], xlab = colnames(assay(dds_1))[18], main = NULL)
-hist(assay(dds_1)[,19], xlab = colnames(assay(dds_1))[19], main = NULL)
-hist(assay(dds_1)[,20], xlab = colnames(assay(dds_1))[20], main = NULL)
-hist(assay(dds_1)[,21], xlab = colnames(assay(dds_1))[21], main = NULL)
-dev.off()
-
-png(paste0("histograms_transcripts_per_sample_", run_id, "_part-III.png"))
-par(mfrow=c(4,5))
-hist(assay(dds_1)[,22], xlab = colnames(assay(dds_1))[22], main = NULL)
-hist(assay(dds_1)[,23], xlab = colnames(assay(dds_1))[23], main = NULL)
-hist(assay(dds_1)[,24], xlab = colnames(assay(dds_1))[24], main = NULL)
-hist(assay(dds_1)[,25], xlab = colnames(assay(dds_1))[25], main = NULL)
-hist(assay(dds_1)[,26], xlab = colnames(assay(dds_1))[26], main = NULL)
-hist(assay(dds_1)[,27], xlab = colnames(assay(dds_1))[27], main = NULL)
-hist(assay(dds_1)[,28], xlab = colnames(assay(dds_1))[28], main = NULL)
-hist(assay(dds_1)[,29], xlab = colnames(assay(dds_1))[29], main = NULL)
-hist(assay(dds_1)[,30], xlab = colnames(assay(dds_1))[30], main = NULL)
-hist(assay(dds_1)[,31], xlab = colnames(assay(dds_1))[31], main = NULL)
-hist(assay(dds_1)[,32], xlab = colnames(assay(dds_1))[32], main = NULL)
-hist(assay(dds_1)[,33], xlab = colnames(assay(dds_1))[33], main = NULL)
-hist(assay(dds_1)[,34], xlab = colnames(assay(dds_1))[34], main = NULL)
-hist(assay(dds_1)[,35], xlab = colnames(assay(dds_1))[35], main = NULL)
-hist(assay(dds_1)[,36], xlab = colnames(assay(dds_1))[36], main = NULL)
-hist(assay(dds_1)[,37], xlab = colnames(assay(dds_1))[37], main = NULL)
-hist(assay(dds_1)[,38], xlab = colnames(assay(dds_1))[38], main = NULL)
-hist(assay(dds_1)[,39], xlab = colnames(assay(dds_1))[39], main = NULL)
-hist(assay(dds_1)[,40], xlab = colnames(assay(dds_1))[40], main = NULL)
-hist(assay(dds_1)[,41], xlab = colnames(assay(dds_1))[41], main = NULL)
-dev.off()
-
-#############################################################################
-# => in dds_2, look for SSTR1, SSTR2, SSTR3, SSTR4, SSTR5
-#############################################################################
-
-# get min, max, mean and median for each sample
-dds_2_min <- apply(assay(dds_2), 2, min)
-dds_2_max <- apply(assay(dds_2), 2, max)
-dds_2_mean <- apply(assay(dds_2), 2, mean)
-dds_2_median <- apply(assay(dds_2), 2, median)
-
-# save results table
-res_tab_2 <- data.frame(min=dds_2_min, max=dds_2_max, mean=dds_2_mean, median=dds_2_median)
-if(output_save==TRUE){ write.csv(res_tab_2, file = paste0("table_genes_", run_id,".csv")) }
-
-dds_2_1 <- which(startsWith(rownames(dds_2), "SSTR1")) # 7321
-dds_2_2 <- which(startsWith(rownames(dds_2), "SSTR2")) # 11356
-dds_2_3 <- which(startsWith(rownames(dds_2), "SSTR3")) # 16787
-dds_2_4 <- which(startsWith(rownames(dds_2), "SSTR4")) # 15559
-dds_2_5 <- which(startsWith(rownames(dds_2), "SSTR5")) # 9008 and 9009
-
-# create a matrix with all genes of interest
-mat_2 <- cbind(assay(dds_2)[dds_2_1,], 
-               assay(dds_2)[dds_2_2,], 
-               assay(dds_2)[dds_2_3,], 
-               assay(dds_2)[dds_2_4,], 
-               #assay(dds_2)[dds_2_5[1],],  # => SSTR5 antisense RNA 1
-               assay(dds_2)[dds_2_5[2],])
-
-colnames(mat_2) <- c("SSTR1", "SSTR2", "SSTR3", "SSTR4", "SSTR5")
-
-# create a heatmap with all 5 genes of interest and min, max, mean and median
-if(output_save==TRUE){ png(file = paste0("heatmap_SSTR1-5_genes_", run_id, "_all.png")) }
-heatmap(cbind(mat_2, dds_2_min, dds_2_max, dds_2_mean, dds_2_median), Rowv = NA, Colv = NA, cexRow=0.8, cexCol=0.8)
-if(output_save==TRUE){ dev.off() }
-
-# same as above, but without max.expr as it's too extreme
-if(output_save==TRUE){ png(file = paste0("heatmap_SSTR1-5_genes_", run_id, "_noMAX.png")) }
-heatmap(cbind(mat_2, dds_2_min, dds_2_mean, dds_2_median), Rowv = NA, Colv = NA, cexRow=0.8, cexCol=0.8)
-if(output_save==TRUE){ dev.off() }
-
-# same as above, but without max.expr and min.expr as it's too extreme
-if(output_save==TRUE){ png(file = paste0("heatmap_SSTR1-5_genes_", run_id, "_noMAXnoMIN.png")) }
-heatmap(cbind(mat_2, dds_2_mean, dds_2_median), Rowv = NA, Colv = NA, cexRow=0.8, cexCol=0.8)
-if(output_save==TRUE){ dev.off() }
-
-par(mfrow=c(1,1))
-hist(assay(dds_2)[,1], xlab = colnames(assay(dds_2))[1], main = NULL)
-
-# make histograms of gene expression values per sample
-png(paste0("histograms_genes_per_sample_", run_id, "_part-I.png"))
-hist(assay(dds_2)[,1], xlab = colnames(assay(dds_2))[1], main = "Distribution of gene expression per sample")
-dev.off()
-
-png(paste0("histograms_genes_per_sample_", run_id, "_part-II.png"))
-par(mfrow=c(4,5))
-hist(assay(dds_2)[,2], xlab = colnames(assay(dds_2))[2], main = NULL)
-hist(assay(dds_2)[,3], xlab = colnames(assay(dds_2))[3], main = NULL)
-hist(assay(dds_2)[,4], xlab = colnames(assay(dds_2))[4], main = NULL)
-hist(assay(dds_2)[,5], xlab = colnames(assay(dds_2))[5], main = NULL)
-hist(assay(dds_2)[,6], xlab = colnames(assay(dds_2))[6], main = NULL)
-hist(assay(dds_2)[,7], xlab = colnames(assay(dds_2))[7], main = NULL)
-hist(assay(dds_2)[,8], xlab = colnames(assay(dds_2))[8], main = NULL)
-hist(assay(dds_2)[,9], xlab = colnames(assay(dds_2))[9], main = NULL)
-hist(assay(dds_2)[,10], xlab = colnames(assay(dds_2))[10], main = NULL)
-hist(assay(dds_2)[,11], xlab = colnames(assay(dds_2))[11], main = NULL)
-hist(assay(dds_2)[,12], xlab = colnames(assay(dds_2))[12], main = NULL)
-hist(assay(dds_2)[,13], xlab = colnames(assay(dds_2))[13], main = NULL)
-hist(assay(dds_2)[,14], xlab = colnames(assay(dds_2))[14], main = NULL)
-hist(assay(dds_2)[,15], xlab = colnames(assay(dds_2))[15], main = NULL)
-hist(assay(dds_2)[,16], xlab = colnames(assay(dds_2))[16], main = NULL)
-hist(assay(dds_2)[,17], xlab = colnames(assay(dds_2))[17], main = NULL)
-hist(assay(dds_2)[,18], xlab = colnames(assay(dds_2))[18], main = NULL)
-hist(assay(dds_2)[,19], xlab = colnames(assay(dds_2))[19], main = NULL)
-hist(assay(dds_2)[,20], xlab = colnames(assay(dds_2))[20], main = NULL)
-hist(assay(dds_2)[,21], xlab = colnames(assay(dds_2))[21], main = NULL)
-dev.off()
-
-png(paste0("histograms_genes_per_sample_", run_id, "_part-III.png"))
-par(mfrow=c(4,5))
-hist(assay(dds_2)[,22], xlab = colnames(assay(dds_2))[22], main = NULL)
-hist(assay(dds_2)[,23], xlab = colnames(assay(dds_2))[23], main = NULL)
-hist(assay(dds_2)[,24], xlab = colnames(assay(dds_2))[24], main = NULL)
-hist(assay(dds_2)[,25], xlab = colnames(assay(dds_2))[25], main = NULL)
-hist(assay(dds_2)[,26], xlab = colnames(assay(dds_2))[26], main = NULL)
-hist(assay(dds_2)[,27], xlab = colnames(assay(dds_2))[27], main = NULL)
-hist(assay(dds_2)[,28], xlab = colnames(assay(dds_2))[28], main = NULL)
-hist(assay(dds_2)[,29], xlab = colnames(assay(dds_2))[29], main = NULL)
-hist(assay(dds_2)[,30], xlab = colnames(assay(dds_2))[30], main = NULL)
-hist(assay(dds_2)[,31], xlab = colnames(assay(dds_2))[31], main = NULL)
-hist(assay(dds_2)[,32], xlab = colnames(assay(dds_2))[32], main = NULL)
-hist(assay(dds_2)[,33], xlab = colnames(assay(dds_2))[33], main = NULL)
-hist(assay(dds_2)[,34], xlab = colnames(assay(dds_2))[34], main = NULL)
-hist(assay(dds_2)[,35], xlab = colnames(assay(dds_2))[35], main = NULL)
-hist(assay(dds_2)[,36], xlab = colnames(assay(dds_2))[36], main = NULL)
-hist(assay(dds_2)[,37], xlab = colnames(assay(dds_2))[37], main = NULL)
-hist(assay(dds_2)[,38], xlab = colnames(assay(dds_2))[38], main = NULL)
-hist(assay(dds_2)[,39], xlab = colnames(assay(dds_2))[39], main = NULL)
-hist(assay(dds_2)[,40], xlab = colnames(assay(dds_2))[40], main = NULL)
-hist(assay(dds_2)[,41], xlab = colnames(assay(dds_2))[41], main = NULL)
-dev.off()
 
 #############################################################################
 # check the results of differential expression analysis 

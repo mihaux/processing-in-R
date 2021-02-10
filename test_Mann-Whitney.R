@@ -85,7 +85,7 @@ dds <- read.csv(args[1], row.names = 1, header = TRUE)
 dat <- as.matrix(dds)
 
 # define running ID (either "raw" / "vst" / "rlog")
-run_id <- "rlog"
+run_id <- "raw"
 
 # change data format to matrix and integer
 #dat_raw <- as.matrix(assay(dds_all))
@@ -120,7 +120,7 @@ if(nrow(anno) == ncol(dat)){
   #dat_raw <- dat_raw[,-which(colnames(dat_raw) == "ID_14058")]
   #dat_vst <- dat_vst[,-which(colnames(dat_vst) == "ID_14058")]
   #dat_rlog <- dat_rlog[,-which(colnames(dat_rlog) == "ID_14058")]
-  dat <- dat[,-which(colnames(dat) == "ID.14058")]
+  dat <- dat[,-which(colnames(dat) == "ID_14058")]
 
   # modify Occlusion.grade. and Intima.pattern. to make it 2 comparison groups
   Occlusion_grade_new <- c(1:39)
