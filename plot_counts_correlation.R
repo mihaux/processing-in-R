@@ -52,6 +52,11 @@ for (i in 1:ncol(df_1)) {
 #  ken[i] <- cor(df_1[,i], df_2[,i], method = 'kendall')      # takes too long to process
 }
 
+df_coefficients <- as.data.frame(cbind(colnames(df_1) ,pears, spears))
+colnames(df_coefficients) <- c("IDs", "pearson", "spearman")
+
+write.csv(df_coefficients, file = "coefficients.csv")
+
 # for each sample, plot SE agains PE
 df_temp <- list()
 for (i in 1:ncol(df_1)) {
@@ -62,15 +67,6 @@ for (i in 1:ncol(df_1)) {
 for (i in 1:41) {
   print(names(df_temp[[i]]))
 }
-
-# Open a pdf file
-pdf("rplot.pdf") 
-# 2. Create a plot
-plot(x = my_data$wt, y = my_data$mpg,
-     pch = 16, frame = FALSE,
-     xlab = "wt", ylab = "mpg", col = "#2E9FDF")
-# Close the pdf file
-dev.off() 
 
 png("correlation_SE_PE_ID_11026.png"); ggplot(df_temp[[1]], aes(ID_11026_SE, ID_11026_PE)) + geom_point() + geom_abline(colour = "brown"); dev.off() 
 png("correlation_SE_PE_ID_11028.png"); ggplot(df_temp[[2]], aes(ID_11028_SE, ID_11028_PE)) + geom_point() + geom_abline(colour = "brown"); dev.off()
@@ -113,6 +109,4 @@ png("correlation_SE_PE_ID_16187.png"); ggplot(df_temp[[38]], aes(ID_16187_SE, ID
 png("correlation_SE_PE_ID_16648.png"); ggplot(df_temp[[39]], aes(ID_16648_SE, ID_16648_PE)) + geom_point() + geom_abline(colour = "brown"); dev.off()
 png("correlation_SE_PE_ID_16649.png"); ggplot(df_temp[[40]], aes(ID_16649_SE, ID_16649_PE)) + geom_point() + geom_abline(colour = "brown"); dev.off()
 png("correlation_SE_PE_ID_8546.png"); ggplot(df_temp[[41]], aes(ID_8546_SE, ID_8546_PE)) + geom_point() + geom_abline(colour = "brown"); dev.off()
-
-
 
