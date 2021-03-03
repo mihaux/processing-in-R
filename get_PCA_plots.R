@@ -148,14 +148,14 @@ chr_1_22 <- plotPCA(tr_chr1_22, intgroup=c("gender"))
 chr_1_22_X <- plotPCA(tr_chr1_22_X, intgroup=c("gender"))
 chr_1_22_Y <- plotPCA(tr_chr1_22_Y, intgroup=c("gender"))
 
-# => PC1 for all_chromosomes vs. PC1 for chr1-22
-res_spearman_all_1_22 <- cor.test(chr_all$data$PC1, chr_1_22$data$PC1, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+# => PC2 for all_chromosomes vs. PC2 for chr1-22
+res_spearman_all_1_22 <- cor.test(chr_all$data$PC2, chr_1_22$data$PC2, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
 
-# => PC1 for all_chromosomes vs. PC1 for chr1-22+chrX
-res_spearman_all_1_22_X <- cor.test(chr_all$data$PC1, chr_1_22_X$data$PC1, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+# => PC2 for all_chromosomes vs. PC2 for chr1-22+chrX
+res_spearman_all_1_22_X <- cor.test(chr_all$data$PC2, chr_1_22_X$data$PC2, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
 
-# => PC1 for all_chromosomes vs. PC1 for chr1-22+chrY
-res_spearman_all_1_22_Y <- cor.test(chr_all$data$PC1, chr_1_22_Y$data$PC1, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
+# => PC2 for all_chromosomes vs. PC2 for chr1-22+chrY
+res_spearman_all_1_22_Y <- cor.test(chr_all$data$PC2, chr_1_22_Y$data$PC2, alternative = c("two.sided"), method = c("spearman"), conf.level = 0.95, exact=FALSE)
 
 
 # Multiple testing correction

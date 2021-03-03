@@ -1,35 +1,9 @@
-# running differential expression analysis on direct output from Salmon, using the Swish method
 
-# source: https://bioconductor.org/packages/release/bioc/vignettes/fishpond/inst/doc/swish.html#Plotting_gene_results
 
-# SummarizedExperiment() explained
-# https://www.bioconductor.org/help/course-materials/2019/BSS2019/04_Practical_CoreApproachesInBioconductor.html#constructing-a-summarizedexperiment-object-by-hand
 
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!requireNamespace("SummarizedExperiment", quietly = TRUE)) BiocManager::install("SummarizedExperiment"); library(SummarizedExperiment)
-if (!requireNamespace("fishpond", quietly = TRUE)) BiocManager::install("fishpond"); library(fishpond)
 
-# get working directory to recognise the machine
-w_dir <- getwd()
 
-# create a shortcut for the OneDrive directory where all files are stored
-if(startsWith(w_dir, "/Users/michal")){           
-  main_dir <- "/Users/michal/Documents/OneDrive - University of Leeds"    # on my mac
-} else if (startsWith(w_dir, "/Users/ummz")) {    
-  main_dir <- "/Users/ummz/Documents/OneDrive - University of Leeds"      # on uni mac    
-} else {
-  print("Unrecognised machine.")
-}
 
-# define wheather output files should be saved or not [TRUE / FALSE]
-output_save <- TRUE
-
-# define directory with data (INPUT)
-data_dir <- paste0(main_dir,"/ANALYSES_archived/run_13_Jan21/processed/")
-
-# define directory for results (OUTPUT)
-dir_out <- paste0(main_dir, "/ANALYSES_archived/run_13_Jan21/processed/edgeR/")
-setwd(dir_out)
 
 # load counts (raw)
 cts_gene <- read.csv(paste0(data_dir, "counts_gene-level_no_outliers.csv"), row.names = 1)

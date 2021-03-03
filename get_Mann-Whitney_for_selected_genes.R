@@ -1,9 +1,10 @@
 # extract Mann-Whitney results for selected genes
-# data types: Normalised_rlog | Normalised_vst 
+# data types: RAW & VST 
 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!requireNamespace("DESeq2", quietly = TRUE)) BiocManager::install("DESeq2"); library(DESeq2)
 library(ggplot2)
+library(qdapRegex)
 
 # get working directory to recognise the machine
 w_dir <- getwd()
@@ -21,134 +22,263 @@ if(startsWith(w_dir, "/Users/michal")){
 output_save <- TRUE
 
 # define directory with data (INPUT)
-data_dir <- paste0(main_dir,"/ANALYSES/Dec20_rerun/RESULTS")
+data_dir <- paste0(main_dir,"/ANALYSES_archived/run_13_Jan21/statistical_testing/output/")
 
 # define directory for results (OUTPUT)
-dir_out <- paste0(main_dir, "/ANALYSES/Dec20_rerun/EXTRACTED_RESULTS")
+dir_out <- paste0(main_dir, "/ANALYSES_archived/run_13_Jan21/statistical_testing/output/extracted/gene-level")
 setwd(dir_out)
 
-# load data all results files at once (both vst and rlog)
-nm <- list.files(path=data_dir, recursive = TRUE, pattern = ".csv", full.names = TRUE)
-all_results <- lapply(nm, function(x) read.csv(x, sep = ";"))
+# load data all results files at once (both RAW and VST)
+nm_clinical_raw <- list.files(path=paste0(data_dir, "clinical"), recursive = TRUE, pattern = "raw_gene-level.csv", full.names = TRUE)
+nm_clinical_VST <- list.files(path=paste0(data_dir, "clinical"), recursive = TRUE, pattern = "VST_gene-level.csv", full.names = TRUE)
 
-names(all_results) <- list.files(path=data_dir, recursive = TRUE, pattern = "\\_rlog.csv$|\\_vst.csv$")
-# define running ID (either "raw", "vst" pr "rlog")
-#run_id <- "rlog"
+nm_histological_raw <- list.files(path=paste0(data_dir, "histological"), recursive = TRUE, pattern = "raw_gene-level.csv", full.names = TRUE)
+nm_histological_VST <- list.files(path=paste0(data_dir, "histological"), recursive = TRUE, pattern = "VST_gene-level.csv", full.names = TRUE)
 
-# extract SSTR1, SSTR2, SSTR3, SSTR4, SSTR5
-idx <- lapply(all_results, function(x) which(x$ID %in% c("SSTR1", "SSTR2", "SSTR3", "SSTR4", "SSTR5")))
+# keep only "table_sorted_by_pvalues_" (half of each list)
+nm_clinical_raw_fin <- nm_clinical_raw[seq(2, length(nm_clinical_raw), by = 2)]
+nm_clinical_VST_fin <- nm_clinical_VST[seq(2, length(nm_clinical_VST), by = 2)]
 
-results_extracted <- list()
-for (i in 1:length(all_results)) {
-  results_extracted[[i]] <- all_results[[i]][idx[[i]],]
+nm_histological_raw_fin <- nm_histological_raw[seq(2, length(nm_histological_raw), by = 2)]
+nm_histological_VST_fin <- nm_histological_VST[seq(2, length(nm_histological_VST), by = 2)]
+
+# read all table results and put them on a list
+all_results_clinical_raw_fin <- lapply(nm_clinical_raw_fin, function(x) read.csv(x, sep = ";"))
+all_results_clinical_VST_fin <- lapply(nm_clinical_VST_fin, function(x) read.csv(x, sep = ";"))
+
+all_results_histological_raw_fin <- lapply(nm_histological_raw_fin, function(x) read.csv(x, sep = ";"))
+all_results_histological_VST_fin <- lapply(nm_histological_VST_fin, function(x) read.csv(x, sep = ";"))
+
+# give it proper names
+names(all_results_clinical_raw_fin) <- unlist(qdapRegex::ex_between(nm_clinical_raw_fin, "clinical/", "/table"))
+names(all_results_clinical_VST_fin) <- unlist(qdapRegex::ex_between(nm_clinical_VST_fin, "clinical/", "/table"))
+
+names(all_results_histological_raw_fin) <- unlist(qdapRegex::ex_between(nm_histological_raw_fin, "histological/", "/table"))
+names(all_results_histological_VST_fin) <- unlist(qdapRegex::ex_between(nm_histological_VST_fin, "histological/", "/table"))
+
+# extract all genes of interest
+# => in df, look for:
+# SSTR1   |  ENSG00000139874
+# SSTR2   |  ENSG00000180616
+# SSTR3   |  ENSG00000278195
+# SSTR4   |  ENSG00000132671
+# SSTR5   |  ENSG00000162009
+
+idx_clinical_raw <- lapply(all_results_clinical_raw_fin, function(x) which(x$ID %in% c("ENSG00000139874", "ENSG00000180616", "ENSG00000278195", "ENSG00000132671", "ENSG00000162009")))
+idx_clinical_VST <- lapply(all_results_clinical_VST_fin, function(x) which(x$ID %in% c("ENSG00000139874", "ENSG00000180616", "ENSG00000278195", "ENSG00000132671", "ENSG00000162009")))
+                                                                             
+idx_histological_raw <- lapply(all_results_histological_raw_fin, function(x) which(x$ID %in% c("ENSG00000139874", "ENSG00000180616", "ENSG00000278195", "ENSG00000132671", "ENSG00000162009")))
+idx_histological_VST <- lapply(all_results_histological_VST_fin, function(x) which(x$ID %in% c("ENSG00000139874", "ENSG00000180616", "ENSG00000278195", "ENSG00000132671", "ENSG00000162009")))
+                                                                                     
+# extract the results
+results_extracted_clinical_raw <- list()
+for (i in 1:length(all_results_clinical_raw_fin)) {
+  results_extracted_clinical_raw[[i]] <- all_results_clinical_raw_fin[[i]][idx_clinical_raw[[i]],]
 }
 
+results_extracted_clinical_VST <- list()
+for (i in 1:length(all_results_clinical_VST_fin)) {
+  results_extracted_clinical_VST[[i]] <- all_results_clinical_VST_fin[[i]][idx_clinical_VST[[i]],]
+}
 
-# create a table with all the results (fdr.pvalue)
-res.fdr.pvalue <- data.frame(feature=gsub('.{4}$', '', dirname(names(all_results))),
-                             sstr1=unlist(lapply(results_extracted, function(x) x[1,4])),
-                             sstr2=unlist(lapply(results_extracted, function(x) x[2,4])),
-                             sstr3=unlist(lapply(results_extracted, function(x) x[3,4])),
-                             sstr4=unlist(lapply(results_extracted, function(x) x[4,4])),
-                             sstr5=unlist(lapply(results_extracted, function(x) x[5,4])))
+results_extracted_histological_raw <- list()
+for (i in 1:length(all_results_histological_raw_fin)) {
+  results_extracted_histological_raw[[i]] <- all_results_histological_raw_fin[[i]][idx_histological_raw[[i]],]
+}
+
+results_extracted_histological_VST <- list()
+for (i in 1:length(all_results_histological_VST_fin)) {
+  results_extracted_histological_VST[[i]] <- all_results_histological_VST_fin[[i]][idx_histological_VST[[i]],]
+}
+
+# give them proper names
+feat_names_fin_clinical_raw <- names(all_results_clinical_raw_fin)
+feat_names_fin_clinical_VST <- names(all_results_clinical_VST_fin)
+
+feat_names_fin_histological_raw <- names(all_results_histological_raw_fin)
+feat_names_fin_histological_VST <- names(all_results_histological_VST_fin)
+
+# create a table with all the results (fdr.pvalue) and (p.value)
+### => clinical_raw
+res.fdr.pvalue_clinical_raw <- data.frame(feature=feat_names_fin_clinical_raw,
+                                          sstr1=unlist(lapply(results_extracted_clinical_raw, function(x) x[1,4])),
+                                          sstr2=unlist(lapply(results_extracted_clinical_raw, function(x) x[2,4])),
+                                          sstr3=unlist(lapply(results_extracted_clinical_raw, function(x) x[3,4])),
+                                          sstr4=unlist(lapply(results_extracted_clinical_raw, function(x) x[4,4])),
+                                          sstr5=unlist(lapply(results_extracted_clinical_raw, function(x) x[5,4])))
                   
-res.p.value <- data.frame(feature=gsub('.{4}$', '', dirname(names(all_results))),
-                          sstr1=unlist(lapply(results_extracted, function(x) x[1,3])),
-                          sstr2=unlist(lapply(results_extracted, function(x) x[2,3])),
-                          sstr3=unlist(lapply(results_extracted, function(x) x[3,3])),
-                          sstr4=unlist(lapply(results_extracted, function(x) x[4,3])),
-                          sstr5=unlist(lapply(results_extracted, function(x) x[5,3])))
+
+res.p.value_clinical_raw <- data.frame(feature=feat_names_fin_clinical_raw,
+                                          sstr1=unlist(lapply(results_extracted_clinical_raw, function(x) x[1,3])),
+                                          sstr2=unlist(lapply(results_extracted_clinical_raw, function(x) x[2,3])),
+                                          sstr3=unlist(lapply(results_extracted_clinical_raw, function(x) x[3,3])),
+                                          sstr4=unlist(lapply(results_extracted_clinical_raw, function(x) x[4,3])),
+                                          sstr5=unlist(lapply(results_extracted_clinical_raw, function(x) x[5,3])))
+
+### => clinical_VST
+res.fdr.pvalue_clinical_VST <- data.frame(feature=feat_names_fin_clinical_VST,
+                                          sstr1=unlist(lapply(results_extracted_clinical_VST, function(x) x[1,4])),
+                                          sstr2=unlist(lapply(results_extracted_clinical_VST, function(x) x[2,4])),
+                                          sstr3=unlist(lapply(results_extracted_clinical_VST, function(x) x[3,4])),
+                                          sstr4=unlist(lapply(results_extracted_clinical_VST, function(x) x[4,4])),
+                                          sstr5=unlist(lapply(results_extracted_clinical_VST, function(x) x[5,4])))
+
+
+res.p.value_clinical_VST <- data.frame(feature=feat_names_fin_clinical_VST,
+                                       sstr1=unlist(lapply(results_extracted_clinical_VST, function(x) x[1,3])),
+                                       sstr2=unlist(lapply(results_extracted_clinical_VST, function(x) x[2,3])),
+                                       sstr3=unlist(lapply(results_extracted_clinical_VST, function(x) x[3,3])),
+                                       sstr4=unlist(lapply(results_extracted_clinical_VST, function(x) x[4,3])),
+                                       sstr5=unlist(lapply(results_extracted_clinical_VST, function(x) x[5,3])))
+
+### => histological_raw
+res.fdr.pvalue_histological_raw <- data.frame(feature=feat_names_fin_histological_raw,
+                                              sstr1=unlist(lapply(results_extracted_histological_raw, function(x) x[1,4])),
+                                              sstr2=unlist(lapply(results_extracted_histological_raw, function(x) x[2,4])),
+                                              sstr3=unlist(lapply(results_extracted_histological_raw, function(x) x[3,4])),
+                                              sstr4=unlist(lapply(results_extracted_histological_raw, function(x) x[4,4])),
+                                              sstr5=unlist(lapply(results_extracted_histological_raw, function(x) x[5,4])))
+
+
+res.p.value_histological_raw <- data.frame(feature=feat_names_fin_histological_raw,
+                                           sstr1=unlist(lapply(results_extracted_histological_raw, function(x) x[1,3])),
+                                           sstr2=unlist(lapply(results_extracted_histological_raw, function(x) x[2,3])),
+                                           sstr3=unlist(lapply(results_extracted_histological_raw, function(x) x[3,3])),
+                                           sstr4=unlist(lapply(results_extracted_histological_raw, function(x) x[4,3])),
+                                           sstr5=unlist(lapply(results_extracted_histological_raw, function(x) x[5,3])))
+
+### => histological_VST
+res.fdr.pvalue_histological_VST <- data.frame(feature=feat_names_fin_histological_VST,
+                                              sstr1=unlist(lapply(results_extracted_histological_VST, function(x) x[1,4])),
+                                              sstr2=unlist(lapply(results_extracted_histological_VST, function(x) x[2,4])),
+                                              sstr3=unlist(lapply(results_extracted_histological_VST, function(x) x[3,4])),
+                                              sstr4=unlist(lapply(results_extracted_histological_VST, function(x) x[4,4])),
+                                              sstr5=unlist(lapply(results_extracted_histological_VST, function(x) x[5,4])))
+
+
+res.p.value_histological_VST <- data.frame(feature=feat_names_fin_histological_VST,
+                                           sstr1=unlist(lapply(results_extracted_histological_VST, function(x) x[1,3])),
+                                           sstr2=unlist(lapply(results_extracted_histological_VST, function(x) x[2,3])),
+                                           sstr3=unlist(lapply(results_extracted_histological_VST, function(x) x[3,3])),
+                                           sstr4=unlist(lapply(results_extracted_histological_VST, function(x) x[4,3])),
+                                           sstr5=unlist(lapply(results_extracted_histological_VST, function(x) x[5,3])))
 
 # save results table
 if(output_save==TRUE){ 
-  write.csv(res.fdr.pvalue, file = paste0("extracted_p-adjusted.csv")) 
-  write.csv(res.p.value, file = paste0("extracted_p-values.csv"))
+  write.csv(res.fdr.pvalue_clinical_raw, file = paste0("extracted_p-adjusted_clinical_raw.csv")) 
+  write.csv(res.p.value_clinical_raw, file = paste0("extracted_p-values_clinical_raw.csv"))
+
+  write.csv(res.fdr.pvalue_clinical_VST, file = paste0("extracted_p-adjusted_clinical_VST.csv")) 
+  write.csv(res.p.value_clinical_VST, file = paste0("extracted_p-values_clinical_VST.csv"))
+  
+  write.csv(res.fdr.pvalue_histological_raw, file = paste0("extracted_p-adjusted_histological_raw.csv")) 
+  write.csv(res.p.value_histological_raw, file = paste0("extracted_p-values_histological_raw.csv"))
+  
+  write.csv(res.fdr.pvalue_histological_VST, file = paste0("extracted_p-adjusted_histological_VST.csv")) 
+  write.csv(res.p.value_histological_VST, file = paste0("extracted_p-values_histological_VST.csv"))
+  
 }
 
-# separate rlog and vst and clinical and histological
-padj_rlog <- res.fdr.pvalue[c(1,3,5,7,9,11,13,15,17,19,21,23,25,27),]
+if(FALSE){ # not needed anymore
+# separate clinical and histological features
+res.fdr.pvalue_clinical <- res.fdr.pvalue[c(2,4,5,9),]
+row.names(res.fdr.pvalue_clinical) <- res.fdr.pvalue_clinical$feature
+res.fdr.pvalue_clinical$feature <- NULL
 
-padj_rlog_clinic <- padj_rlog[c(1,3,7,8,14),]
-row.names(padj_rlog_clinic) <- padj_rlog_clinic$feature
-padj_rlog_clinic$feature <- NULL
+res.fdr.pvalue_histological <- res.fdr.pvalue[c(1,3,6,7,8),]
+row.names(res.fdr.pvalue_histological) <- res.fdr.pvalue_histological$feature
+res.fdr.pvalue_histological$feature <- NULL
+  
+res.p.value_clinical <- res.p.value[c(2,4,5,9),]
+row.names(res.p.value_clinical) <- res.p.value_clinical$feature
+res.p.value_clinical$feature <- NULL
 
-padj_rlog_histo <- padj_rlog[c(2,4,5,6,9,10,11,12,13),]
-row.names(padj_rlog_histo) <- padj_rlog_histo$feature
-padj_rlog_histo$feature <- NULL
-
-padj_vst <- res.fdr.pvalue[c(2,4,6,8,10,12,14,16,18,20,22,24,26,28),]
-
-padj_vst_clinic <- padj_vst[c(1,3,7,8,14),]
-row.names(padj_vst_clinic) <- padj_vst_clinic$feature
-padj_vst_clinic$feature <- NULL
-
-padj_vst_histo <- padj_vst[c(2,4,5,6,9,10,11,12,13),]
-row.names(padj_vst_histo) <- padj_vst_histo$feature
-padj_vst_histo$feature <- NULL
-
-pval_rlog <- res.p.value[c(1,3,5,7,9,11,13,15,17,19,21,23,25,27),]
-
-pval_rlog_clinic <- pval_rlog[c(1,3,7,8,14),]
-row.names(pval_rlog_clinic) <- pval_rlog_clinic$feature
-pval_rlog_clinic$feature <- NULL
-
-pval_rlog_histo <- pval_rlog[c(2,4,5,6,9,10,11,12,13),]
-row.names(pval_rlog_histo) <- pval_rlog_histo$feature
-pval_rlog_histo$feature <- NULL
-
-pval_vst <- res.p.value[c(2,4,6,8,10,12,14,16,18,20,22,24,26,28),]
-
-pval_vst_clinic <- pval_vst[c(1,3,7,8,14),]
-row.names(pval_vst_clinic) <- pval_vst_clinic$feature
-pval_vst_clinic$feature <- NULL
-
-pval_vst_histo <- pval_vst[c(2,4,5,6,9,10,11,12,13),]
-row.names(pval_vst_histo) <- pval_vst_histo$feature
-pval_vst_histo$feature <- NULL
-
+res.p.value_histological <- res.p.value[c(1,3,6,7,8),]
+row.names(res.p.value_histological) <- res.p.value_histological$feature
+res.p.value_histological$feature <- NULL
+}
 
 library('plot.matrix')
 
-png('clinical_rlog_padjusted.png', width = 1024, height = 768)
+#### => p-value
+
+# add correct rownames
+rownames(res.p.value_clinical_raw) <- res.p.value_clinical_raw$feature
+rownames(res.p.value_clinical_VST) <- res.p.value_clinical_VST$feature
+
+rownames(res.p.value_histological_raw) <- res.p.value_histological_raw$feature
+rownames(res.p.value_histological_VST) <- res.p.value_histological_VST$feature
+
+png('clinical_raw_pvalue.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(padj_rlog_clinic[,1:5]), digits=6, las=2, main="clinical features - rlog - fdr.pval", ylab="", xlab="")
+plot(as.matrix(res.p.value_clinical_raw[,2:6]), digits=6, las=2, main="clinical features - raw - p.value", ylab="", xlab="")
 dev.off()
 
-png('histological_rlog_padjusted.png', width = 1024, height = 768)
+png('clinical_VST_pvalue.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(padj_rlog_histo[,1:5]), digits=6, las=2, main="histological features - rlog - fdr.pval", ylab="", xlab="")
+plot(as.matrix(res.p.value_clinical_VST[,2:6]), digits=6, las=2, main="clinical features - VST - p.value", ylab="", xlab="")
 dev.off()
 
-png('clinical_vst_padjusted.png', width = 1024, height = 768)
+png('histological_raw_pvalue.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(padj_vst_clinic[,1:5]), digits=6, las=2, main="clinical features - vst - fdr.pval", ylab="", xlab="")
+plot(as.matrix(res.p.value_histological_raw[,2:6]), digits=6, las=2, main="histological features - raw - p.value", ylab="", xlab="")
 dev.off()
 
-png('histological_vst_padjusted.png', width = 1024, height = 768)
+png('histological_VST_pvalue.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(padj_vst_histo[,1:5]), digits=6, las=2, main="histological features - vst - fdr.pval", ylab="", xlab="")
+plot(as.matrix(res.p.value_histological_VST[,2:6]), digits=6, las=2, main="histological features - VST - p.value", ylab="", xlab="")
 dev.off()
 
-png('clinical_rlog_pvalue.png', width = 1024, height = 768)
+#### => p-adjusted
+
+# add correct rownames
+rownames(res.fdr.pvalue_clinical_raw) <- res.fdr.pvalue_clinical_raw$feature
+rownames(res.fdr.pvalue_clinical_VST) <- res.fdr.pvalue_clinical_VST$feature
+rownames(res.fdr.pvalue_histological_raw) <- res.fdr.pvalue_histological_raw$feature
+rownames(res.fdr.pvalue_histological_VST) <- res.fdr.pvalue_histological_VST$feature
+
+png('clinical_raw_padjusted_clinical.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(pval_rlog_clinic[,1:5]), digits=6, las=2, main="clinical features - rlog - p.value", ylab="", xlab="")
+plot(as.matrix(res.fdr.pvalue_clinical_raw[,2:6]), digits=6, las=2, main="clinical features - raw - fdr.pval", ylab="", xlab="")
 dev.off()
 
-png('histological_rlog_pvalue.png', width = 1024, height = 768)
+png('clinical_VST_padjusted_clinical.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(pval_rlog_histo[,1:5]), digits=6, las=2, main="histological features - rlog - p.value", ylab="", xlab="")
+plot(as.matrix(res.fdr.pvalue_clinical_VST[,2:6]), digits=6, las=2, main="clinical features - VST - fdr.pval", ylab="", xlab="")
 dev.off()
 
-png('clinical_vst_pvalue.png', width = 1024, height = 768)
+png('histological_raw_padjusted.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(pval_vst_clinic[,1:5]), digits=6, las=2, main="clinical features - vst - p.value", ylab="", xlab="")
+plot(as.matrix(res.fdr.pvalue_histological_raw[,2:6]), digits=6, las=2, main="histological features - raw - fdr.pval", ylab="", xlab="")
 dev.off()
 
-png('histological_vst_pvalue.png', width = 1024, height = 768)
+png('histological_VST_padjusted.png', width = 1024, height = 768)
 par(mar=c(11.1, 9.1, 11.1, 9.1))
-plot(as.matrix(pval_vst_histo[,1:5]), digits=6, las=2, main="histological features - vst - p.value", ylab="", xlab="")
+plot(as.matrix(res.fdr.pvalue_histological_VST[,2:6]), digits=6, las=2, main="histological features - VST - fdr.pval", ylab="", xlab="")
 dev.off()
 
 
+# SAME AS ABOVE BUT WITHOUT "Infiltrate around vasa vasorum", "Intima pattern", "Media pattern"
+exclude <- c(which(rownames(res.p.value_histological_raw) == "Infiltrate_around_vasa_vasorum"),
+             which(rownames(res.p.value_histological_raw) == "Intima_pattern"),
+             which(rownames(res.p.value_histological_raw) == "Media_pattern"))
 
+png('histological_raw_pvalue_MOD.png', width = 1024, height = 768)
+par(mar=c(11.1, 9.1, 11.1, 9.1))
+plot(as.matrix(res.p.value_histological_raw[-exclude,2:6]), digits=6, las=2, main="histological features - raw - p.value", ylab="", xlab="")
+dev.off()
 
+png('histological_VST_pvalue_MOD.png', width = 1024, height = 768)
+par(mar=c(11.1, 9.1, 11.1, 9.1))
+plot(as.matrix(res.p.value_histological_VST[-exclude,2:6]), digits=6, las=2, main="histological features - VST - p.value", ylab="", xlab="")
+dev.off()
+
+png('histological_raw_padjusted_MOD.png', width = 1024, height = 768)
+par(mar=c(11.1, 9.1, 11.1, 9.1))
+plot(as.matrix(res.fdr.pvalue_histological_raw[-exclude,2:6]), digits=6, las=2, main="histological features - raw - fdr.pval", ylab="", xlab="")
+dev.off()
+
+png('histological_VST_padjusted_MOD.png', width = 1024, height = 768)
+par(mar=c(11.1, 9.1, 11.1, 9.1))
+plot(as.matrix(res.fdr.pvalue_histological_VST[-exclude,2:6]), digits=6, las=2, main="histological features - VST - fdr.pval", ylab="", xlab="")
+dev.off()

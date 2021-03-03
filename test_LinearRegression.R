@@ -8,3 +8,20 @@
 # So you'll see whether the association between STR1 and each of these is effectively multiple interesting associations, or really just driven by one underlying association.
 
 
+# Example of linear regression
+# FORMULA: y ~ Normal(u, sigma)
+# FORMULA: u = a + bx
+n <- 100 # number of data points 
+a <- 10 # intercept
+b <- 2
+sigma <- 1
+
+x <- rnorm(n) # generate samples from the normal distribution
+
+mu <- a + b*x
+y <- rnorm(n, mu, sigma)
+
+# test
+lm(y~ 1 + x) # run the linear regression
+
+summary(lm(y~ 1 + x)) # as above plus summarize the results
