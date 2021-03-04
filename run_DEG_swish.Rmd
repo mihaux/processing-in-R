@@ -40,7 +40,7 @@ if(startsWith(w_dir, "/Users/michal")){
 }
 
 # define wheather output files should be saved or not [TRUE / FALSE]
-output_save <- FALSE
+output_save <- TRUE
 ```
 
 
@@ -70,10 +70,11 @@ dir_out <- file.path(main_dir, "ANALYSES_archived", "run_15_Mar21", "Swish_resul
 # load table data
 coldata <- read.table(file.path(data_dir, "samples.txt"), header = TRUE)
 
-# define path to annotation files (clinical / histological)
-#dir_anno <- paste0(main_dir, "/data/metadata/outliers_excluded/cic_clinical_data_v2_summary_ORDERED_outliers_excluded.csv")
-#dir_anno <- paste0(main_dir, "/data/metadata/outliers_excluded/slide_scores_v6_outliers_excluded.csv")
-
+# define the feature to be used
+# colnames(coldata)
+# =>  "gender" | "visual_loss" | "jaw_claudication" | "ischaemic_features" | "steroids" | "age"  
+run_feat <- "gender"
+  
 # get list of all files and add it to coldata table
 coldata$files <- file.path(data_dir, "entire_output_directory", coldata$names, "quant.sf")
 all(file.exists(coldata$files))
@@ -90,39 +91,82 @@ if(output_save == TRUE){ save(se, file = file.path(data_dir, "se.RData")) }
 
 # Run differential expression analysis using Swish
 
-# Running swish has three steps: 
-# => scaling the inferential replicates, (NOT NEEDED, USED DATA GENERATED WITH length-scaledTPM)
-# => labeling the rows with sufficient counts for running differential expression, 
-# => and then calculating the statistics. 
+Running swish has three steps: 
+- scaling the inferential replicates, (NOT NEEDED, USED DATA GENERATED WITH length-scaledTPM)
+- labeling the rows with sufficient counts for running differential expression, 
+- and then calculating the statistics. 
 
-# NOTE: a random seed needs to be set before running swish(), as swish makes use of pseudo-random number generation in breaking ties and in calculating permutations
+**NOTE:** a random seed needs to be set before running swish(), as swish makes use of pseudo-random number generation in breaking ties and in calculating permutations
 
-# NOTE: The default number of permutations in swish is nperms=100. However, for paired datasets as this one, you may have fewer maximum permutations. In this case, there are 64 possible ways to switch the condition labels for six pairs of samples. We can set the nperms manually (or if we had just used the default value, swish would set nperms to the maximum value possible and notify the user that it had done so).
+**NOTE:** The default number of permutations in swish is nperms=100. However, for paired datasets as this one, you may have fewer maximum permutations. In this case, there are 64 possible ways to switch the condition labels for six pairs of samples. We can set the nperms manually (or if we had just used the default value, swish would set nperms to the maximum value possible and notify the user that it had done so).
+
+**List of features**
+=> clinical
+- gender                 male   | female
+- visual_loss            no     | yes
+- jaw_claudication       no     | yes
+- ischaemic_features     no     | yes
+- steroids               short  | long       => 'number.of.days.on.steroids.at.TAB' | short < 6 | long >= 6
+- age                    young  | old        => 'age.at.BL' | young < 75 | old >= 75
+
+=> histological          no     | yes   [for all features]
+- GCA_present
+- Giant_cells
+- Infiltrate_around_vasa_vasorum
+- Intima_pattern
+- Media_destruction
+- Media_pattern
+- Neoangiogenesis
+- Occlusion_grade
+
+Other histological features: (check if they could be used)
+- Any.granulomatous.infiltrate.	
+- Granulomatous.infiltrate.in.adventitia.	
+- Granulomatous.infiltrate.in.media.	
+- Granulomatous.infiltrate.in.intima.	
+- Any.lymphocytic.infiltrate.	
+- Lymphocytic.infiltrate.in.adventitia.	
+- Lymphocytic.infiltrate.in.media.	
+- Lymphocytic.infiltrate.in.intima.	
+- Barcelona.score.	
+- Adventitia.pattern.	
+- Aggregates.	
+- PALI.	
+- Hyperplasia.	
+- Fibrosis.	
+- Oedema.	
 
 ```{r}
 # transcript-level
 y <- se
 
-# run analysis of two group comparison for gender (male vs. female)
-y$cond1 <- factor(y$cond1, c("male","female"))
+# set the current feature as factor 
+y$gender <- factor(y$gender, c("male","female"))
+
+# TODO: the line above needs to be variable independent, by using str(y@colData@listData), and making all level in the same format across all the features (i.e. c("male","female") to be changed to c("no","yes"))
+
+#str(y@colData@listData)
+#y@colData[, run_feat] <- factor(y@colData[, run_feat], c("male","female"))
 
 y <- scaleInfReps(y)
 y <- labelKeep(y)
 y <- y[mcols(y)$keep,]
 
 set.seed(1)
-y <- swish(y, x="cond1")   # don't set nperms=, use the default
+y <- swish(y, x="gender")   # don't set nperms=, use the default
 
 # save table with results 
-write.csv(mcols(y), file = file.path(dir_out, "DTE_table_gender.csv"))
+write.csv(mcols(y), file = file.path(dir_out, paste0("DTE_table_", run_feat, ".csv")))
 
 # get the number of transcripts in a 5% and 1% FDR 
-sink(file = file.path(dir_out, "DTE_nb_significant_gender.txt"))
+sink(file = file.path(dir_out, paste0("DTE_nb_significant_", run_feat, ".txt")))
+
 cat("Numper of significant transcripts at 5%")
 table(mcols(y)$qvalue < .05)   # FALSE: 86607 | TRUE: 84
 cat("\n")
 cat("Numper of significant transcripts at 1%")
 table(mcols(y)$qvalue < .01)   # FALSE: 86613 | TRUE: 78
+
 sink()
 
 # get list of transcrips in a 5% FDR ("Significant transcript list")
@@ -132,8 +176,7 @@ DTE_extract <- c("tx_biotype", "gene_id", "log10mean", "log2FC", "pvalue", "qval
 res_DTE_fin <- res_DTE[,DTE_extract]
 
 # save data.frame with results
-write.csv(res_DTE_fin, file = file.path(dir_out, "DTE_significant_list_gender.csv"))
-
+write.csv(res_DTE_fin, file = file.path(dir_out, paste0("DTE_significant_list_", run_feat, ".csv")))
 ```
 
 ```{r}
@@ -144,26 +187,28 @@ gse <- summarizeToGene(se)
 
 gy <- gse
 
-# run analysis of two group comparison for gender (male vs. female)
-gy$cond1 <- factor(gy$cond1, c("male","female"))
+# set the current feature as factor 
+gy$gender <- factor(gy$gender, c("male","female"))
 
 gy <- scaleInfReps(gy)
 gy <- labelKeep(gy)
 gy <- gy[mcols(gy)$keep,]
 set.seed(1)
 
-gy <- swish(gy, x="cond1")
+gy <- swish(gy, x="gender")
 
 # save table with results 
-write.csv(mcols(gy), file = file.path(dir_out, "DGE_table_gender.csv"))
+write.csv(mcols(gy), file = file.path(dir_out, paste0("DGE_table_", run_feat, ".csv")))
 
 # get the number of genes in a 5% and 1% FDR 
-sink(file = file.path(dir_out, "DGE_nb_significant_gender.txt"))
+sink(file = file.path(dir_out, paste0("DGE_nb_significant_", run_feat, ".txt")))
+
   cat("Numper of significant genes at 5%")
   table(mcols(gy)$qvalue < .05)   # FALSE: 20778 | TRUE: 32
   cat("\n")
   cat("Numper of significant genes at 1%")
   table(mcols(gy)$qvalue < .01)   # FALSE: 20784 | TRUE: 26
+  
 sink()
 
 # get list of genes in a 5% FDR ("Significant gene list")
@@ -174,8 +219,7 @@ DGE_extract <- c("gene_name", "gene_biotype", "seq_coord_system", "description",
 res_DGE_fin <- res_DGE[,DGE_extract]
 
 # save data.frame with results
-write.csv(res_DGE_fin, file = file.path(dir_out, "DGE_significant_list_gender.csv"))
-
+write.csv(res_DGE_fin, file = file.path(dir_out, paste0("DGE_significant_list_", run_feat, ".csv")))
 ```
 
 RESULTS table columns:
