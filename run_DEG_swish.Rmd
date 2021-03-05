@@ -19,10 +19,12 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 if (!requireNamespace("SummarizedExperiment", quietly = TRUE)) BiocManager::install("SummarizedExperiment")
 if (!requireNamespace("fishpond", quietly = TRUE)) BiocManager::install("fishpond")
 if (!requireNamespace("tximeta", quietly = TRUE)) BiocManager::install("tximeta")
+if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) BiocManager::install("org.Hs.eg.db")
 
 library(SummarizedExperiment)
 library(fishpond)
 library(tximeta)
+library(org.Hs.eg.db)
 ```
 
 
@@ -55,6 +57,23 @@ dir_out <- file.path(main_dir, "ANALYSES_archived", "run_15_Mar21", "Swish_resul
 
 # Use tximeta package to load Salmon outputs with inferential replicates
 
+TABLE OF OUTPUT FILES:
+# transcript-level (same set of results for gene-level)
+
+=> first chunk
+(1) table with results (whole) [.csv]
+(2) number of transcripts in a 5% and 1% FDR  [.txt]
+(3) list of significant transcripts [.csv]
+
+=> plotting results 
+
+(1) histogram of p-values [.png]
+(2) number of down- and up-regulated transcripts at 5% FDR [.txt]
+(3) table with 4 columns c("log10mean","log2FC","pvalue","qvalue") ordered for positive log fold change transcripts  [.csv]
+(4) table with 4 columns c("log10mean","log2FC","pvalue","qvalue") ordered for negative log fold change transcripts  [.csv]
+(5) - MA plot, with FDR significant transcript colored [.png]
+(5bis) - MA plot as above, but with gene symbols added [.png]
+
 ```{r}
 # NOTE: tximeta package require coldata in order to create SummarizedExperiment object
 # this file needs to be created beforhand in as tab-delimated .txt with following structure:
@@ -70,11 +89,19 @@ dir_out <- file.path(main_dir, "ANALYSES_archived", "run_15_Mar21", "Swish_resul
 # load table data
 coldata <- read.table(file.path(data_dir, "samples.txt"), header = TRUE)
 
-# define the feature to be used
+# define the feature to be used and create a new folder for results of the current run
 # colnames(coldata)
 # =>  "gender" | "visual_loss" | "jaw_claudication" | "ischaemic_features" | "steroids" | "age"  
 run_feat <- "gender"
   
+# check if directory for this feature already exists
+if(dir.exists(file.path(dir_out, run_feat)) == FALSE){
+  # if not, create it
+  dir.create(file.path(dir_out, run_feat))
+} else {
+  cat("Output directory already exists")
+}
+
 # get list of all files and add it to coldata table
 coldata$files <- file.path(data_dir, "entire_output_directory", coldata$names, "quant.sf")
 all(file.exists(coldata$files))
@@ -86,7 +113,7 @@ se <- tximeta(coldata)
 assayNames(se)
 
 # save se object in RData format (NOT SURE IF THIS WORKED)
-if(output_save == TRUE){ save(se, file = file.path(data_dir, "se.RData")) }
+#if(output_save == TRUE){ save(se, file = file.path(data_dir, "se.RData")) }
 ```
 
 # Run differential expression analysis using Swish
@@ -109,15 +136,16 @@ Running swish has three steps:
 - steroids               short  | long       => 'number.of.days.on.steroids.at.TAB' | short < 6 | long >= 6
 - age                    young  | old        => 'age.at.BL' | young < 75 | old >= 75
 
-=> histological          no     | yes   [for all features]
-- GCA_present
-- Giant_cells
-- Infiltrate_around_vasa_vasorum
-- Intima_pattern
-- Media_destruction
-- Media_pattern
-- Neoangiogenesis
-- Occlusion_grade
+=> histological  (`ID_14058` is not present in histological metadata)
+- GCA_present                        no | yes 
+- Giant_cells                        no | yes
+- Infiltrate_around_vasa_vasorum     no | yes
+- Media_destruction                  no | yes
+- Neoangiogenesis                    no | yes
+
+- Intima_pattern                     no | yes (multiple classes => modified)
+- Media_pattern                      no | yes (multiple classes => modified)
+- Occlusion_grade                    no | yes (multiple classes => modified)
 
 Other histological features: (check if they could be used)
 - Any.granulomatous.infiltrate.	
@@ -156,15 +184,15 @@ set.seed(1)
 y <- swish(y, x="gender")   # don't set nperms=, use the default
 
 # save table with results 
-write.csv(mcols(y), file = file.path(dir_out, paste0("DTE_table_", run_feat, ".csv")))
+write.csv(mcols(y), file = file.path(dir_out, run_feat, paste0("DTE_table_", run_feat, ".csv")))
 
 # get the number of transcripts in a 5% and 1% FDR 
-sink(file = file.path(dir_out, paste0("DTE_nb_significant_", run_feat, ".txt")))
+sink(file = file.path(dir_out, run_feat, paste0("DTE_nb_significant_", run_feat, ".txt")))
 
-cat("Numper of significant transcripts at 5%")
+cat("Number of significant transcripts at 5%")
 table(mcols(y)$qvalue < .05)   # FALSE: 86607 | TRUE: 84
 cat("\n")
-cat("Numper of significant transcripts at 1%")
+cat("Number of significant transcripts at 1%")
 table(mcols(y)$qvalue < .01)   # FALSE: 86613 | TRUE: 78
 
 sink()
@@ -176,8 +204,83 @@ DTE_extract <- c("tx_biotype", "gene_id", "log10mean", "log2FC", "pvalue", "qval
 res_DTE_fin <- res_DTE[,DTE_extract]
 
 # save data.frame with results
-write.csv(res_DTE_fin, file = file.path(dir_out, paste0("DTE_significant_list_", run_feat, ".csv")))
+write.csv(res_DTE_fin, file = file.path(dir_out, run_feat, paste0("DTE_significant_list_", run_feat, ".csv")))
+
 ```
+
+
+```{r}
+# plotting results - transcript-level
+
+# (1) check the distribution of p-values
+png(file.path(dir_out, run_feat, paste0("DTE_histogram_pvalues_", run_feat, ".png")))
+hist(mcols(y)$pvalue, col="grey")
+dev.off()
+
+# NOTE: This looks as expected for a comparison where we expect many transcripts will be affected by the treatment (IFNg stimulation of macrophage cells). There is a flat component and then an enrichment of transcripts with p-values near 0.
+
+# (2) check which transcripts have the most extreme log2 fold change
+
+# NOTE: it is often that many transcripts will share the same q-value, so it’s valuable to look at the log2 fold change as well (see further note below on q-value computation). 
+
+# The log2 fold change computed by swish is the median over inferential replicates, and uses a pseudo-count of 5 on the scaled counts, to stabilize the variance on the fold change from division by small counts. 
+
+# Here we make two vectors that give the significant genes with the lowest (most negative) and highest (most positive) log fold changes.
+
+# (2) get the number of down- and up-regulated transcripts at 5% FDR (in terms of their log2 fold change)
+sink(file = file.path(dir_out, run_feat, paste0("DTE_nb_down-up_", run_feat, ".txt")))
+cat("Number of down- and up-regulated transcripts at 5% FDR (in terms of their log2 fold change)")
+with(mcols(y), table(sig=qvalue < .05, sign.lfc=sign(log2FC)))
+sink()
+
+# select only significant transcripts (separately for down- and up-regulated; and ordered)
+sig <- mcols(y)$qvalue < .05
+lo <- order(mcols(y)$log2FC * sig)
+hi <- order(-mcols(y)$log2FC * sig)
+
+# define a list of colnames to be retained in results table
+cols <- c("log10mean","log2FC","pvalue","qvalue")
+
+# get a table with just the calculated statistics 
+
+# (3) for the large positive log fold change transcripts (up-regulation):
+top.up <- mcols(y)[hi,]
+table.up <- print(as.data.frame(top.up)[,cols], digits=3)
+write.csv(table.up, file = file.path(dir_out, run_feat, paste0("DTE_table_positive_log_fold_change_", run_feat, ".csv")))
+
+# (4) for the largest negative log fold change transcripts (down-regulation):
+top.down <- mcols(y)[lo,]
+table.down <- print(as.data.frame(top.down)[,cols], digits=3)
+write.csv(table.down, file = file.path(dir_out, run_feat, paste0("DTE_table_negative_log_fold_change_", run_feat, ".csv")))
+
+#----------- leave it for now -----------#
+#We can plot the scaled counts for the inferential replicates, and also group the samples by a covariate, in this case the cell line. The analysis was paired, so the statistic assessed if the change within pairs was consistent. Here we plot the 100th top up-regulated transcript. plotInfReps also has functionality for plotting uncertainty in single cell data, as will be covered in a later section.
+
+#plotInfReps(y, idx=hi[100], x="condition", cov="line")
+#----------------------------------------#
+
+# (5) make an MA plot, where the transcripts in our FDR set are colored
+png(file.path(dir_out, run_feat, paste0("DTE_MA_plot_", run_feat, ".png")))
+plotMASwish(y, alpha=.05)
+dev.off()
+
+# (5.bis) use the addIds function from tximeta to add gene symbols. 
+# By specifying gene=TRUE, this will use the gene ID to match to gene symbols for all of the transcripts.
+
+y <- addIds(y, "SYMBOL", gene=TRUE)
+
+# add gene symbols to MA plot
+png(file.path(dir_out, run_feat, paste0("DTE_MA_plot_with_symbols", run_feat, ".png")))
+plotMASwish(y, alpha=.05, xlim=c(.5,5.5))
+with(
+  subset(mcols(y), qvalue < .05 & abs(log2FC) > 4),
+     text(log10mean, log2FC, SYMBOL,
+          col="blue", pos=4, cex=.7)
+)
+dev.off()
+
+```
+
 
 ```{r}
 # gene-level
@@ -198,15 +301,15 @@ set.seed(1)
 gy <- swish(gy, x="gender")
 
 # save table with results 
-write.csv(mcols(gy), file = file.path(dir_out, paste0("DGE_table_", run_feat, ".csv")))
+write.csv(mcols(gy), file = file.path(dir_out, run_feat, paste0("DGE_table_", run_feat, ".csv")))
 
 # get the number of genes in a 5% and 1% FDR 
-sink(file = file.path(dir_out, paste0("DGE_nb_significant_", run_feat, ".txt")))
+sink(file = file.path(dir_out, run_feat, paste0("DGE_nb_significant_", run_feat, ".txt")))
 
-  cat("Numper of significant genes at 5%")
+  cat("Number of significant genes at 5%")
   table(mcols(gy)$qvalue < .05)   # FALSE: 20778 | TRUE: 32
   cat("\n")
-  cat("Numper of significant genes at 1%")
+  cat("Number of significant genes at 1%")
   table(mcols(gy)$qvalue < .01)   # FALSE: 20784 | TRUE: 26
   
 sink()
@@ -219,7 +322,78 @@ DGE_extract <- c("gene_name", "gene_biotype", "seq_coord_system", "description",
 res_DGE_fin <- res_DGE[,DGE_extract]
 
 # save data.frame with results
-write.csv(res_DGE_fin, file = file.path(dir_out, paste0("DGE_significant_list_", run_feat, ".csv")))
+write.csv(res_DGE_fin, file = file.path(dir_out, run_feat, paste0("DGE_significant_list_", run_feat, ".csv")))
+```
+
+```{r}
+# plotting results - gene-level
+
+# (1) check the distribution of p-values
+png(file.path(dir_out, run_feat, paste0("DGE_histogram_pvalues_", run_feat, ".png")))
+hist(mcols(gy)$pvalue, col="grey")
+dev.off()
+
+# NOTE: This looks as expected for a comparison where we expect many transcripts will be affected by the treatment (IFNg stimulation of macrophage cells). There is a flat component and then an enrichment of transcripts with p-values near 0.
+
+# (2) check which genes have the most extreme log2 fold change
+
+# (2) get the number of down- and up-regulated geness at 5% FDR (in terms of their log2 fold change)
+sink(file = file.path(dir_out, run_feat, paste0("DGE_nb_down-up_", run_feat, ".txt")))
+cat("Number of down- and up-regulated genes at 5% FDR (in terms of their log2 fold change)")
+with(mcols(gy), table(sig=qvalue < .05, sign.lfc=sign(log2FC)))
+sink()
+
+# select only significant transcripts (separately for down- and up-regulated; and ordered)
+sig <- mcols(gy)$qvalue < .05
+glo <- order(mcols(gy)$log2FC * sig)
+ghi <- order(-mcols(gy)$log2FC * sig)
+
+# get a table with just the calculated statistics 
+
+# use the same list of colnames already defined for transcripts
+#cols <- c("log10mean","log2FC","pvalue","qvalue")
+
+# (3) for the large positive log fold change transcripts (up-regulation):
+gtop.up <- mcols(gy)[ghi,]
+gtable.up <- print(as.data.frame(gtop.up)[,cols], digits=3)
+write.csv(gtable.up, file = file.path(dir_out, run_feat, paste0("DGE_table_positive_log_fold_change_", run_feat, ".csv")))
+
+# (4) for the largest negative log fold change transcripts (down-regulation):
+gtop.down <- mcols(y)[glo,]
+gtable.down <- print(as.data.frame(gtop.down)[,cols], digits=3)
+write.csv(gtable.down, file = file.path(dir_out, run_feat, paste0("DGE_table_negative_log_fold_change_", run_feat, ".csv")))
+
+
+#----------- leave it for now -----------#
+#We can plot a particular one of these genes:
+
+#plotInfReps(gy, idx=ghi[100], x="condition", cov="line")
+
+#As expected, the highly up-regulated genes are involved in immune response. Many genes encoding guanylate-binding proteins (GBP) are up-regulated, and these proteins are induced by interferon, produced in response to infection by pathogenic microbes.
+
+#We can make an MA plot, where the genes in our FDR set are colored:
+#----------------------------------------#
+
+# (5) make an MA plot, where the transcripts in our FDR set are colored
+png(file.path(dir_out, run_feat, paste0("DGE_MA_plot_", run_feat, ".png")))
+plotMASwish(gy, alpha=.05)
+dev.off()
+
+# (5.bis) use the addIds function from tximeta to add gene symbols. 
+# By specifying gene=TRUE, this will use the gene ID to match to gene symbols for all of the transcripts.
+
+gy <- addIds(gy, "SYMBOL", gene=TRUE)
+
+# add gene symbols to MA plot
+png(file.path(dir_out, run_feat, paste0("DGE_MA_plot_with_symbols", run_feat, ".png")))
+plotMASwish(gy, alpha=.05, xlim=c(.5,5.5))
+with(
+  subset(mcols(gy), qvalue < .05 & abs(log2FC) > 4),
+     text(log10mean, log2FC, SYMBOL,
+          col="blue", pos=4, cex=.7)
+)
+dev.off()
+
 ```
 
 RESULTS table columns:
