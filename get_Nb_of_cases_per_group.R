@@ -37,7 +37,9 @@ setwd(args[3])
 
 # load data 
 df_clinical <- read.csv(args[1], row.names = 1, header = TRUE)        # dim = 41 19
-df_histological <- read.csv(args[2], row.names = 1, header = TRUE)    # dim = 40 24
+#df_histological <- read.csv(args[2], row.names = 1, header = TRUE)    # dim = 40 24
+
+df_histological <- read.csv(file.path(main_dir, "/data/metadata/histological_data/FINAL_spreadsheet/histological_data_FINAL.csv"), header = TRUE)
 
 if(FALSE){ # there are 4 sheets in cic_clinical_data_v2.csv | the other 3 are not important for now
   # load each sheet from cic_clinical_data_v2.xlsx

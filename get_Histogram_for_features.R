@@ -161,3 +161,52 @@ hist(as.numeric(df_female$number.of.days.between.TAB.and.BL.blood.sample),
      main = "Histogram of 'number.of.days.between.TAB.and.BL.blood.sample' \n - female only")
 if(output_save==TRUE){ dev.off() }
 
+### gender ###
+library(stringr)
+
+# replace '1' with 'male' and '2' with 'female'
+gender_temp <- str_replace(df_meta$gender, "1", "male")
+gender_final <- str_replace(gender_temp, "2", "female")
+
+if(output_save==TRUE){ png(file = "frequency_gender_all.png") }
+barplot(table(gender_final), 
+        col = c("#F8766D", "#00BFC4"), ylim = c(0,25),
+        xlab="Sex", ylab="Frequency")
+if(output_save==TRUE){ dev.off() }
+
+# create samples_info.txt file for Swish
+
+# replace '1' with 'yes' and '2' with 'no'
+gender_temp <- str_replace(df_meta$gender, "1", "yes")
+gender_final <- str_replace(gender_temp, "2", "no")
+
+visual_loss_temp <- str_replace(df_meta$visual_loss, "0", "no")
+visual_loss_final <- str_replace(visual_loss_temp, "1", "yes")
+
+jaw_claudication_temp <- str_replace(df_meta$jaw_claudication, "0", "no")
+jaw_claudication_final <- str_replace(jaw_claudication_temp, "1", "yes")
+
+ischaemic_features_temp <- str_replace(df_meta$ischaemic_features, "0", "no")
+ischaemic_features_final <- str_replace(ischaemic_features_temp, "1", "yes")
+
+# replace <75 with 'no' and >= 75 with 'yes'
+age_final <- c(rep("no", 40))
+age_to_be_repl <- which(df_meta$age.at.BL >= 75)
+age_final[age_to_be_repl] <- "yes"
+
+# replace <6 with 'no' and >= 6 with 'yes'
+steroids_final <- c(rep("no", 40))
+steroids_to_be_repl <- which(df_meta$number.of.days.on.steroids.at.TAB >= 6)
+steroids_final[steroids_to_be_repl] <- "yes"
+
+out_clinical <- data.frame(gender=gender_final,
+                           visual_loss=visual_loss_final,
+                           jaw_claudication=jaw_claudication_final,
+                           ischaemic_features=ischaemic_features_final,
+                           age=age_final,
+                           steroids=steroids_final)
+
+rownames(out_clinical) <- rownames(df_meta)
+
+write.csv(out_clinical, "samples_info_clinical.csv")
+
